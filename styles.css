@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  * {
+    @apply m-0 p-0 box-border;
+  }
+
+  .main {
+    @apply w-[420px] min-w-[120px] min-h-[250px] max-h-[500px];
+  }
+}

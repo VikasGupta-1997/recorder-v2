@@ -1,0 +1,101 @@
+.permissions-iframe {
+  width: 0;
+  height: 0;
+  top: 0;
+  left: 0;
+  display: none;
+  visibility: hidden;
+}
+
+.recording-start-overlay {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 36px;
+    text-transform: capitalize;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.countdown-text {
+    font-size: 120px;
+    height: 150px;
+    width: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(to top, #000000 50%, #434343 50%, #414345 50%, #232526 50%);
+    color: white;
+    font-weight: bold;
+    border-radius: 12px;
+    font-family: sans-serif;
+}
+
+.draggable-container {
+  position: fixed; /* Use fixed to keep it always in view */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.draggable-child {
+  width: fit-content;
+  position: absolute;
+  bottom: 4%;
+  left: 8%;
+  z-index: 9999999;
+  display: flex;
+  flex-direction: row-reverse;
+  pointer-events: auto;
+  align-items: end;
+}
+
+.cam-injector-iframe {
+  width: 248px;
+  height: 248px;
+  margin: auto;
+  margin-bottom: -10px;
+}
+
+.cam-injector-iframe iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.spinner-container {
+  background: rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 222px;
+  height: 222px;
+  margin: 8px;
+  border-radius: 50%;
+  margin-left: 24px;
+  /* margin-bottom: 24px; */
+  background: #1A2980;  /* fallback for old browsers */
+  background: -webkit-linear-gradient(to right, #26D0CE, #1A2980);  /* Chrome 10-25, Safari 5.1-6 */
+  background: linear-gradient(to right, #26D0CE, #1A2980); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+}
+
+.loader-spinner {
+  width: 64px;
+  --b: 8px; 
+  aspect-ratio: 1;
+  border-radius: 50%;
+  padding: 1px;
+  background: conic-gradient(#0000 10%,rgb(32 69 95)) content-box;
+  -webkit-mask:
+    repeating-conic-gradient(#0000 0deg,#000 1deg 20deg,#0000 21deg 36deg),
+    radial-gradient(farthest-side,#0000 calc(100% - var(--b) - 1px),#000 calc(100% - var(--b)));
+  -webkit-mask-composite: destination-in;
+          mask-composite: intersect;
+  animation:l4 1s infinite steps(10);
+}
+@keyframes l4 {to{transform: rotate(1turn)}}

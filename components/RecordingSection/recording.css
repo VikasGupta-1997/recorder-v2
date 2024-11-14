@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+    .container{
+        @apply p-6
+    }  
+    .is-disabled {
+        opacity: 0.5;
+        pointer-events: none;
+        cursor: not-allowed;
+    }  
+    .screen-recording {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 14px;
+        gap: 12px;
+       
+    }
+    .icon-wrap {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: center;
+        border: 1px solid lightgray;
+        padding: 6px;
+        border-radius: 8px;
+        gap: 6px;
+        padding-bottom: 4px;
+        width: 25%;
+        cursor: pointer;
+    }
+
+    .is-active {
+        border: 1px solid black;
+        background: #F2F3F5;
+    }
+
+    .icon-wrap svg {
+        width: 32px;
+        height: 32px;
+    }
+
+    .icon-wrap label {
+        font-size: 10px;
+        cursor: pointer;
+    }
+}

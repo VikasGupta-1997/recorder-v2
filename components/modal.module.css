@@ -1,0 +1,109 @@
+.darkBG {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 36px;
+    text-transform: capitalize;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.centered {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+}
+
+.modal {
+    width: 350px;
+    height: 140px;
+    background: white;
+    color: white;
+    z-index: 10;
+    border-radius: 8px;
+    box-shadow: 0 5px 20px 0 rgba(0, 0, 0, 0.04);
+}
+
+.modalHeader {
+    /* height: 50px; */
+    background: white;
+    overflow: hidden;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid lightgray;
+    padding-left: 24px;
+    padding-right: 16px;
+  }
+
+  .heading {
+    margin: 0;
+    font-weight: bold;
+    padding: 10px;
+    color: #2c3e50;
+    font-weight: 500;
+    font-size: 18px;
+    text-align: center;
+    text-transform: capitalize;
+  }
+
+  .modalActions {
+    /* position: absolute; */
+    /* bottom: 2px; */
+    /* margin-bottom: 10px; */
+    width: 100%;
+    margin-top: 16px;
+  }
+
+  .actionsContainer {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+  }
+
+  .deleteBtn {
+    margin-top: 10px;
+    cursor: pointer;
+    font-weight: 500;
+    padding: 11px 28px;
+    border-radius: 24px;
+    font-size: 0.8rem;
+    border: none;
+    color: #fff;
+    background: #0DABD8;
+    transition: all 0.25s ease;
+    text-transform: capitalize;
+  }
+  
+.deleteBtn:hover {
+    box-shadow: 0 10px 20px -10px #0DABD8;
+    /* transform: translateY(-5px); */
+    background: #0DABD8;
+  }
+
+  .cancelBtn {
+    margin-top: 10px;
+    cursor: pointer;
+    font-weight: 500;
+    padding: 11px 28px;
+    border-radius: 24px;
+    font-size: 0.8rem;
+    /* border: none; */
+    color: #2c3e50;
+    background: #fcfcfc;
+    transition: all 0.25s ease;
+    border: 1px solid lightgray;
+  }
+  
+.cancelBtn:hover {
+    box-shadow: none;
+    transform: none;
+    background: whitesmoke;
+  }

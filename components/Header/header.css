@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .header {
+    @apply flex justify-between border-b-2 p-5 pt-4 pb-2;
+  }
+  .logo {
+    @apply w-12 h-12 rounded-xl flex items-center justify-center border border-[#E2E5ED];
+    box-shadow: 0px 6px 6px #00000042;
+  }
+
+  .logo .outer-circle {
+    @apply w-[25px] h-[25px] bg-[#FF2500];
+  }
+
+  .logo .outer-circle .inner-circle {
+    @apply w-[14px] h-[14px] bg-[#F9AA9D];
+  }
+}

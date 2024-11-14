@@ -1,0 +1,38 @@
+.recordingStartOverlay {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 36px;
+    text-transform: capitalize;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.countdownText {
+    position: fixed;
+    font-size: 120px;
+    height: 150px;
+    width: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(to top, #000000 50%, #434343 50%, #414345 50%, #232526 50%);
+    color: white;
+    font-weight: bold;
+    border-radius: 12px;
+    font-family: sans-serif;
+}
+
+.screenToggle {
+    position: fixed;
+    right: 3%;
+    bottom: 4%;
+    background: white;
+    border-radius: 8px;
+    padding: 4px;
+    padding-bottom: 2px;
+    cursor: pointer
+}

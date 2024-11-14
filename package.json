@@ -1,0 +1,76 @@
+{
+  "name": "adilo-browser-recorder-extension",
+  "displayName": "Adilo browser recorder extension",
+  "version": "0.0.1",
+  "description": "A Video and Audio recording extention.",
+  "author": "softwaredev@zestgeek.com",
+  "scripts": {
+    "dev": "plasmo dev",
+    "build": "plasmo build",
+    "package": "plasmo package",
+    "firefox-dev": "plasmo dev --target=firefox-mv2",
+    "firefox-build": "plasmo build --target=firefox-mv2",
+    "firefox-package": "plasmo package --target=firefox-mv2"
+  },
+  "dependencies": {
+    "@ffmpeg/ffmpeg": "^0.12.10",
+    "@ffmpeg/util": "^0.12.1",
+    "@plasmohq/messaging": "^0.6.2",
+    "@plasmohq/storage": "^1.11.0",
+    "lodash.debounce": "^4.0.8",
+    "plasmo": "0.89.3",
+    "plyr-react": "^5.3.0",
+    "react": "18.3.1",
+    "react-audio-visualize": "^1.2.0",
+    "react-dom": "18.3.1",
+    "react-draggable": "^4.4.6",
+    "react-icons": "^5.3.0",
+    "react-player": "^2.16.0",
+    "react-select": "^5.8.1",
+    "wavesurfer.js": "^7.8.8"
+  },
+  "devDependencies": {
+    "@ianvs/prettier-plugin-sort-imports": "4.3.1",
+    "@plasmohq/parcel-resolver": "^0.14.1",
+    "@types/chrome": "0.0.277",
+    "@types/node": "22.7.5",
+    "@types/react": "18.3.11",
+    "@types/react-dom": "18.3.0",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.47",
+    "prettier": "3.3.3",
+    "tailwindcss": "^3.4.13",
+    "typescript": "5.6.3"
+  },
+  "manifest": {
+    "host_permissions": [
+      "https://*/*"
+    ],
+    "permissions": [
+      "storage",
+      "downloads",
+      "activeTab",
+      "scripting",
+      "tabCapture",
+      "tabs",
+      "desktopCapture",
+      "tabCapture",
+      "offscreen",
+      "app.window",
+      "system.display",
+      "unlimitedStorage"
+    ],
+    "web_accessible_resources": [
+      {
+        "resources": [
+          "tabs/*",
+          "vendor/*"
+        ],
+        "matches": [
+          "http://*/*",
+          "https://*/*"
+        ]
+      }
+    ]
+  }
+}

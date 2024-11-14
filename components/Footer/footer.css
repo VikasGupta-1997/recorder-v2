@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .footer {
+    @apply flex justify-center pb-6 border-t-2 pt-6;
+  }
+
+  .footer button {
+    @apply h-[60px] w-full bg-[#0DABD8] rounded-[48px] opacity-100 flex items-center justify-center gap-6;
+  }
+
+  .footer button:disabled {
+    @apply opacity-50;
+  }
+
+  .footer button span {
+    @apply text-white text-[20px] tracking-wider;
+  }
+
+  .pulse-effect {
+    position: relative;
+    display: inline-block;
+  }
+
+  .pulse-effect::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 125%;
+    height: 125%;
+    /* background-color: rgba(5, 170, 218, 0.5); */
+    background-color: rgb(255 37 0);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    animation: pulseEffect 1.5s infinite ease-in-out;
+  }
+
+  @keyframes pulseEffect {
+    0% {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+    }
+    100% {
+      transform: translate(-50%, -50%) scale(1.5);
+      opacity: 0;
+    }
+  }
+}
