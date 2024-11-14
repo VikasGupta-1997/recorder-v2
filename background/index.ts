@@ -178,7 +178,8 @@ let elapsedTime = 0;
 let timerInterval: NodeJS.Timeout | null = null;
 let saveInterval = 10; // Save to IndexedDB every 10 seconds
 let saveCounter = 0;
-let isCamInjection = false
+let isCamInjection = false;
+let previewTabId = null;
 
 // Start timer function
 
@@ -365,6 +366,12 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     } catch (error) {
       console.error("Caught exception: ", error);
     }
+  }
+
+  if(message.type === 'GET_INDEXDB_RECORDING'){
+    setTimeout(() => {
+      chrome.tabs.sendMessage(previewTabId, { type: "PLAY_PREVIEW" }, function () { })
+    }, 1000)
   }
 
   if (message.type === "startTimer") {
@@ -642,6 +649,7 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 
           if (isToOpenPreview) {
             chrome.tabs.create({ url: chrome.runtime.getURL('tabs/preview.html') }, async (tab) => {
+              previewTabId = tab.id
               chrome.tabs.sendMessage(tab.id, { type: "RECORDING_COMPLETED" }, function () { })
               chrome.tabs.onUpdated.addListener(function listener(tabId, info) {
                 if (tabId === tab.id && info.status === 'complete') {

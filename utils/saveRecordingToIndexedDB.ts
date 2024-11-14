@@ -30,7 +30,8 @@ async function saveRecordingToIndexedDB(blob, onComplete) {
 
         transaction.oncomplete = () => {
             console.log("onComplete Call!!")
-            onComplete()
+            // onComplete()
+            chrome.runtime.sendMessage({type: "GET_INDEXDB_RECORDING"})
         };
         transaction.onerror = (event) => console.error("Error saving recording:", event);
     };

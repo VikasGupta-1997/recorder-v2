@@ -164,6 +164,7 @@ const Audio = () => {
             });
             chrome.runtime.sendMessage({type: "RECORDING_IN_PROGRESS_END"})
         }
+        onComplete()
         saveRecordingToIndexedDB(blob, onComplete)
     };
 

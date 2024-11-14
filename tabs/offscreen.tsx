@@ -205,6 +205,7 @@ const OffScreen = () => {
             videoUrl: url
           });
         }
+        onComplete()
         saveRecordingToIndexedDB(blob, onComplete)
       } else {
         chrome.runtime.sendMessage({ type: "OFFSCREEN_RECORDING_END" });
@@ -370,6 +371,7 @@ const OffScreen = () => {
               videoUrl: url
             });
           }
+          onComplete()
           saveRecordingToIndexedDB(blob, onComplete)
         }
         chrome.runtime.sendMessage({ type: "RECORDING_IN_PROGRESS_END" })

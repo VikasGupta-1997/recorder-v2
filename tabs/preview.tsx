@@ -42,7 +42,7 @@ function PreviewPage() {
     const [playing, setPlaying] = useState(true);
     const [volume, setVolume] = useState(1);
     const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder>()
-    const [ loadingVideo, setVideoLoading] = useState(true)
+    const [loadingVideo, setVideoLoading] = useState(true)
     const svgMicRef = useRef(null)
     const url = useRef('')
     const containerRef = useRef(null)
@@ -58,7 +58,22 @@ function PreviewPage() {
         // });
     };
 
+    const onMountListeners = () => {
+        chrome.runtime.onMessage.addListener(
+            function async(message) {
+                console.log("onMountListeners1212", message)
+                switch (message.type) {
+                    case "PLAY_PREVIEW": {
+                        console.log("GET_INDEXDB_RECORDING12121212")
+                        setVideoLoading(false)
+                    }
+                }
+            }
+        )
+    }
+
     useEffect(() => {
+        onMountListeners()
         if (waveContainerRef.current && !waveSurferRef.current) {
             waveSurferRef.current = WaveSurfer.create({
                 container: waveContainerRef.current,
@@ -108,20 +123,25 @@ function PreviewPage() {
     }
 
     async function playRecordingInVideoTag() {
-        console.log("ENTERED!!~!")
+        console.log("ENTERED!!~!", isAudio)
         try {
             const base64Data = await loadRecordingFromIndexedDB() as string;
 
             // Convert Base64 to a Blob URL and set as the video src
             const response = await fetch(base64Data);
-            console.log("response1221", response)
+            console.log(videoRef.current, "response1221", response)
             const blob = await response.blob();
             const videoUrl = URL.createObjectURL(blob);
             url.current = videoUrl
-            setVideoLoading(false)
-            
+            // setVideoLoading(false)
+            if (isAudio === 'video') {
+                videoRef.current.src = url.current;
+            } else {
+                console.log("Set Audio Here !")
+                audioRef.current.src = url.current;
+            }
         } catch (error) {
-            setVideoLoading(false)
+            // setVideoLoading(false)
             console.error("Error loading and playing recording:", error);
         }
     }
@@ -129,7 +149,7 @@ function PreviewPage() {
 
     useEffect(() => {
         chrome.storage.local.get(["isAudioOnly"], async (result) => {
-            playRecordingInVideoTag()
+            // playRecordingInVideoTag()
             if (result?.isAudioOnly) {
                 setIsAudio('audio');
             } else {
@@ -316,20 +336,16 @@ function PreviewPage() {
     };
 
     useEffect(() => {
-        if(!loadingVideo){
-            if(isAudio === 'video'){
-                videoRef.current.src = url.current;
-            } else {
-                console.log("Set Audio Here !")
-                audioRef.current.src =  url.current;
-            }
+        if (!loadingVideo) {
+            playRecordingInVideoTag()
+
             // waveSurferRef.current.load(url.current);
         }
     }, [loadingVideo, isAudio])
 
     console.log("mediaRecorder1212", widthHeight)
-    
-    if(loadingVideo) {
+
+    if (loadingVideo) {
         return (
             <div>
                 ...Loading Video
