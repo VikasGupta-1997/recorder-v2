@@ -414,6 +414,10 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     isRecordingFromSystemTab = false
   }
 
+  if(message.type === 'SET_SAVING_IN_INDEXDB'){
+    chrome.storage.local.set({"saving_in_indexdb": message.data})
+  }
+
   if (message.type === 'INJECT_VIDEOCAM') {
     // await chrome.storage.local.set({"isCamInjected": true})
     try {
@@ -463,9 +467,13 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     // chrome.runtime.sendMessage({type: "SHOW_TOOLBAR"})
   }
 
-  if (message.type === 'END_CAM_ONLY_RECORDING') {
-    chrome.runtime.sendMessage({ type: "END_CAM_ONLY_RECORDING_CAMERA" })
-  }
+  // if (message.type === 'END_CAM_ONLY_RECORDING') {
+    // chrome.runtime.sendMessage({ type: "END_CAM_ONLY_RECORDING_CAMERA" })
+  // }
+
+  // if (message.type === 'END_MIC_ONLY_RECORDING') {
+    // chrome.runtime.sendMessage({ type: "END_MIC_ONLY_RECORDING_CAMERA" })
+  // }
 
   if (message.type === 'END_MIC_ONLY_RECORDING') {
     chrome.runtime.sendMessage({ type: "END_MIC_ONLY_RECORDING_AUDIO" })
@@ -591,7 +599,8 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
           } else {
           }
         } else {
-          chrome.runtime.sendMessage({ type: "START_RECORDING_OFFSCREEN", data: message.data });
+          console.log("isCamOnlyisCamOnly", message)
+          chrome.runtime.sendMessage({ type: "START_RECORDING_OFFSCREEN", data: message.data, isCamOnly: message?.isCamOnly, isAudioOnly: message?.isAudioOnly });
           return;
         }
       });

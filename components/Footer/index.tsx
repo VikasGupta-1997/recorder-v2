@@ -38,12 +38,14 @@ const Footer = ({ selections, isRecordingInProgress, formattedTimeRef }) => {
     }
     // return;
     if (selections?.screenRecording?.value === 'camOnly') {
-      chrome.runtime.sendMessage({ type: "OPEN_CAM_ONLY_RECORDING", selections: selections })
+      chrome.runtime.sendMessage({ type: "START_TO_RECORD", data: selections, isCamOnly: true, isAudioOnly: false })
+      // chrome.runtime.sendMessage({ type: "OPEN_CAM_ONLY_RECORDING", selections: selections })
     } else if (selections?.screenRecording?.value === 'audioOnly') {
-      chrome.runtime.sendMessage({ type: "OPEN_MIC_ONLY_RECORDING", selections: selections })
+      chrome.runtime.sendMessage({ type: "START_TO_RECORD", data: selections, isCamOnly: false, isAudioOnly: true })
+      // chrome.runtime.sendMessage({ type: "OPEN_MIC_ONLY_RECORDING", selections: selections, isCamOnly: false, isAudioOnly: true })
     }
     else {
-      chrome.runtime.sendMessage({ type: "START_TO_RECORD", data: selections })
+      chrome.runtime.sendMessage({ type: "START_TO_RECORD", data: selections, isCamOnly: false , isAudioOnly: false})
     }
     window.close();
   }

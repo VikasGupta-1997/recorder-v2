@@ -8,6 +8,13 @@ let recordingChunks = []
 let chunks = [];
 let userMediaStream;
 let windowOnlyAudioRecord = null
+let camOnlyRecorder = null;
+let camOnlyChunks = [];
+
+let micOnlyRecorder = null;
+let micOnlyChunks = []
+
+
 const OffScreen = () => {
   const [audioVideoStreams, setAudioVideoStreams] = useState({ audioTrack: null, videoTrack: null })
   const [newStream, setNewStream] = useState(null)
@@ -16,6 +23,7 @@ const OffScreen = () => {
   const [mediaRecorder, setMediaRecorder] = useState(null)
   const [startToRecord, setStartToRecord] = useState(false)
   const [recorderState, setRecorderState] = useState('ideal')
+  const [camOnlyStream, setCamOnlyStream] = useState(null)
   const [isDiscardRecording, setIsDiscardRecording] = useState(false)
   const [isWindowOnlyRecording, setIsWindowOnlyRecording] = useState(false)
   const videoRef = useRef(null)
@@ -43,9 +51,24 @@ const OffScreen = () => {
       setMediaRecorder(null);
       recorder = null
     }
-    if (userMediaStream) {
-      userMediaStream.getTracks().forEach(track => track.stop());
+    if(camOnlyRecorder) {
+      camOnlyRecorder?.stop()
+      camOnlyRecorder?.stream?.getTracks()?.forEach(track => track?.stop());
+      setCamOnlyStream(null)
+      camOnlyRecorder = null
     }
+    if(micOnlyRecorder){
+      console.log("SEtIfg Off", micOnlyRecorder)
+      micOnlyRecorder?.stop()
+      micOnlyRecorder?.stream?.getTracks()?.forEach(track => track?.stop());
+      // setCamOnlyStream(null)
+      micOnlyRecorder = null
+    }
+    if (userMediaStream) {
+      userMediaStream?.getTracks().forEach(track => track.stop());
+    }
+    camOnlyChunks = []
+    micOnlyChunks = []
     setIsWindowOnlyRecording(false)
     setRecorderState('ideal')
     setIsDiscardRecording(false)
@@ -205,8 +228,8 @@ const OffScreen = () => {
             videoUrl: url
           });
         }
-        onComplete()
         saveRecordingToIndexedDB(blob, onComplete)
+        onComplete()
       } else {
         chrome.runtime.sendMessage({ type: "OFFSCREEN_RECORDING_END" });
         chunks = [];
@@ -371,8 +394,8 @@ const OffScreen = () => {
               videoUrl: url
             });
           }
-          onComplete()
           saveRecordingToIndexedDB(blob, onComplete)
+          onComplete()
         }
         chrome.runtime.sendMessage({ type: "RECORDING_IN_PROGRESS_END" })
       };
@@ -407,13 +430,172 @@ const OffScreen = () => {
     isRecordingDiscarded = true
     recorder?.stop()
   }
+
+  const saveMicRecording = () => {
+    console.log("saveMicRecording called!!")
+    const blob = new Blob(micOnlyChunks, {
+        type: 'audio/webm; codecs=opus'
+    });
+    function onComplete(){
+        const url = (URL as any).createObjectURL(blob);
+         console.log("url1122", url)
+        chrome.runtime.sendMessage({
+            type: 'OPEN_PREVIEW_TAB',
+            videoUrl: url,
+            isAudioOnly: true
+        });
+        chrome.runtime.sendMessage({type: "RECORDING_IN_PROGRESS_END"})
+        // Create a download link
+        //  const url = URL.createObjectURL(blob);
+        //  const downloadLink = document.createElement("a");
+        //  downloadLink.href = url;
+        //  downloadLink.download = "recording12Mic.webm"; // Set the filename for download
+        //  downloadLink.style.display = "none";
+ 
+        //  // Append link to the body and click to start download
+        //  document.body.appendChild(downloadLink);
+        //  downloadLink.click();
+ 
+        //  // Clean up after download
+        //  document.body.removeChild(downloadLink);
+        //  URL.revokeObjectURL(url); // Release the URL object
+         resetAll()
+        // console.log("url1122", url)
+        // chrome.runtime.sendMessage({
+        //     type: 'OPEN_PREVIEW_TAB',
+        //     videoUrl: url,
+        //     isAudioOnly: true
+        // });
+        // chrome.runtime.sendMessage({type: "RECORDING_IN_PROGRESS_END"})
+    }
+    saveRecordingToIndexedDB(blob, onComplete)
+    onComplete()
+};
+
+  const recordMicOnly = async selections => {
+    console.log("recordMicOnly121", selections)
+    const stream = await navigator.mediaDevices.getUserMedia({audio: {deviceId: selections?.micRecording?.value}});
+    micOnlyRecorder = new MediaRecorder(stream);
+    micOnlyRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+            micOnlyChunks.push(event.data);
+        }
+    };
+    micOnlyRecorder.onstop = saveMicRecording;
+    micOnlyRecorder.start();
+    micOnlyRecorder.onstart = () => {
+        console.log("YES STYARTED")
+        micOnlyChunks = []
+        chrome.runtime.sendMessage({ type: 'startTimer' })
+        isRecordingStarted = true
+        chrome.runtime.sendMessage({type: "RECORDING_IN_PROGRESS"})
+    }
+    // setIsRecordingStartedS(true)
+    console.log('Recording started...');
+    // setMediaRecorder(recorder)
+  }
+
+  const recordCameraOnly = async (selections) => {
+    const mediaStream = await navigator.mediaDevices.getUserMedia({
+      audio: selections?.micRecording.value !== "mic_off" ? { deviceId: selections?.micRecording?.value } : false,
+      video: { deviceId: selections?.cameraRecording?.value }
+    });
+    camOnlyRecorder = new MediaRecorder(mediaStream);
+    camOnlyRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        camOnlyChunks.push(event.data)
+        // Handle recorded data (e.g., save it or upload it)
+        console.log('Recorded data available:', event.data);
+      }
+    };
+    camOnlyRecorder.start();
+
+    camOnlyRecorder.onstop = async () => {
+
+      const blob = new Blob(camOnlyChunks, { type: 'video/webm' });
+      // Convert Blob to Base64
+      console.log("onstop", blob)
+      function onComplete() {
+        console.log("Recording saved to IndexedDB")
+        const url = (URL as any).createObjectURL(blob);
+         // Create a download link
+        //  const url = URL.createObjectURL(blob);
+        //  const downloadLink = document.createElement("a");
+        //  downloadLink.href = url;
+        //  downloadLink.download = "recording.webm"; // Set the filename for download
+        //  downloadLink.style.display = "none";
+ 
+        //  // Append link to the body and click to start download
+        //  document.body.appendChild(downloadLink);
+        //  downloadLink.click();
+ 
+        //  // Clean up after download
+        //  document.body.removeChild(downloadLink);
+        //  URL.revokeObjectURL(url); // Release the URL object
+ 
+        // console.log("BLOB URL", url, chrome?.storage)
+        chrome.runtime.sendMessage({
+          type: 'OPEN_PREVIEW_TAB',
+          videoUrl: url
+        });
+        chrome.runtime.sendMessage({type: "CLOSE_CAM_ONLY_WINDOW"})
+        chrome.runtime.sendMessage({ type: "RECORDING_IN_PROGRESS_END" })
+        camOnlyChunks = []
+        resetAll()
+      }
+      saveRecordingToIndexedDB(blob, onComplete)
+      onComplete()
+    };
+
+    camOnlyRecorder.onended = () => {
+      camOnlyRecorder.onstop()
+    }
+
+    camOnlyRecorder.onstart = () => {
+      console.log("STARTED HERE!!")
+      // setIsRecordingPaused(false);
+      chrome.runtime.sendMessage({ type: 'startTimer' })
+      chrome.runtime.sendMessage({ type: "RECORDING_IN_PROGRESS" })
+      isRecordingStarted = true
+    }
+    setCamOnlyStream(mediaStream)
+  }
+
   const onMountListners = () => {
     chrome.runtime.onMessage.addListener(
       function async(message) {
         switch (message.type) {
+          case "END_CAM_ONLY_RECORDING": {
+            console.log("END_CAM_ONLY_RECORDING", camOnlyRecorder)
+            camOnlyRecorder?.stop()
+          }
+          break;
+          case "END_MIC_ONLY_RECORDING": {
+            console.log("END_CAM_ONLY_RECORDING", micOnlyRecorder)
+            micOnlyRecorder?.stop()
+          }
+          break;
+          case "START_CAM_ONLY_RECORDING": {
+            console.log("START_CAM_ONLY_RECORDING", message)
+            recordCameraOnly(message?.data)
+          }
+            break;
+            case "START_MIC_ONLY_RECORDING": {
+              console.log("START_MIC_ONLY_RECORDING", message)
+              recordMicOnly(message?.data)
+            }
+            break;
           case "START_RECORDING_OFFSCREEN": {
-            recordSetSelections(message?.data)
-            recordingScreens(message?.data)
+            console.log("MESS OFF", message)
+            if (message?.isCamOnly) {
+              chrome.runtime.sendMessage({ type: "OPEN_CAM_ONLY_RECORDING", selections: message?.data })
+            } else if(message?.isAudioOnly){
+              console.log("Audio Only Recording!!", message)
+              chrome.runtime.sendMessage({ type: "OPEN_MIC_ONLY_RECORDING", selections: message?.data })
+            } else {
+              recordSetSelections(message?.data)
+              recordingScreens(message?.data)
+            }
           }
             break;
           case "NEW_RECORDING_STARTED_OFFSCREEN": {

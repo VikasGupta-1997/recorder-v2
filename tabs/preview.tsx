@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { AudioVisualizer, LiveAudioVisualizer } from 'react-audio-visualize';
 import { BiMicrophone } from "react-icons/bi";
 import { HiOutlineVolumeUp, HiOutlineVolumeOff } from "react-icons/hi";
@@ -64,7 +64,7 @@ function PreviewPage() {
                 console.log("onMountListeners1212", message)
                 switch (message.type) {
                     case "PLAY_PREVIEW": {
-                        console.log("GET_INDEXDB_RECORDING12121212")
+                        console.log("GET_INDEXDB_RECORDING12121212", isAudio)
                         setVideoLoading(false)
                     }
                 }
@@ -73,7 +73,19 @@ function PreviewPage() {
     }
 
     useEffect(() => {
-        onMountListeners()
+        if(!loadingVideo){
+            playRecordingInVideoTag()
+        }
+    }, [loadingVideo])
+
+    useEffect(() => {
+        chrome.storage.local.get(["saving_in_indexdb"], async result => {
+            console.log("result===>", result)
+            if(!result?.saving_in_indexdb) {
+                console.log("setVideoLoadingsetVideoLoadingsetVideoLoadingCALLEDDDD!!!!!")
+                setVideoLoading(false)
+            }
+        })
         if (waveContainerRef.current && !waveSurferRef.current) {
             waveSurferRef.current = WaveSurfer.create({
                 container: waveContainerRef.current,
@@ -135,6 +147,7 @@ function PreviewPage() {
             url.current = videoUrl
             // setVideoLoading(false)
             if (isAudio === 'video') {
+                console.log("videoRef121", videoRef.current)
                 videoRef.current.src = url.current;
             } else {
                 console.log("Set Audio Here !")
@@ -145,6 +158,10 @@ function PreviewPage() {
             console.error("Error loading and playing recording:", error);
         }
     }
+
+    useLayoutEffect(() => {
+        onMountListeners()
+    }, [isAudio])
 
 
     useEffect(() => {
@@ -337,7 +354,7 @@ function PreviewPage() {
 
     useEffect(() => {
         if (!loadingVideo) {
-            playRecordingInVideoTag()
+            // playRecordingInVideoTag()
 
             // waveSurferRef.current.load(url.current);
         }

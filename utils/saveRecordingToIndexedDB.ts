@@ -7,7 +7,9 @@ function blobToBase64(blob) {
     });
 }
 
+
 async function saveRecordingToIndexedDB(blob, onComplete) {
+    chrome.runtime.sendMessage({type: "SET_SAVING_IN_INDEXDB", data: true})
     console.log(indexedDB, "saveRecordingToIndexedDB Calledddd", blob, onComplete)
     const base64Data = await blobToBase64(blob);
     console.log("NEW BASE 64", base64Data)
@@ -32,6 +34,7 @@ async function saveRecordingToIndexedDB(blob, onComplete) {
             console.log("onComplete Call!!")
             // onComplete()
             chrome.runtime.sendMessage({type: "GET_INDEXDB_RECORDING"})
+            chrome.runtime.sendMessage({type: "SET_SAVING_IN_INDEXDB", data: false})
         };
         transaction.onerror = (event) => console.error("Error saving recording:", event);
     };

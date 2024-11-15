@@ -40,8 +40,9 @@ const Camera = () => {
     useEffect(() => {
         if (startRecordingNow) {
             console.log("NOW START RECORDING!!", selections)
-            recordedChunksV = []
-            startRecording()
+            chrome.runtime.sendMessage({type: "START_CAM_ONLY_RECORDING", data: selections})
+            // recordedChunksV = []
+            // startRecording()
         }
     }, [startRecordingNow])
 
@@ -60,10 +61,9 @@ const Camera = () => {
     const startMediaStream = async ({ audioDevice, videoDevice }) => {
         console.log(audioDevice, videoDevice, "startMediaStream==>", videoRef)
         try {
-            const devices = await navigator.mediaDevices.enumerateDevices();
-            console.log("devices1212", devices)
             const mediaStream = await navigator.mediaDevices.getUserMedia({
-                audio: audioDevice.value !== "mic_off" ? { deviceId: audioDevice?.value } : false,
+                // audio: audioDevice.value !== "mic_off" ? { deviceId: audioDevice?.value } : false,
+                audio: false,
                 video: { deviceId: videoDevice?.value }
             });
             if (videoRef.current) {
@@ -213,7 +213,11 @@ const Camera = () => {
                 break
             case "stop": {
                 console.log("STOP!! ")
-                endRecording()
+                chrome.runtime.sendMessage({type: "END_CAM_ONLY_RECORDING"})
+                setTimeout(() => {
+                    window.close()
+                }, 100)
+                // endRecording()
                 // resetScreen()
                 // chrome.runtime.sendMessage({ type: "RECORDING_END" })
             }

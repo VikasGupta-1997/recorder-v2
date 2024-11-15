@@ -44,9 +44,11 @@ const Audio = () => {
 
     useEffect(() => {
         if (startRecordingNow) {
+            console.log("startRecordingNowstartRecordingNow", selections)
             startRecording();
+            chrome.runtime.sendMessage({type: "START_MIC_ONLY_RECORDING", data: selections})
         }
-    }, [startRecordingNow]);
+    }, [startRecordingNow, selections]);
 
     useEffect(() => {
         if (selections) {
@@ -58,6 +60,7 @@ const Audio = () => {
     }, [selections]);
 
     const startMediaStream = async ({ audioDevice }) => {
+        console.log("MEDIA AUDIO")
         try {
             const audioConstraints = {
                 audio: { deviceId: audioDevice?.value }
@@ -122,7 +125,7 @@ const Audio = () => {
                     recordedChunks.push(event.data);
                 }
             };
-            recorder.onstop = saveRecording;
+            // recorder.onstop = saveRecording;
             recorder.start();
             recorder.onstart = () => {
                 console.log("YES STYARTED")
@@ -134,7 +137,7 @@ const Audio = () => {
                 chrome.runtime.sendMessage({type: "RECORDING_IN_PROGRESS"})
             }
             setIsRecordingStartedS(true)
-            console.log('Recording started...');
+            // console.log('Recording started...');
             setMediaRecorder(recorder)
         } else {
             console.error('No media stream available for recording');
@@ -167,6 +170,16 @@ const Audio = () => {
         onComplete()
         saveRecordingToIndexedDB(blob, onComplete)
     };
+
+    const offMic = () => {
+        if(recorder){
+            console.log("recorderrecorder", recorder)
+            recorder?.stop()
+            recorder?.stream?.getTracks()?.forEach(track => track?.stop());
+            // setCamOnlyStream(null)
+            recorder = null
+        }
+    }
 
     const onMountListeners = () => {
         chrome.runtime.onMessage.addListener(
@@ -269,7 +282,12 @@ const Audio = () => {
                 break;
             case "stop": {
                 console.log("STOP!! ");
-                endRecording();
+                // endRecording();
+                chrome.runtime.sendMessage({type: "END_MIC_ONLY_RECORDING"})
+                offMic()
+                setTimeout(() => {
+                    window.close()
+                }, 100)
             }
                 break;
             case "restart": {
