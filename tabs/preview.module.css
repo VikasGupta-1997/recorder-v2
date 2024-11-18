@@ -234,10 +234,13 @@ video {
     font-weight: bold;
 }
 
-.editing-control-wrapper, .wavesurfer-wrapper {
+.editing-control-wrapper {
     width: 55%;
 }
 
+.wavesurfer-wrapper {
+    width: 100%;
+}
 .heading-title {
     width: 55%;
     font-size: 18px;

@@ -1,9 +1,11 @@
 
 import styleText from "data-text:../preview.module.css"
 import * as style from '../preview.module.css'
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { HiOutlineVolumeUp, HiOutlineVolumeOff } from "react-icons/hi";
 import { FaPlay, FaPause } from "react-icons/fa";
+import Plyr from "plyr-react";
+import "plyr-react/plyr.css";
 
 export const getStyle = () => {
     const style = document.createElement("style")
@@ -12,10 +14,12 @@ export const getStyle = () => {
 }
 
 export default function VideoPreview({
-    videoRef
+    videoRef,
+    blobUrl
 }) {
     const [playing, setPlaying] = useState(true);
     const [volume, setVolume] = useState(1);
+    const plyrRef = useRef(null);
 
     const handlePlayPause = () => {
         console.log("handlePlayPause Called", playing)
@@ -40,30 +44,72 @@ export default function VideoPreview({
         }
     };
 
+    const options = {
+        controls: [
+            "play",
+            "mute",
+            // "volume",
+            "progress",
+            "current-time",
+            "duration",
+        ],
+        urls: null,
+        ratio: "16:9",
+        blankVideo:
+            "chrome-extension://" +
+            chrome.i18n.getMessage("@@extension_id") +
+            "/assets/blank.mp4",
+        keyboard: {
+            global: true,
+        },
+    }
+
+    // Plyr configuration
+    const videoSource = blobUrl
+        ? {
+            type: "video",
+            sources: [
+                {
+                    src: blobUrl,
+                    type: "video/mp4", // Adjust type if your video format is different
+                },
+            ],
+        }
+        : null as any;
+
+
     return (
         <div className={style["react-player-wrapper-video "]}>
-            <video preload="metadata" ref={videoRef} className={style["video"]} id="ext-vid-previewVideo" autoPlay ></video>
-            <div className={style["video-controls"]}>
-                <button onClick={handlePlayPause}>
-                    {playing ? <FaPause size={14} color="white" /> : <FaPlay size={14} color="white" />}
-                </button>
-                <span className={style["volume-span"]} >
-                    {volume === 0 ? <HiOutlineVolumeOff size={18} color="white" /> : <HiOutlineVolumeUp size={18} color="white" />}
-                    <input
-                        type="range"
-                        min="0"
-                        max="1"
-                        step="0.01"
-                        className={style["volume-slider"]}
-                        value={volume}
-                        onChange={handleVolumeChange}
-                        style={{ width: '100px', marginLeft: 12 }}
-                    />
-                </span>
-                <div style={{ color: 'white', marginLeft: 'auto', marginRight: 12 }}>
-                    {/* {formatTime(currentTime)} / {formatTime(duration)} */}
-                </div>
-            </div>
+            {blobUrl ? (
+                <Plyr
+                    ref={plyrRef}
+                    source={videoSource}
+                    options={options}
+                />
+            ) : (
+                <p>Loading video preview...</p>
+            )}
+            <style>
+                {`
+                    .plyr {
+                    max-width: 900px !important;
+                    left: 0px !important;
+                    right: 0px !important;
+                    margin: 0px !important;
+                    top: 0px !important;
+                    bottom: 0px !important;
+                    position: relative !important;
+                    border-radius: 6px !important;
+                    }
+                    .plyr__progress--played {
+                    background-color: #ff5733 !important; /* Your custom color */
+                    }
+                    .plyr__controls {
+                        background-color: rgba(35, 153, 219, 0.8) !important;
+                        padding: 16px 10px! important;
+                    }
+                `}
+            </style>
         </div>
     )
 }

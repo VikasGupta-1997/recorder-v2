@@ -3,6 +3,8 @@ import { BsScissors } from "react-icons/bs"
 import { MdOutlineCrop } from "react-icons/md"
 import styleText from "data-text:../preview.module.css"
 import * as style from '../preview.module.css'
+import { useEffect, useRef, useState } from "react"
+import WaveSurfer from "wavesurfer.js"
 
 export const getStyle = () => {
     const style = document.createElement("style")
@@ -10,28 +12,68 @@ export const getStyle = () => {
     return style
 }
 
-const EditingControls = () => {
+const EditingControls = ({blobUrl}) => {
+    const waveContainerRef = useRef<HTMLDivElement>(null);
+    const waveSurferRef = useRef<WaveSurfer | null>(null);
+    const [isWaveSurferReady, setIsWaveSurferReady] = useState(false);
+
+    useEffect(() => {
+        if (waveContainerRef.current && !waveSurferRef.current) {
+            waveSurferRef.current = WaveSurfer.create({
+                container: waveContainerRef.current,
+                waveColor: '#ddd',
+                progressColor: '#555',
+                cursorColor: '#333',
+                height: 100,
+                barWidth: 2,
+                // responsive: true,
+                interact: false, // Optional: disables seeking through waveform
+            });
+
+            waveSurferRef.current.on('ready', () => {
+                setIsWaveSurferReady(true);
+            });
+        }
+
+        return () => {
+            waveSurferRef.current?.destroy();
+            waveSurferRef.current = null;
+        };
+    }, []);
+
+    useEffect(() => {
+        if(blobUrl) {
+            waveSurferRef.current.load(blobUrl);
+        }
+    }, [blobUrl])
+
     return (
-        <div className={style["editing-container"]} >
-            <div className={style["redo-undo"]} >
-                <div className="undo" > <LiaUndoAltSolid color="10abd9" fontSize={24} /> </div>
-                <div className="redo" > <LiaRedoAltSolid color="10abd9" fontSize={24} /> </div>
+        <>
+            <div className={style["editing-container"]} >
+                <div className={style["redo-undo"]} >
+                    <div className="undo" > <LiaUndoAltSolid color="10abd9" fontSize={24} /> </div>
+                    <div className="redo" > <LiaRedoAltSolid color="10abd9" fontSize={24} /> </div>
+                </div>
+                <div className={style["editing-actions"]} >
+                    {
+                        ["cut", "trim", "delete recording", "publish"].map(action => (
+                            <button key={action} className={action === 'publish' ? style["publish-btn"] : ""} >
+                                {["cut", "trim"].includes(action) && <span  >
+                                    {action === 'cut' ? <BsScissors fontSize={14} color="10abd9" /> : <MdOutlineCrop fontSize={14} color="10abd9" />}
+                                </span>}
+                                <p>
+                                    {action}
+                                </p>
+                            </button>
+                        ))
+                    }
+                </div>
             </div>
-            <div className={style["editing-actions"]} >
-                {
-                    ["cut", "trim", "delete recording", "publish"].map(action => (
-                        <button key={action} className={action === 'publish' ? style["publish-btn"] : ""} >
-                            {["cut", "trim"].includes(action) && <span  >
-                                {action === 'cut' ? <BsScissors fontSize={14} color="10abd9" /> : <MdOutlineCrop fontSize={14} color="10abd9" />}
-                            </span>}
-                            <p>
-                                {action}
-                            </p>
-                        </button>
-                    ))
-                }
+            <div className={style["wavesurfer-wrapper"]} >
+                <div ref={waveContainerRef} style={{ marginTop: '10px' }} />
+                {!isWaveSurferReady && <p>Loading waveform...</p>}
             </div>
-        </div>
+        </>
     )
 }
 

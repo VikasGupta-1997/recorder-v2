@@ -18,14 +18,10 @@ function PreviewPage() {
     const videoRef = useRef(null)
     const audioRef = useRef(null);
     const [isAudio, setIsAudio] = useState('ideal')
-
+    const [blobUrl, setBlobUrl] = useState(null)
     const [loadingVideo, setVideoLoading] = useState(true)
     const url = useRef('')
     const containerRef = useRef(null)
-    // const wavesurferRef = useRef(null);
-    const waveSurferRef = useRef<WaveSurfer | null>(null);
-    const waveContainerRef = useRef<HTMLDivElement>(null);
-    const [isWaveSurferReady, setIsWaveSurferReady] = useState(false);
 
     const onMountListeners = () => {
         chrome.runtime.onMessage.addListener(
@@ -55,27 +51,6 @@ function PreviewPage() {
                 setVideoLoading(false)
             }
         })
-        if (waveContainerRef.current && !waveSurferRef.current) {
-            waveSurferRef.current = WaveSurfer.create({
-                container: waveContainerRef.current,
-                waveColor: '#ddd',
-                progressColor: '#555',
-                cursorColor: '#333',
-                height: 100,
-                barWidth: 2,
-                // responsive: true,
-                interact: false, // Optional: disables seeking through waveform
-            });
-
-            waveSurferRef.current.on('ready', () => {
-                setIsWaveSurferReady(true);
-            });
-        }
-
-        return () => {
-            waveSurferRef.current?.destroy();
-            waveSurferRef.current = null;
-        };
     }, []);
 
     function loadRecordingFromIndexedDB() {
@@ -113,10 +88,11 @@ function PreviewPage() {
             const blob = await response.blob();
             const videoUrl = URL.createObjectURL(blob);
             url.current = videoUrl
+            setBlobUrl(videoUrl)
             // setVideoLoading(false)
             if (isAudio === 'video') {
                 console.log("videoRef121", videoRef.current)
-                videoRef.current.src = url.current;
+                // videoRef.current.src = url.current;
             } else {
                 console.log("Set Audio Here !")
                 audioRef.current.src = url.current;
@@ -168,16 +144,12 @@ function PreviewPage() {
                 </span>
             </h1>
             <div className={style["ref-wrapper"]}>
-                {isAudio === 'video' && <VideoPreview videoRef={videoRef} />
+                {isAudio === 'video' && <VideoPreview blobUrl={blobUrl} videoRef={videoRef} />
                 }
                 {isAudio === 'audio' && <AudioPreview audioRef={audioRef} containerRef={containerRef} />}
             </div>
             <div className={style["editing-control-wrapper"]} >
-                <EditingControls />
-            </div>
-            <div className={style["wavesurfer-wrapper"]} >
-                <div ref={waveContainerRef} style={{ marginTop: '10px' }} />
-                {!isWaveSurferReady && <p>Loading waveform...</p>}
+                <EditingControls blobUrl={blobUrl} />
             </div>
         </div>
     );
