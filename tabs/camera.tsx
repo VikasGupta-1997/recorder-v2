@@ -35,11 +35,13 @@ const Camera = () => {
     const [isPopupConfirmation, setIsPopupConfirmation] = useState('')
     const formattedTimeRef = useRef(null)
 
-    useEffect(() => countDown(showStartOverlay, count, setCount, setShowStartOverlay, setStartRecordingNow), [showStartOverlay, count]);
+    useEffect(() => {
+        countDown(showStartOverlay, count, setCount, setShowStartOverlay, setStartRecordingNow)}, [showStartOverlay, count]);
 
     useEffect(() => {
         if (startRecordingNow) {
             console.log("NOW START RECORDING!!", selections)
+            setIsRecordingPaused(false)
             chrome.runtime.sendMessage({type: "START_CAM_ONLY_RECORDING", data: selections})
             // recordedChunksV = []
             // startRecording()
@@ -50,6 +52,7 @@ const Camera = () => {
 
     useEffect(() => {
         if (selections) {
+            chrome.runtime.sendMessage({type: "PreviewShow"})
             startMediaStream({
                 audioDevice: selections?.micRecording,
                 videoDevice: selections?.cameraRecording
@@ -196,8 +199,9 @@ const Camera = () => {
                 break
             case "play": {
                 console.log("PLAY ", mediaRecorder)
-                recorder.pause();
-                chrome.runtime.sendMessage({ type: 'resumeTimer' })
+                // recorder.pause();
+                chrome.runtime.sendMessage({type: "PLAY_CAMONLY_TIMER"})
+                // chrome.runtime.sendMessage({ type: 'resumeTimer' })
                 setIsRecordingPaused(false)
 
                 // chrome.runtime.sendMessage({ type: "RECORDING_PLAY" })
@@ -206,8 +210,8 @@ const Camera = () => {
             case "pause": {
                 console.log("PAUSE ", mediaRecorder)
                 setIsRecordingPaused(true)
-                recorder.pause();
-                chrome.runtime.sendMessage({ type: 'pauseTimer' })
+                chrome.runtime.sendMessage({type: "PAUSE_CAMONLY_TIMER"})
+                // recorder.pause();
                 // chrome.runtime.sendMessage({ type: "RECORDING_PAUSE" })
             }
                 break
@@ -226,11 +230,11 @@ const Camera = () => {
                 console.log("restart ")
                 // resetScreen()
 
-                recorder.pause();
+                // recorder.pause();
                 setIsPopupConfirmation('restart')
                 setIsRecordingPaused(true);
-
-                chrome.runtime.sendMessage({ type: "pauseTimer" })
+                chrome.runtime.sendMessage({type: "PAUSE_CAMONLY_TIMER"})
+                // chrome.runtime.sendMessage({ type: "pauseTimer" })
                 // chrome.runtime.sendMessage({ type: "RECORDING_RESTART" })
 
             }
@@ -240,9 +244,10 @@ const Camera = () => {
                 // resetScreen()
 
                 setIsPopupConfirmation('delete')
-                setIsRecordingPaused(true);
-                recorder.pause();
-                chrome.runtime.sendMessage({ type: "pauseTimer" })
+                chrome.runtime.sendMessage({type: "PAUSE_CAMONLY_TIMER"})
+                // setIsRecordingPaused(true);
+                // recorder.pause();
+                // chrome.runtime.sendMessage({ type: "pauseTimer" })
                 // chrome.runtime.sendMessage({ type: "RECORDING_DELETE" })
             }
                 break;
@@ -255,8 +260,11 @@ const Camera = () => {
             console.log("IS CONFINMMR OUTER")
             if (isConfirmed) {
                 if (isConfirmed === 'delete') {
-                    chrome.runtime.sendMessage({ type: "stopTimer" })
-                    chrome.runtime.sendMessage({ type: "RECORDING_END" })
+                    chrome.runtime.sendMessage({type: "DELETE_CAMONLY_RECORDING"})
+                    // chrome.runtime.sendMessage({ type: "stopTimer" })
+                    // chrome.runtime.sendMessage({ type: "RECORDING_END" })
+                    chrome.storage.local.set({ isRecordingInProgress: false })
+                    chrome.runtime.sendMessage({type: "NoPreviewShow"})
                     chrome.runtime.sendMessage({ type: "RECORDING_IN_PROGRESS_END" })
                     console.log("IS CONFINMMR")
                     setTimeout(() => {
@@ -266,19 +274,27 @@ const Camera = () => {
                     //   resetAllNew()
                 } else {
                     console.log("IS RESTARTED!!!")
-                    isRestartRecording = true
-                    if (recorder) {
-                        console.log("DEJA VU!!")
-                        // recorder.stop();
-                        recordedChunksV = []
-                        console.log("MELAAA VU!!")
-                        setCount(5)
-                        setShowStartOverlay(true)
-                        setStartRecordingNow(false)
-                    }
+                    // isRestartRecording = true
+                    // // if (recorder) {
+                    // console.log("DEJA VU!!")
+                    // // recorder.stop();
+                    // recordedChunksV = []
+                    // console.log("MELAAA VU!!")
+                    // setCount(5)
+                    // setShowStartOverlay(true)
+                    // setStartRecordingNow(false)
+                    // }
                     //   chrome.runtime.sendMessage({ type: "RECORDING_RESTART" })
                     chrome.runtime.sendMessage({ type: "stopTimer" })
-                    chrome.runtime.sendMessage({ type: "NoPreviewShow" })
+                    chrome.runtime.sendMessage({type: "RESTART_CAMONLY_RECORDING"}, function(res) {
+                        console.log("RESSS", res)
+
+                        chrome.runtime.sendMessage({ type: "OPEN_CAM_ONLY", data: selections, isCamOnly: true, isAudioOnly: false })
+
+                        // chrome.runtime.sendMessage({type: "OPEN_CAM_ONLY"})
+                        setTimeout(() => window.close(), 100)
+                    })
+                    // chrome.runtime.sendMessage({ type: "NoPreviewShow" })
                     //   setTimer(0)
                     //   setCount(5)
                     //   setShowStartOverlay(false)
@@ -310,8 +326,9 @@ const Camera = () => {
         const setVal = isValidValue ? type : ''
         if (!isValidValue) {
             setIsRecordingPaused(false)
-            recorder.resume();
-            chrome.runtime.sendMessage({ type: "RECORDING_PLAY" })
+            // recorder.resume();
+            chrome.runtime.sendMessage({type: "PLAY_CAMONLY_TIMER"})
+            // chrome.runtime.sendMessage({ type: "RECORDING_PLAY" })
             chrome.runtime.sendMessage({ type: "PreviewShow" })
         }
         setIsPopupConfirmation(setVal)

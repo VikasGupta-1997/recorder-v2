@@ -226,7 +226,8 @@ const Audio = () => {
             if (isConfirmed) {
                 if (isConfirmed === 'delete') {
                     chrome.runtime.sendMessage({ type: "stopTimer" })
-                    chrome.runtime.sendMessage({ type: "RECORDING_END" })
+                    chrome.runtime.sendMessage({ type: "AUDIOONLY_RECORDING_DELETE" })
+                    // chrome.runtime
                     chrome.runtime.sendMessage({ type: "RECORDING_IN_PROGRESS_END" })
                       setTimeout(() => {
                         window.close()
@@ -234,15 +235,25 @@ const Audio = () => {
                 } else {
                     console.log("RECORDING STOPEED!")
                     isRestartRecording = true
-                    if (recorder) {
-                        setIsRecordingStartedS(false)
-                        recorder.stop();
-                        setCount(5)
-                        setShowStartOverlay(true)
-                        setStartRecordingNow(false)
-                    }
-                    chrome.runtime.sendMessage({ type: "stopTimer" })
-                    chrome.runtime.sendMessage({ type: "NoPreviewShow" })
+                    // if (recorder) {
+                    //     setIsRecordingStartedS(false)
+                    //     recorder.stop();
+                    //     setCount(5)
+                    //     setShowStartOverlay(true)
+                    //     setStartRecordingNow(false)
+                    // }
+                    // chrome.runtime.sendMessage({type: "AUDIOONLY_RECORDING_RESTART"})
+                    // chrome.runtime.sendMessage({ type: "OPEN_MIC_ONLY", data: selections, isCamOnly: true, isAudioOnly: false })
+                    chrome.runtime.sendMessage({type: "RESTART_MICONLY_RECORDING"}, function(res) {
+
+                        chrome.runtime.sendMessage({ type: "OPEN_MIC_ONLY", data: selections, isCamOnly: false, isAudioOnly: true })
+
+                        // chrome.runtime.sendMessage({type: "OPEN_CAM_ONLY"})
+                        setTimeout(() => window.close(), 100)
+                    })
+                    setTimeout(() => window.close(), 100)
+                    // chrome.runtime.sendMessage({ type: "stopTimer" })
+                    // chrome.runtime.sendMessage({ type: "NoPreviewShow" })
                 }
                 setIsPopupConfirmation('')
             }
@@ -263,10 +274,9 @@ const Audio = () => {
             case "play": {
                 console.log("PLAY ");
                 if (recorder && recorder.state === "paused") {
-                    chrome.runtime.sendMessage({ type: 'resumeTimer' })
                     recorder.resume();  // Resumes the recording
                     setIsRecordingPaused(false);
-                    chrome.runtime.sendMessage({ type: "RECORDING_PLAY" });
+                    chrome.runtime.sendMessage({ type: "AUDIOONLY_RECORDING_PLAY" });
                 }
             }
                 break;
@@ -276,7 +286,7 @@ const Audio = () => {
                     chrome.runtime.sendMessage({ type: 'pauseTimer' })
                     recorder.pause();  // Pauses the recording
                     setIsRecordingPaused(true);
-                    chrome.runtime.sendMessage({ type: "RECORDING_PAUSE" });
+                    chrome.runtime.sendMessage({ type: "AUDIOONLY_RECORDING_PAUSE" });
                 }
             }
                 break;
@@ -297,6 +307,8 @@ const Audio = () => {
                 setIsPopupConfirmation('restart')
                 recorder.pause();  // Pauses the recording
                 setIsRecordingPaused(true);
+                chrome.runtime.sendMessage({ type: "AUDIOONLY_RECORDING_PAUSE" });
+
                 // chrome.runtime.sendMessage({ type: "RECORDING_RESTART" });
             }
                 break;
@@ -306,6 +318,8 @@ const Audio = () => {
                 recorder.pause();  // Pauses the recording
                 setIsRecordingPaused(true);
                 setIsPopupConfirmation('delete')
+                chrome.runtime.sendMessage({ type: "AUDIOONLY_RECORDING_PAUSE" });
+
                 // resetAll();
                 // chrome.runtime.sendMessage({ type: "RECORDING_DELETE" });
             }
@@ -318,7 +332,9 @@ const Audio = () => {
         const setVal = isValidValue ? type : ''
         if (!isValidValue) {
             setIsRecordingPaused(false)
-            chrome.runtime.sendMessage({ type: "RECORDING_PLAY" })
+            console.log("PLAYYY")
+            chrome.runtime.sendMessage({ type: "AUDIOONLY_RECORDING_PLAY" });
+            // chrome.runtime.sendMessage({ type: "RECORDING_PLAY" })
             recorder.resume();  // Pauses the recording
             setIsRecordingPaused(false);
             chrome.runtime.sendMessage({ type: "PreviewShow" })

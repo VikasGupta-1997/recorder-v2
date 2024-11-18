@@ -93,6 +93,12 @@ const openNewWindow = (url, sendMessageAction, selections, isWindowSelected) => 
       chrome.tabs.onUpdated.addListener(checkTabLoaded);
       chrome.windows.onRemoved.addListener((closedWindowId) => {
         if (closedWindowId === cameraWindowId) {
+          if(url === "tabs/camera.html"){
+            chrome.runtime.sendMessage({type: "END_CAM_ONLY_RECORDING"})
+          }
+          if(url === "tabs/audioRecording.html"){
+            chrome.runtime.sendMessage({type: "END_MIC_ONLY_RECORDING"})
+          }
           stopTimer()
           // chrome.storage.local.set({ "isRecordingInProgress": false })
           try {
@@ -563,6 +569,18 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
         chrome.tabs.sendMessage(tabs[0].id, { type: "START_COUNTDOWN_CONTENT" })
       }
     })
+  }
+
+  if(message.type === 'OPEN_CAM_ONLY'){
+    setTimeout(() => {
+      chrome.runtime.sendMessage({ type: "START_RECORDING_OFFSCREEN", data: message.data, isCamOnly: message?.isCamOnly, isAudioOnly: message?.isAudioOnly });
+    }, 250)
+  }
+
+  if(message.type === 'OPEN_MIC_ONLY'){
+    setTimeout(() => {
+      chrome.runtime.sendMessage({ type: "START_RECORDING_OFFSCREEN", data: message.data, isCamOnly: message?.isCamOnly, isAudioOnly: message?.isAudioOnly });
+    }, 250)
   }
 
   if (message.type === 'SCREEN_SHARE_WINDOW_SELECTED') {

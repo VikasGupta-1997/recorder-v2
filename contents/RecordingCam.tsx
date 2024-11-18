@@ -427,9 +427,22 @@ const CustomButton = () => {
               hasDrag
             /></div>
           }
-          {<div style={{ display: (injectCam) ? 'block' : 'none' }}
+          {<div style={{ display: (injectCam) ? 'block' : 'none',  cursor: 'move', position:"relative" }}
             className={style['cam-injector-iframe']}>
             <iframe className={style['webcam-iframe']} ref={webcamRef} allow='camera' />
+            {/* Transparent overlay */}
+            <div
+              className={style["iframe-overlay"]}
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "100%",
+                background: "transparent",
+                zIndex: 1, // Ensure it's above the iframe
+              }}
+            ></div>
           </div>
           }
           {/* {injectCam && isDragging && (

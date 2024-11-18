@@ -76,13 +76,13 @@ function PreviewPage() {
         if(!loadingVideo){
             playRecordingInVideoTag()
         }
-    }, [loadingVideo])
+    }, [loadingVideo, isAudio])
 
     useEffect(() => {
         chrome.storage.local.get(["saving_in_indexdb"], async result => {
             console.log("result===>", result)
             if(!result?.saving_in_indexdb) {
-                console.log("setVideoLoadingsetVideoLoadingsetVideoLoadingCALLEDDDD!!!!!")
+                console.log("setVideoLoadingCALLEDDDD!!!!!")
                 setVideoLoading(false)
             }
         })
