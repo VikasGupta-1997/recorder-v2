@@ -8,11 +8,11 @@ function blobToBase64(blob) {
 }
 
 
-async function saveRecordingToIndexedDB(blob, onComplete) {
+async function saveRecordingToIndexedDB(blob) {
     chrome.runtime.sendMessage({type: "SET_SAVING_IN_INDEXDB", data: true})
-    console.log(indexedDB, "saveRecordingToIndexedDB Calledddd", blob, onComplete)
+    // console.log(indexedDB, "saveRecordingToIndexedDB Calledddd", blob)
     const base64Data = await blobToBase64(blob);
-    console.log("NEW BASE 64", base64Data)
+    // console.log("NEW BASE 64", base64Data)
     // Open IndexedDB and save Base64 data
     const request = indexedDB.open("videoDatabase", 1);
     request.onupgradeneeded = () => {

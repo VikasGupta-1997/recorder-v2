@@ -108,7 +108,7 @@ const Camera = () => {
                 recordedChunksV = []
             }
             onComplete()
-            saveRecordingToIndexedDB(blob, onComplete)
+            saveRecordingToIndexedDB(blob)
         };
 
         recorder.onended = () => {

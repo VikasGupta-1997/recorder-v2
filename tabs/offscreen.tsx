@@ -344,7 +344,7 @@ const OffScreen = () => {
             videoUrl: url
           });
         }
-        saveRecordingToIndexedDB(blob, onComplete)
+        saveRecordingToIndexedDB(blob)
         onComplete()
       } else {
         chrome.runtime.sendMessage({ type: "OFFSCREEN_RECORDING_END" });
@@ -510,7 +510,7 @@ const OffScreen = () => {
               videoUrl: url
             });
           }
-          saveRecordingToIndexedDB(blob, onComplete)
+          saveRecordingToIndexedDB(blob)
           onComplete()
         }
         chrome.runtime.sendMessage({ type: "RECORDING_IN_PROGRESS_END" })
@@ -589,7 +589,7 @@ const OffScreen = () => {
         // chrome.runtime.sendMessage({type: "RECORDING_IN_PROGRESS_END"})
     }
     if(!isMicOnlyRecordingDiscarded){
-      saveRecordingToIndexedDB(blob, onComplete)
+      saveRecordingToIndexedDB(blob)
     }
     onComplete()
 };
@@ -669,7 +669,7 @@ const OffScreen = () => {
       }
       console.log("SHould Not call",isCamOnlyRecordingDiscarded)
       if(!isCamOnlyRecordingDiscarded) {
-        saveRecordingToIndexedDB(blob, onComplete)
+        saveRecordingToIndexedDB(blob)
       }
       onComplete()
     };
