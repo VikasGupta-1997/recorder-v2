@@ -242,20 +242,24 @@ const OffScreen = () => {
       // Draw the webcam video within the clipped circular area
       offscreenContext.drawImage(webcamVideo, 0, 0, offscreenCanvas.width, offscreenCanvas.height);
   
-      // Draw the circular webcam view onto the recording canvas
-      const webcamX = 4; // 4 pixels padding from the left
-      const webcamY = recordingCanvas.height - offscreenCanvas.height - 8; // 8 pixels padding from the bottom
-      recordingContext.drawImage(offscreenCanvas, webcamX, webcamY);
-  
-      // Draw the screen video on the remaining canvas
-      const screenX = offscreenCanvas.width + 8; // Align with 8 pixels padding
+      // Calculate dimensions and position for screen recording
+      const screenX = offscreenCanvas.width + 8; // Align with 8 pixels padding from the webcam
       const screenWidth = recordingCanvas.width - screenX; // Calculate remaining width
       const screenHeight = screenVideo.videoHeight * (screenWidth / screenVideo.videoWidth); // Maintain aspect ratio
       const screenY = (recordingCanvas.height - screenHeight) / 2; // Center vertically
   
+      // Calculate the webcam position to align with the bottom of the screen recording view
+      const webcamX = 4; // 4 pixels padding from the left
+      const webcamY = screenY + screenHeight - offscreenCanvas.height; // Align webcam to the bottom of screen recording
+  
+      // Draw the circular webcam view onto the recording canvas
+      recordingContext.drawImage(offscreenCanvas, webcamX, webcamY);
+  
       // Draw the screen video
       recordingContext.drawImage(screenVideo, screenX, screenY, screenWidth, screenHeight);
-    };
+  };
+  
+  
 
     // const drawFrame = () => {
     //   // Fill the background with black
@@ -636,7 +640,7 @@ const OffScreen = () => {
       function onComplete() {
         console.log("Recording saved to IndexedDB", isCamOnlyRecordingDiscarded)
         const url = (URL as any).createObjectURL(blob);
-         // Create a download link
+        // Create a download link
         //  const url = URL.createObjectURL(blob);
         //  const downloadLink = document.createElement("a");
         //  downloadLink.href = url;
