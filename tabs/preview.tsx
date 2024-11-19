@@ -20,6 +20,7 @@ function PreviewPage() {
     const [isAudio, setIsAudio] = useState('ideal')
     const [blobUrl, setBlobUrl] = useState(null)
     const [loadingVideo, setVideoLoading] = useState(true)
+    const [isEditMode, setIsEditMode] = useState(false)
     const url = useRef('')
     const containerRef = useRef(null)
 
@@ -128,10 +129,16 @@ function PreviewPage() {
 
     if (loadingVideo) {
         return (
-            <div>
-                ...Loading Video
+            <div className={style["loading-container"]} >
+                <div className={style["loader"]}></div>
             </div>
         )
+    }
+
+
+    const changeMode = () => {
+        console.log("MODE")
+        setIsEditMode(prev => !prev)
     }
 
     return (
@@ -144,13 +151,14 @@ function PreviewPage() {
                 </span>
             </h1>
             <div className={style["ref-wrapper"]}>
-                {isAudio === 'video' && <VideoPreview blobUrl={blobUrl} videoRef={videoRef} />
+                {isAudio === 'video' && <VideoPreview blobUrl={blobUrl} />
                 }
                 {isAudio === 'audio' && <AudioPreview audioRef={audioRef} containerRef={containerRef} />}
             </div>
-            <div className={style["editing-control-wrapper"]} >
+            {isEditMode ? null : <div className={`${style['edit-mode-btn']}`} > <button className={`${style["rounded-btn"]} ${style['publish-btn']}`} onClick={changeMode} >Edit Video</button></div>}
+            {isEditMode && <div className={style["editing-control-wrapper"]} >
                 <EditingControls blobUrl={blobUrl} />
-            </div>
+            </div>}
         </div>
     );
 }

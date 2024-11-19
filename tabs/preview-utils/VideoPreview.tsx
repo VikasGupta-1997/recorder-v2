@@ -2,8 +2,6 @@
 import styleText from "data-text:../preview.module.css"
 import * as style from '../preview.module.css'
 import { useRef, useState } from "react"
-import { HiOutlineVolumeUp, HiOutlineVolumeOff } from "react-icons/hi";
-import { FaPlay, FaPause } from "react-icons/fa";
 import Plyr from "plyr-react";
 import "plyr-react/plyr.css";
 
@@ -14,35 +12,10 @@ export const getStyle = () => {
 }
 
 export default function VideoPreview({
-    videoRef,
     blobUrl
 }) {
-    const [playing, setPlaying] = useState(true);
-    const [volume, setVolume] = useState(1);
     const plyrRef = useRef(null);
 
-    const handlePlayPause = () => {
-        console.log("handlePlayPause Called", playing)
-        if (videoRef.current) {
-            console.log("INIDEDDDD")
-            if (playing) {
-                console.log("isPlaying Video")
-                videoRef.current.pause();
-            } else {
-                console.log("isPAuding Video")
-                videoRef.current.play();
-            }
-        }
-        setPlaying(prev => !prev);
-    };
-
-    const handleVolumeChange = (event) => {
-        const newVolume = event.target.value;
-        setVolume(newVolume);
-        if (videoRef.current) {
-            videoRef.current.volume = newVolume; // Update video volume
-        }
-    };
 
     const options = {
         controls: [
@@ -55,10 +28,6 @@ export default function VideoPreview({
         ],
         urls: null,
         ratio: "16:9",
-        blankVideo:
-            "chrome-extension://" +
-            chrome.i18n.getMessage("@@extension_id") +
-            "/assets/blank.mp4",
         keyboard: {
             global: true,
         },
@@ -87,7 +56,7 @@ export default function VideoPreview({
                     options={options}
                 />
             ) : (
-                <p>Loading video preview...</p>
+                <div className={style["video-skelton"]} ><div className={style["loader"]} ></div></div>
             )}
             <style>
                 {`
