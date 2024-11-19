@@ -241,11 +241,20 @@ video {
 .wavesurfer-wrapper {
     width: 100%;
 }
+
 .heading-title {
     width: 55%;
     font-size: 18px;
     display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.heading-title .title {
+    display: flex;
     gap: 8px;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .heading-title p {
@@ -317,6 +326,7 @@ video {
     padding: 10px 16px;
     text-transform: capitalize;
     cursor: pointer;
+    height: 30px;
 }
 
 .publish-btn {

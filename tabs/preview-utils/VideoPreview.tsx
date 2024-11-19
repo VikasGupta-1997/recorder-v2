@@ -61,7 +61,7 @@ export default function VideoPreview({
             <style>
                 {`
                     .plyr {
-                    max-width: 900px !important;
+                    // max-width: 900px !important;
                     left: 0px !important;
                     right: 0px !important;
                     margin: 0px !important;

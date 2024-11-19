@@ -141,14 +141,23 @@ function PreviewPage() {
         setIsEditMode(prev => !prev)
     }
 
+    const handleCancelEditing = () => {
+        setIsEditMode(false)
+    }
+
     return (
         <div className={style["container"]}>
             <h1 className={style["heading-title"]}>
-                {`Rec-11122024-desktop.${isAudio === 'video' ? 'mp4' : 'mp3'}`}
-                {" "}
-                <span className={style["edit-icon"]} >
-                    <FaRegEdit color={'white'} size={10} />
+                <span className={style["title"]} >
+                    {`Rec-11122024-desktop.${isAudio === 'video' ? 'mp4' : 'mp3'}`}
+                    {" "}
+                    <span className={style["edit-icon"]} >
+                        <FaRegEdit color={'white'} size={10} />
+                    </span>
                 </span>
+                {isEditMode && <span>
+                    <button onClick={handleCancelEditing} className={style["rounded-btn"]}>cancel</button>
+                </span>}
             </h1>
             <div className={style["ref-wrapper"]}>
                 {isAudio === 'video' && <VideoPreview blobUrl={blobUrl} />

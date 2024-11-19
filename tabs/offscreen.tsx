@@ -344,8 +344,8 @@ const OffScreen = () => {
             videoUrl: url
           });
         }
-        saveRecordingToIndexedDB(blob)
         onComplete()
+        saveRecordingToIndexedDB(blob)
       } else {
         chrome.runtime.sendMessage({ type: "OFFSCREEN_RECORDING_END" });
         chunks = [];
@@ -510,8 +510,8 @@ const OffScreen = () => {
               videoUrl: url
             });
           }
-          saveRecordingToIndexedDB(blob)
           onComplete()
+          saveRecordingToIndexedDB(blob)
         }
         chrome.runtime.sendMessage({ type: "RECORDING_IN_PROGRESS_END" })
       };
@@ -588,10 +588,10 @@ const OffScreen = () => {
         // });
         // chrome.runtime.sendMessage({type: "RECORDING_IN_PROGRESS_END"})
     }
+    onComplete()
     if(!isMicOnlyRecordingDiscarded){
       saveRecordingToIndexedDB(blob)
     }
-    onComplete()
 };
 
   const recordMicOnly = async selections => {
@@ -668,10 +668,10 @@ const OffScreen = () => {
         resetAll()
       }
       console.log("SHould Not call",isCamOnlyRecordingDiscarded)
+      onComplete()
       if(!isCamOnlyRecordingDiscarded) {
         saveRecordingToIndexedDB(blob)
       }
-      onComplete()
     };
 
     camOnlyRecorder.onended = () => {
