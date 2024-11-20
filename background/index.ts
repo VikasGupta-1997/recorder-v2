@@ -26,14 +26,14 @@ chrome.runtime.onInstalled.addListener(async (details) => {
     // This is the first time the extension is installed
     await createOffscreenDocument()
     await chrome.storage.local.set({ firstTimeLaunch: true });
-    chrome.tabs.query({}, function(tabs) {
-      // Reload each tab
-      tabs.forEach(tab => {
-          if (tab.id) {
-              chrome.tabs.reload(tab.id)
-          }
-      });
-    });
+    // chrome.tabs.query({}, function(tabs) {
+    //   // Reload each tab
+    //   tabs.forEach(tab => {
+    //       if (tab.id) {
+    //           chrome.tabs.reload(tab.id)
+    //       }
+    //   });
+    // });
   }
 });
 
@@ -93,11 +93,11 @@ const openNewWindow = (url, sendMessageAction, selections, isWindowSelected) => 
       chrome.tabs.onUpdated.addListener(checkTabLoaded);
       chrome.windows.onRemoved.addListener((closedWindowId) => {
         if (closedWindowId === cameraWindowId) {
-          if(url === "tabs/camera.html"){
-            chrome.runtime.sendMessage({type: "END_CAM_ONLY_RECORDING"})
+          if (url === "tabs/camera.html") {
+            chrome.runtime.sendMessage({ type: "END_CAM_ONLY_RECORDING" })
           }
-          if(url === "tabs/audioRecording.html"){
-            chrome.runtime.sendMessage({type: "END_MIC_ONLY_RECORDING"})
+          if (url === "tabs/audioRecording.html") {
+            chrome.runtime.sendMessage({ type: "END_MIC_ONLY_RECORDING" })
           }
           stopTimer()
           // chrome.storage.local.set({ "isRecordingInProgress": false })
@@ -190,7 +190,7 @@ let previewTabId = null;
 // Start timer function
 
 function startTimer(tabType?: string | undefined) {
-  function broadCastUpdateTimer(){
+  function broadCastUpdateTimer() {
     chrome.tabs.query({}, (tabs) => {
       tabs.forEach((tab) => {
         chrome.tabs.sendMessage(tab.id, { type: "updateTimer", time: elapsedTime });
@@ -232,7 +232,7 @@ function stopTimer() {
   isRunning = false; // Reset running flag
   isPaused = false; // Reset paused flag
   console.log("elapsedTime1212", elapsedTime)
-  chrome.storage.local.set({"totalElapsedTime": elapsedTime})
+  chrome.storage.local.set({ "totalElapsedTime": elapsedTime })
   elapsedTime = 0; // Reset the elapsed time
 
   // Save reset time to IndexedDB
@@ -374,7 +374,7 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     }
   }
 
-  if(message.type === 'GET_INDEXDB_RECORDING'){
+  if (message.type === 'GET_INDEXDB_RECORDING') {
     setTimeout(() => {
       chrome.tabs.sendMessage(previewTabId, { type: "PLAY_PREVIEW" }, function () { })
     }, 1000)
@@ -420,8 +420,8 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     isRecordingFromSystemTab = false
   }
 
-  if(message.type === 'SET_SAVING_IN_INDEXDB'){
-    chrome.storage.local.set({"saving_in_indexdb": message.data})
+  if (message.type === 'SET_SAVING_IN_INDEXDB') {
+    chrome.storage.local.set({ "saving_in_indexdb": message.data })
   }
 
   if (message.type === 'INJECT_VIDEOCAM') {
@@ -474,11 +474,11 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   }
 
   // if (message.type === 'END_CAM_ONLY_RECORDING') {
-    // chrome.runtime.sendMessage({ type: "END_CAM_ONLY_RECORDING_CAMERA" })
+  // chrome.runtime.sendMessage({ type: "END_CAM_ONLY_RECORDING_CAMERA" })
   // }
 
   // if (message.type === 'END_MIC_ONLY_RECORDING') {
-    // chrome.runtime.sendMessage({ type: "END_MIC_ONLY_RECORDING_CAMERA" })
+  // chrome.runtime.sendMessage({ type: "END_MIC_ONLY_RECORDING_CAMERA" })
   // }
 
   if (message.type === 'END_MIC_ONLY_RECORDING') {
@@ -571,13 +571,13 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     })
   }
 
-  if(message.type === 'OPEN_CAM_ONLY'){
+  if (message.type === 'OPEN_CAM_ONLY') {
     setTimeout(() => {
       chrome.runtime.sendMessage({ type: "START_RECORDING_OFFSCREEN", data: message.data, isCamOnly: message?.isCamOnly, isAudioOnly: message?.isAudioOnly });
     }, 250)
   }
 
-  if(message.type === 'OPEN_MIC_ONLY'){
+  if (message.type === 'OPEN_MIC_ONLY') {
     setTimeout(() => {
       chrome.runtime.sendMessage({ type: "START_RECORDING_OFFSCREEN", data: message.data, isCamOnly: message?.isCamOnly, isAudioOnly: message?.isAudioOnly });
     }, 250)

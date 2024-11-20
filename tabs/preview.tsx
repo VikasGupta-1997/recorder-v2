@@ -2,7 +2,6 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { FaRegEdit } from "react-icons/fa";
 import styleText from "data-text:./preview.module.css"
 import * as style from './preview.module.css'
-import WaveSurfer from 'wavesurfer.js';
 import VideoPreview from "./preview-utils/VideoPreview";
 import AudioPreview from "./preview-utils/AudioPreview";
 import EditingControls from "./preview-utils/EditingControls";
@@ -21,16 +20,15 @@ function PreviewPage() {
     const [blobUrl, setBlobUrl] = useState(null)
     const [loadingVideo, setVideoLoading] = useState(true)
     const [isEditMode, setIsEditMode] = useState(false)
+    const [blob, setBlob] = useState(null)
     const url = useRef('')
     const containerRef = useRef(null)
 
     const onMountListeners = () => {
         chrome.runtime.onMessage.addListener(
             function async(message) {
-                console.log("onMountListeners1212", message)
                 switch (message.type) {
                     case "PLAY_PREVIEW": {
-                        console.log("GET_INDEXDB_RECORDING12121212", isAudio)
                         setVideoLoading(false)
                     }
                 }
@@ -45,13 +43,16 @@ function PreviewPage() {
     }, [loadingVideo, isAudio])
 
     useEffect(() => {
-        chrome.storage.local.get(["saving_in_indexdb"], async result => {
-            console.log("result===>", result)
+        chrome.storage.local.get(["isAudioOnly", "saving_in_indexdb"], async (result) => {
             if (!result?.saving_in_indexdb) {
-                console.log("setVideoLoadingCALLEDDDD!!!!!")
                 setVideoLoading(false)
             }
-        })
+            if (result?.isAudioOnly) {
+                setIsAudio('audio');
+            } else {
+                setIsAudio('video');
+            }
+        });
     }, []);
 
     function loadRecordingFromIndexedDB() {
@@ -87,6 +88,7 @@ function PreviewPage() {
             const response = await fetch(base64Data);
             console.log(videoRef.current, "response1221", response)
             const blob = await response.blob();
+            setBlob(blob)
             const videoUrl = URL.createObjectURL(blob);
             url.current = videoUrl
             setBlobUrl(videoUrl)
@@ -107,25 +109,6 @@ function PreviewPage() {
     useLayoutEffect(() => {
         onMountListeners()
     }, [isAudio])
-
-
-    useEffect(() => {
-        chrome.storage.local.get(["isAudioOnly"], async (result) => {
-            // playRecordingInVideoTag()
-            if (result?.isAudioOnly) {
-                setIsAudio('audio');
-            } else {
-                setIsAudio('video');
-            }
-        });
-    }, []);
-
-    useEffect(() => {
-        if (!loadingVideo) {
-            // playRecordingInVideoTag()
-            // waveSurferRef.current.load(url.current);
-        }
-    }, [loadingVideo, isAudio])
 
     if (loadingVideo) {
         return (
@@ -160,9 +143,9 @@ function PreviewPage() {
                 </span>}
             </h1>
             <div className={style["ref-wrapper"]}>
-                {isAudio === 'video' && <VideoPreview blobUrl={blobUrl} />
+                {isAudio === 'video' && <VideoPreview blob={blob} blobUrl={blobUrl} />
                 }
-                {isAudio === 'audio' && <AudioPreview audioRef={audioRef} containerRef={containerRef} />}
+                {isAudio === 'audio' && <AudioPreview blob={blob} audioRef={audioRef} containerRef={containerRef} />}
             </div>
             {isEditMode ? null : <div className={`${style['edit-mode-btn']}`} > <button className={`${style["rounded-btn"]} ${style['publish-btn']}`} onClick={changeMode} >Edit Video</button></div>}
             {isEditMode && <div className={style["editing-control-wrapper"]} >

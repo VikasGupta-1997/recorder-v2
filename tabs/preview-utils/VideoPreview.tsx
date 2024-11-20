@@ -12,7 +12,8 @@ export const getStyle = () => {
 }
 
 export default function VideoPreview({
-    blobUrl
+    blobUrl,
+    blob
 }) {
     const plyrRef = useRef(null);
 

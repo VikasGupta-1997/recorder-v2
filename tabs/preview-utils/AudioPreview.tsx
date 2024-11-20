@@ -10,10 +10,11 @@ export const getStyle = () => {
     return style
 }
 
-
+let isConnected = false;
 export default function AudioPreview({
     containerRef,
     audioRef,
+    blob
 }) {
     const [isPlaying, setIsPlaying] = useState(true); // Track if audio is playing
     const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder>()
@@ -32,10 +33,10 @@ export default function AudioPreview({
     const dataArrayRef = useRef(null);
 
     const handleResize = () => {
-        // setWidthHeight({
-        //   width: audioGraphRef?.current?.clientWidth,
-        //   height: audioGraphRef?.current?.clientHeight
-        // });
+        setWidthHeight({
+          width: containerRef?.current?.clientWidth,
+          height: containerRef?.current?.clientHeight
+        });
     };
 
     useEffect(() => {
@@ -54,6 +55,10 @@ export default function AudioPreview({
     }, [containerRef])
 
     const setupAnalyser = () => {
+        if (isConnected) {
+            console.log("Audio source is already connected to the analyser.");
+            return; // Prevent reconnection
+        }
         const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
         const analyser = audioCtx.createAnalyser();
         const source = audioCtx.createMediaElementSource(audioRef.current);
@@ -63,7 +68,7 @@ export default function AudioPreview({
         analyser.fftSize = 256; // Determines frequency resolution
         const bufferLength = analyser.frequencyBinCount;
         const dataArray = new Uint8Array(bufferLength);
-
+        isConnected = true; // Mark as connected
         analyserRef.current = analyser;
         setAnalyseRefS(analyser)
         dataArrayRef.current = dataArray;
