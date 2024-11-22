@@ -13,6 +13,7 @@
     "firefox-package": "plasmo package --target=firefox-mv2"
   },
   "dependencies": {
+    "@ffmpeg/core": "^0.12.6",
     "@ffmpeg/ffmpeg": "^0.12.10",
     "@ffmpeg/util": "^0.12.1",
     "@plasmohq/messaging": "^0.6.2",
@@ -30,6 +31,7 @@
     "wavesurfer.js": "^7.8.8"
   },
   "devDependencies": {
+    "@ffmpeg/types": "^0.12.2",
     "@ianvs/prettier-plugin-sort-imports": "4.3.1",
     "@plasmohq/parcel-resolver": "^0.14.1",
     "@types/chrome": "0.0.277",
@@ -44,7 +46,7 @@
   },
   "manifest": {
     "host_permissions": [
-      "https://*/*"
+      "<all_urls>"
     ],
     "permissions": [
       "storage",
@@ -58,19 +60,36 @@
       "offscreen",
       "app.window",
       "system.display",
-      "unlimitedStorage"
+      "unlimitedStorage",
+      "webRequest"
     ],
     "web_accessible_resources": [
       {
         "resources": [
           "tabs/*",
-          "vendor/*"
+          "vendor/*",
+          "ffmpeg/*",
+          "sandboxes/*"
         ],
         "matches": [
-          "http://*/*",
-          "https://*/*"
+          "<all_urls>"
         ]
       }
-    ]
+    ],
+    "sandbox": {
+      "pages": [
+        "sandboxes/demo.tsx"
+      ]
+    },
+    "cross_origin_embedder_policy": {
+      "value": "require-corp"
+    },
+    "cross_origin_opener_policy": {
+      "value": "same-origin"
+    },
+    "content_security_policy": {
+      "sandbox": "sandbox allow-scripts allow-modals allow-popups; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; object-src 'self';worker-src 'self' blob: ;",
+      "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; media-src 'self' data: blob: *;"
+    }
   }
 }

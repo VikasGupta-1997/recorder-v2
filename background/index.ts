@@ -675,7 +675,8 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
           })
 
           if (isToOpenPreview) {
-            chrome.tabs.create({ url: chrome.runtime.getURL('tabs/preview.html') }, async (tab) => {
+            // chrome.tabs.create({ url: chrome.runtime.getURL('tabs/preview.html') }, async (tab) => {
+              chrome.tabs.create({ url: chrome.runtime.getURL('sandboxes/demo.html') }, async (tab) => {
               previewTabId = tab.id
               chrome.tabs.sendMessage(tab.id, { type: "RECORDING_COMPLETED" }, function () { })
               chrome.tabs.onUpdated.addListener(function listener(tabId, info) {
