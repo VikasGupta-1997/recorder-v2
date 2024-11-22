@@ -13,9 +13,6 @@
     "firefox-package": "plasmo package --target=firefox-mv2"
   },
   "dependencies": {
-    "@ffmpeg/core": "^0.12.6",
-    "@ffmpeg/ffmpeg": "^0.12.10",
-    "@ffmpeg/util": "^0.12.1",
     "@plasmohq/messaging": "^0.6.2",
     "@plasmohq/storage": "^1.11.0",
     "lodash.debounce": "^4.0.8",
@@ -31,7 +28,6 @@
     "wavesurfer.js": "^7.8.8"
   },
   "devDependencies": {
-    "@ffmpeg/types": "^0.12.2",
     "@ianvs/prettier-plugin-sort-imports": "4.3.1",
     "@plasmohq/parcel-resolver": "^0.14.1",
     "@types/chrome": "0.0.277",
