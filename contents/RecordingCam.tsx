@@ -160,8 +160,40 @@ const CustomButton = () => {
   const onMountListners =
     () => {
       chrome.runtime.onMessage.addListener(
-        function async(message) {
+        function async(message, sender, sendResponse) {
           switch (message.type) {
+            case "OPEN_SANDBOX": {
+              // use window.open to create a popup
+            const sandboxWin = window.open(chrome.runtime.getURL('sandboxes/demo.html'),"SANDBOXED!","height=800,width=500");       
+            // fire a postMessage event to the sandbox. Inspect the sandbox and see the 
+              // message in the console.
+              setTimeout(() => {
+                console.log("SENDING content!!!!")
+                chrome.runtime.sendMessage({type: "YEAHHHH"})
+                sandboxWin.postMessage({"message":"It works!!"}, "*");
+              }, 4000)
+            }
+            break;
+            case "DATA_FOR_SANDBOX": {
+              console.log(sender, "Try Sending from HEre!!!", sendResponse)
+              setTimeout(() => {
+                window.postMessage({ type: 'from-content', data: 'data-alfa' }, '*');
+                // window.addEventListener(
+                //   'message',
+                //   (event) => {
+                //     console.log('Sandbox window message:', event.data);
+        
+                //     // Send response back to background script
+                //     sendResponse(event.data);
+                //   },
+                //   { once: true }
+                // );
+                // console.log("SENDING ALFA")
+                // // Forward the data to the sandbox script
+                // window.postMessage({ type: 'from-content', data: "Deta-alfa" }, '*');
+              }, 3000);
+            }
+              break;
             case "CLEAR_RECORDING_UI_CONTENT": {
               resetScreen()
               resetAllNew()
@@ -193,11 +225,12 @@ const CustomButton = () => {
               setShowToolBar(true)
               injectWebCamIframe()
             }
-              break
+              break;
             case START_RECORDING:
               break;
             case HIDE_CSUI:
               resetAllNew()
+              break;
             case callBackConstants.POPUP_CLOSED:
               resetAllNew()
               break;
@@ -211,7 +244,31 @@ const CustomButton = () => {
       );
     }
 
+    const onPortMethodAttach = () => {
+      chrome.runtime.onConnect.addListener((port) => {
+        console.log('Connected to background script:', port.name);
+    
+        port.onMessage.addListener((message) => {
+          console.log('Message from background script via port:', message);
+    
+          // Forward the message to the sandboxed page
+          window.postMessage({ type: 'from-extension', data: message.base64 }, '*');
+        });
+    
+        // Listen for messages from the sandboxed page
+        window.addEventListener('message', (event) => {
+          if (event.source !== window || event.data.type !== 'from-sandbox') return;
+    
+          console.log('Message from sandbox:', event.data);
+    
+          // Forward the message to the background script
+          port.postMessage(event.data.data);
+        });
+      });
+    };
+
   useEffect(() => {
+    onPortMethodAttach()
     onMountListners();
   }, [showToolBar])
 
@@ -427,7 +484,7 @@ const CustomButton = () => {
               hasDrag
             /></div>
           }
-          {<div style={{ display: (injectCam) ? 'block' : 'none',  cursor: 'move', position:"relative" }}
+          {<div style={{ display: (injectCam) ? 'block' : 'none', cursor: 'move', position: "relative" }}
             className={style['cam-injector-iframe']}>
             <iframe className={style['webcam-iframe']} ref={webcamRef} allow='camera' />
             {/* Transparent overlay */}

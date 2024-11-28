@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react"
+import { useContext, useEffect, useRef, useState } from "react"
+import  { ContentStateContext } from "~context";
 import { saveRecordingToIndexedDB } from "~utils/saveRecordingToIndexedDB";
 
 let isRecordingStarted = false;
@@ -12,10 +13,10 @@ let camOnlyRecorder = null;
 let camOnlyChunks = [];
 let isCamOnlyRecordingDiscarded = false
 let isMicOnlyRecordingDiscarded = false
+let recordedStreamBase64 = null
 
 let micOnlyRecorder = null;
 let micOnlyChunks = []
-
 
 const OffScreen = () => {
   const [audioVideoStreams, setAudioVideoStreams] = useState({ audioTrack: null, videoTrack: null })
@@ -29,7 +30,12 @@ const OffScreen = () => {
   const [isDiscardRecording, setIsDiscardRecording] = useState(false)
   const [isWindowOnlyRecording, setIsWindowOnlyRecording] = useState(false)
   const videoRef = useRef(null)
+  const [base64Data, setBase64Data] = useState(null)
+  const [isPreviewOpened, setIsPreviewOpened] = useState(false)
+  // const [base64, setBase64] = useState<string>('');
 
+  // console.log("base641122121",base64 )
+  // console.log("1121", base64)
   useEffect(() => {
     if (startToRecord) {
       if (isWindowOnlyRecording) {
@@ -44,6 +50,42 @@ const OffScreen = () => {
       }
     }
   }, [audioVideoStreams, startToRecord, isWindowOnlyRecording])
+
+  const uploadChunks = () => {
+    console.log("uploadChunks started!!")
+    const chunkSize = 1024 * 1024; // 1 MB per chunk
+    let chunkIndex = 0;
+
+    while (chunkIndex * chunkSize < base64Data.length) {
+        const chunk = base64Data.slice(chunkIndex * chunkSize, (chunkIndex + 1) * chunkSize); // No more type error
+        chrome.runtime.sendMessage({
+            type: "RECORDING_CHUNK",
+            data: chunk,
+            index: chunkIndex,
+            isLastChunk: (chunkIndex + 1) * chunkSize >= base64Data.length
+        });
+        console.log(`Sent chunk ${chunkIndex}`);
+        chunkIndex++;
+    }
+    chrome.runtime.sendMessage({
+        type: "RECORDING_CHUNK_UPLOAD_COMPLETE",
+        index: chunkIndex,
+        isLastChunk: (chunkIndex + 1) * chunkSize >= base64Data.length
+    });
+    console.log("All chunks sent.");
+  }
+
+  useEffect(() => {
+    if(isPreviewOpened){
+      if(base64Data){
+        console.log("base64Data1121", base64Data)
+        setTimeout(() => {
+          setIsPreviewOpened(false)
+        }, 500)
+        uploadChunks()
+      }
+    }
+  }, [isPreviewOpened, base64Data])
 
   const resetAll = (showVideo?: any) => {
     if(showVideo !== "restart_camonly"){
@@ -345,7 +387,9 @@ const OffScreen = () => {
           });
         }
         onComplete()
-        saveRecordingToIndexedDB(blob)
+        const base64Data = await saveRecordingToIndexedDB(blob)
+        recordedStreamBase64 = base64Data
+        setBase64Data(base64Data)
       } else {
         chrome.runtime.sendMessage({ type: "OFFSCREEN_RECORDING_END" });
         chunks = [];
@@ -511,7 +555,9 @@ const OffScreen = () => {
             });
           }
           onComplete()
-          saveRecordingToIndexedDB(blob)
+          const base64Data = await saveRecordingToIndexedDB(blob)
+          recordedStreamBase64 = base64Data
+          setBase64Data(base64Data)
         }
         chrome.runtime.sendMessage({ type: "RECORDING_IN_PROGRESS_END" })
       };
@@ -547,7 +593,7 @@ const OffScreen = () => {
     recorder?.stop()
   }
 
-  const saveMicRecording = () => {
+  const saveMicRecording = async () => {
     console.log("saveMicRecording called!!")
     const blob = new Blob(micOnlyChunks, {
         type: 'audio/webm; codecs=opus'
@@ -590,7 +636,10 @@ const OffScreen = () => {
     }
     onComplete()
     if(!isMicOnlyRecordingDiscarded){
-      saveRecordingToIndexedDB(blob)
+      const base64Data = await saveRecordingToIndexedDB(blob)
+      recordedStreamBase64 = base64Data
+      setBase64Data(base64Data)
+
     }
 };
 
@@ -670,7 +719,10 @@ const OffScreen = () => {
       console.log("SHould Not call",isCamOnlyRecordingDiscarded)
       onComplete()
       if(!isCamOnlyRecordingDiscarded) {
-        saveRecordingToIndexedDB(blob)
+        console.log("CAM RECORDIGN ENDEDDD!!!!")
+        const base64Data = await saveRecordingToIndexedDB(blob)
+        recordedStreamBase64 = base64Data
+        setBase64Data(base64Data)
       }
     };
 
@@ -695,6 +747,23 @@ const OffScreen = () => {
           case "END_CAM_ONLY_RECORDING": {
             console.log("END_CAM_ONLY_RECORDING", camOnlyRecorder)
             camOnlyRecorder?.stop()
+          }
+          break;
+          case "PREVIEW_OPENED_SUCCESSFULY": {
+            console.log("OPned preview")
+            setIsPreviewOpened(true)
+          }
+          break;
+          case "OPEN_SANDBOX": {
+            console.log("OFFSCREEN OPEN_SANDBOX!!!")
+            // use window.open to create a popup
+            const sandboxWin = window.open(chrome.runtime.getURL('sandboxes/demo.html'),"SANDBOXED!","height=800,width=500");       
+            // fire a postMessage event to the sandbox. Inspect the sandbox and see the 
+              // message in the console.
+              setTimeout(() => {
+                console.log("SENDING!!!!")
+                sandboxWin.postMessage({"message":"It works!!"}, "*");
+              }, 4000)
           }
           break;
           case "END_MIC_ONLY_RECORDING": {
@@ -835,11 +904,13 @@ const OffScreen = () => {
   }, [])
 
   return <div className="videoRef" >
-    {
-      showVideo && <div id="floating-video">
-        <video id="recording-output" ref={videoRef} width="200" height="150" muted></video>
-      </div>
-    }
+    {/* {
+      <ContentStateContext.Provider value={base64} > */}
+        {showVideo && <div id="floating-video">
+          <video id="recording-output" ref={videoRef} width="200" height="150" muted></video>
+        </div>}
+      {/* </ContentStateContext.Provider>
+    } */}
   </div>
 }
 

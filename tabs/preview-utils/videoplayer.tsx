@@ -16,15 +16,9 @@ export default function VideoPreview({
 }) {
     const plyrRef = useRef(null);
     const [videoSource, setVideoSource] = useState(null);
-    console.log("blobUrl22121 Vidoe Preview", blobUrl)
 
-    const bl = async (url) => {
-        let blob = await fetch(url).then(r => r.blob());
-        console.log("blobblob Preivew", blob)
-    }
     useEffect(() => {
         if (blobUrl) {
-            bl(blobUrl)
             setVideoSource({
                 type: "video",
                 sources: [
@@ -41,19 +35,16 @@ export default function VideoPreview({
         controls: [
             "play",
             "mute",
+            // "volume",
             "progress",
             "current-time",
             "duration",
         ],
-        urls: {
-            // Use local blank video instead of CDN
-            blankVideo: chrome.runtime.getURL('blank.mp4')
-        },
+        urls: null,
         ratio: "16:9",
         keyboard: {
             global: true,
         },
-        crossorigin: 'anonymous' // Add CORS support
     }
 
     if (!videoSource) {

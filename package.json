@@ -65,7 +65,10 @@
           "tabs/*",
           "vendor/*",
           "ffmpeg/*",
-          "sandboxes/*"
+          "sandboxes/*",
+          "sandboxes/demo.tsx",
+          "sandboxes/customIframe.tsx",
+          "context.tsx"
         ],
         "matches": [
           "<all_urls>"

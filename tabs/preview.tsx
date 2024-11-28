@@ -13,6 +13,10 @@ export const getStyle = () => {
 }
 // import { getAudio,  initDB, storeAudio } from '~indexDB'
 
+const receivedChunks = [];
+let isPlaying = false;
+
+
 function PreviewPage() {
     const videoRef = useRef(null)
     const audioRef = useRef(null);
@@ -24,26 +28,86 @@ function PreviewPage() {
     const url = useRef('')
     const containerRef = useRef(null)
 
+    console.log(blobUrl,"blobblob1", blob, )
+    const playPartialRecording = async () => {
+        try {
+            // Convert available chunks to a Blob
+            const base64Data = receivedChunks.filter(Boolean).join('');
+            if (!base64Data) {
+                console.warn('No data available to play');
+                return;
+            }
+
+            // Check if the data is a data URL
+            if (base64Data.startsWith('data:')) {
+                try {
+                    const response = await fetch(base64Data);
+                    console.log("response1212", response)
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const newBlob = await response.blob();
+                    console.log("newBlob1121", newBlob)
+                    const newBlobUrl = URL.createObjectURL(newBlob);
+                    console.log("newBlobUrl11221", newBlobUrl)
+
+                    setBlob(newBlob);
+                    setBlobUrl(newBlobUrl);
+                    // window.postMessage({type: "SEND_FROM_PREVIEW", data: newBlobUrl}, '*')
+                    // Revoke old URL to prevent memory leaks
+                    if (url.current) {
+                        URL.revokeObjectURL(url.current);
+                    }
+                    url.current = newBlobUrl;
+                } catch (fetchError) {
+                    console.error('Error fetching or processing blob:', fetchError);
+                    // Handle the error appropriately, maybe set an error state
+                }
+            } else {
+                console.warn('Invalid data format - expected data URL');
+            }
+        } catch (error) {
+            console.error('Error in playPartialRecording:', error);
+            // Handle the error appropriately, maybe set an error state
+        }
+    };
+
     const onMountListeners = () => {
         chrome.runtime.onMessage.addListener(
             function async(message) {
+                console.log("MESSAAGE", message)
                 switch (message.type) {
-                    case "PLAY_PREVIEW": {
-                        setVideoLoading(false)
+                    case "RECORDING_CHUNK_PREVIEW":{
+                        // Debug log to see chunk format
+                        console.log('Received chunk format:', {
+                            index: message.index,
+                            dataStart: message.data.substring(0, 50) + '...',
+                            dataLength: message.data.length
+                        });
+                        
+                        receivedChunks[message.index] = message.data;
+                        console.log(`Received chunk ${message.index}`);
+                
+                        // Try to start playing the video when enough data is received
+                        if (!isPlaying && receivedChunks.length >= 5) { // Assuming 5 chunks are sufficient to start
+                            isPlaying = true;
+                            playPartialRecording();
+                        }
+                
+                        if (message.isLastChunk) {
+                            console.log("All chunks received. Reassembling...");
+                            playPartialRecording(); // Play the complete recording
+                        }
                     }
+                    break;
                 }
             }
         )
     }
 
     useEffect(() => {
-        if (!loadingVideo) {
-            playRecordingInVideoTag()
-        }
-    }, [loadingVideo, isAudio])
-
-    useEffect(() => {
         chrome.storage.local.get(["isAudioOnly", "saving_in_indexdb"], async (result) => {
+            console.log("resultresult", result)
             if (!result?.saving_in_indexdb) {
                 setVideoLoading(false)
             }
@@ -55,60 +119,18 @@ function PreviewPage() {
         });
     }, []);
 
-    function loadRecordingFromIndexedDB() {
-        return new Promise((resolve, reject) => {
-            const request = indexedDB.open("videoDatabase", 1);
-
-            request.onsuccess = () => {
-                const db = request.result;
-                const transaction = db.transaction("videos", "readonly");
-                const store = transaction.objectStore("videos");
-                const getRequest = store.get("recording");
-
-                getRequest.onsuccess = () => {
-                    if (getRequest.result) {
-                        resolve(getRequest.result.data);
-                    } else {
-                        reject("No recording found in IndexedDB");
-                    }
-                };
-
-                getRequest.onerror = reject;
-            };
-
-            request.onerror = reject;
-        });
-    }
-
-    async function playRecordingInVideoTag() {
-        try {
-            const base64Data = await loadRecordingFromIndexedDB() as string;
-
-            // Convert Base64 to a Blob URL and set as the video src
-            const response = await fetch(base64Data);
-            console.log(videoRef.current, "response1221", response)
-            const blob = await response.blob();
-            setBlob(blob)
-            const videoUrl = URL.createObjectURL(blob);
-            url.current = videoUrl
-            setBlobUrl(videoUrl)
-            // setVideoLoading(false)
-            if (isAudio === 'video') {
-                console.log("videoRef121", videoRef.current)
-                // videoRef.current.src = url.current;
-            } else {
-                console.log("Set Audio Here !")
-                audioRef.current.src = url.current;
-            }
-        } catch (error) {
-            // setVideoLoading(false)
-            console.error("Error loading and playing recording:", error);
-        }
-    }
-
     useLayoutEffect(() => {
+
+        window.addEventListener("message", (event) => {
+            // Make sure the message is coming from a trusted source
+            const message = event.data;
+            console.log("Message received in iframe:", message);
+            // if(message.)
+            // Handle the message from the parent
+          });
+        
         onMountListeners()
-    }, [isAudio])
+    }, [])
 
     if (loadingVideo) {
         return (
@@ -122,6 +144,7 @@ function PreviewPage() {
     const changeMode = () => {
         console.log("MODE")
         setIsEditMode(prev => !prev)
+        window.parent.postMessage({ type: "SEND_FROM_PREVIEW", blob: blob }, "*");
     }
 
     const handleCancelEditing = () => {
