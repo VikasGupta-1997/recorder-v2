@@ -250,8 +250,8 @@ export default function AudioPreview({
                     />
                 </span>
             }
-              <Plyr ref={plyrRef} source={audioSource} options={options} />
-            {/* <audio
+              {/* <Plyr ref={plyrRef} source={audioSource} options={options} /> */}
+            <audio
                 ref={audioRef}
                 style={{
                     height: "30px",
@@ -269,7 +269,7 @@ export default function AudioPreview({
                 onLoadedMetadata={handleLoadedMetadata} // Set duration when metadata is loaded
                 onEnded={handleAudioEnded} // Stop animation when audio ends
                 onPlay={handleAudioPlay} // Start animation when audio plays
-            ></audio> */}
+            ></audio>
             <style>
                 {`
                     .plyr {

@@ -12,7 +12,8 @@ export const getStyle = () => {
 
 export default function VideoPreview({
     blobUrl,
-    blob
+    blob,
+    setTimeData
 }) {
     const plyrRef = useRef(null);
     const [videoSource, setVideoSource] = useState(null);
@@ -36,6 +37,29 @@ export default function VideoPreview({
             });
         }
     }, [blobUrl]);
+
+    useEffect(() => {
+        if (plyrRef.current && plyrRef.current.plyr) {
+          // Check when the video is playing, update the time in real time
+          plyrRef.current.plyr.on("timeupdate", () => {
+            setTimeData({
+                time: plyrRef.current.plyr.currentTime,
+                updatePlayerTime: false
+            })
+            // setContentState((prevContentState) => ({
+            //   ...prevContentState,
+            //   time: plyrRef.current.plyr.currentTime,
+            //   updatePlayerTime: false,
+            // }));
+          });
+        }
+    
+        return () => {
+          if (plyrRef.current && plyrRef.current.plyr) {
+            plyrRef.current.plyr.off("timeupdate");
+          }
+        };
+      }, [plyrRef]);
 
     const options = {
         controls: [

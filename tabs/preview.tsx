@@ -25,6 +25,7 @@ function PreviewPage() {
     const [loadingVideo, setVideoLoading] = useState(true)
     const [isEditMode, setIsEditMode] = useState(false)
     const [blob, setBlob] = useState(null)
+    const [timeData, setTimeData] = useState({time: 0, updatePlayerTime: false})
     const url = useRef('')
     const containerRef = useRef(null)
 
@@ -153,30 +154,37 @@ function PreviewPage() {
 
     const changeMode = () => {
         console.log("MODE")
-        sendPostMessage({ type: "SEND_FROM_PREVIEW", blob: blob })
+        setIsEditMode(prev => !prev)
+        // sendPostMessage({ type: "SEND_FROM_PREVIEW", blob: blob })
     }
 
     const handleCancelEditing = () => {
         setIsEditMode(false)
     }
-
+    console.log("timeData", timeData)
     return (
         <div className={style["container"]}>
-            <h1 className={style["heading-title"]}>
-                <span className={style["title"]} >
-                    {`Rec-11122024-desktop.${isAudio === 'video' ? 'mp4' : 'mp3'}`}
-                    {" "}
-                </span>
-                {isEditMode && <span>
-                    <button onClick={handleCancelEditing} className={style["rounded-btn"]}>cancel</button>
-                </span>}
-            </h1>
-            <div className={style["ref-wrapper"]}>
-                {isAudio === 'video' && <VideoPreview blob={blob} blobUrl={blobUrl} />
-                }
-                {isAudio === 'audio' && <AudioPreview blob={blob} blobUrl={blobUrl} audioRef={audioRef} containerRef={containerRef} />}
-            </div>
-            <div className={`${style['edit-mode-btn']}`} > <button className={`${style["rounded-btn"]} ${style['publish-btn']}`} onClick={changeMode} >Edit Video</button></div>
+          <h1 className={style["heading-title"]}>
+            <span className={style["title"]} >
+              {`Rec-11122024-desktop.${isAudio === 'video' ? 'mp4' : 'mp3'}`}
+              {" "}
+              <span className={style["edit-icon"]} >
+                <FaRegEdit color={'white'} size={10} />
+              </span>
+            </span>
+            {isEditMode && <span>
+              <button onClick={handleCancelEditing} className={style["rounded-btn"]}>cancel</button>
+            </span>}
+          </h1>
+          <div className={style["ref-wrapper"]}>
+            {(isAudio === 'video') && <VideoPreview setTimeData={setTimeData} blob={blob} blobUrl={blobUrl} />
+            }
+            {(isAudio === 'audio') && <AudioPreview blobUrl={blobUrl} blob={blob} audioRef={audioRef} containerRef={containerRef} />}
+          </div>
+          {(isEditMode) ? null : <div className={`${style['edit-mode-btn']}`} > <button className={`${style["rounded-btn"]} ${style['publish-btn']}`} onClick={changeMode} >Edit Video</button></div>}
+          {<div className={style["editing-control-wrapper"]} >
+            <EditingControls blob={blob} timeData={timeData} blobUrl={blobUrl} />
+          </div>}
         </div>
     );
 }

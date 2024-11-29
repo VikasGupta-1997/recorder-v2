@@ -158,7 +158,7 @@ const DemoSand = () => {
           }}
         ></iframe>
       </div>
-      <div style={{ display: editMode ? 'block' : 'none' }}>
+      {/* <div style={{ display: editMode ? 'block' : 'none' }}>
         <div className={style["container"]}>
           <h1 className={style["heading-title"]}>
             <span className={style["title"]} >
@@ -178,13 +178,12 @@ const DemoSand = () => {
             {(isAudio === 'audio' && editMode) && <AudioPreview blobUrl={blobUrl} blob={blob} audioRef={audioRef} containerRef={containerRef} />}
           </div>
           {(isEditMode && editMode) ? null : <div className={`${style['edit-mode-btn']}`} > <button className={`${style["rounded-btn"]} ${style['publish-btn']}`} onClick={changeMode} >Edit Video</button></div>}
-          {(isEditMode && editMode) && <div className={style["editing-control-wrapper"]} >
+          {<div className={style["editing-control-wrapper"]} >
             <EditingControls blobUrl={blobUrl} />
           </div>}
         </div>
-      </div>
+      </div> */}
     </>
-
   </>;
 };
 

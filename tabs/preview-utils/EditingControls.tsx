@@ -5,6 +5,7 @@ import styleText from "data-text:../preview.module.css"
 import * as style from '../preview.module.css'
 import { useEffect, useRef, useState } from "react"
 import WaveSurfer from "wavesurfer.js"
+import WaveformGenerator from "~tabs/waveform-generator"
 
 export const getStyle = () => {
     const style = document.createElement("style")
@@ -12,7 +13,7 @@ export const getStyle = () => {
     return style
 }
 
-const EditingControls = ({blobUrl}) => {
+const EditingControls = ({blobUrl, timeData, blob}) => {
     const waveContainerRef = useRef<HTMLDivElement>(null);
     const waveSurferRef = useRef<WaveSurfer | null>(null);
     const [isWaveSurferReady, setIsWaveSurferReady] = useState(false);
@@ -40,21 +41,21 @@ const EditingControls = ({blobUrl}) => {
     }
 
 
-    useEffect(() => {
-        loadWaveForm()
+    // useEffect(() => {
+    //     loadWaveForm()
 
-        return () => {
-            waveSurferRef.current?.destroy();
-            waveSurferRef.current = null;
-        };
-    }, []);
+    //     return () => {
+    //         waveSurferRef.current?.destroy();
+    //         waveSurferRef.current = null;
+    //     };
+    // }, []);
 
     const fetchSource = () => {}
 
     useEffect(() => {
         if(blobUrl) {
-            fetchSource()
-            waveSurferRef.current.load(blobUrl);
+            // fetchSource()
+            // waveSurferRef.current.load(blobUrl);
         }
     }, [blobUrl])
 
@@ -81,8 +82,7 @@ const EditingControls = ({blobUrl}) => {
                 </div>
             </div>
             <div className={style["wavesurfer-wrapper"]} >
-                <div ref={waveContainerRef} style={{ marginTop: '10px' }} />
-                {!isWaveSurferReady && <p>Loading waveform...</p>}
+                <WaveformGenerator  blob={blob} time={timeData.time} updatePlayerTime={timeData.updatePlayerTime} />
             </div>
         </>
     )
