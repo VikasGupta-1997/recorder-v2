@@ -47,7 +47,7 @@ export default function VideoPreview({
         ],
         urls: {
             // Use local blank video instead of CDN
-            blankVideo: chrome.runtime.getURL('blank.mp4')
+            blankVideo: chrome?.runtime ? chrome.runtime.getURL('/blank.mp4') : "/blank.mp4",
         },
         ratio: "16:9",
         keyboard: {

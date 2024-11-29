@@ -3,6 +3,7 @@ import * as style from '../preview.module.css'
 import { useEffect, useRef, useState } from "react"
 import { AudioVisualizer, LiveAudioVisualizer } from 'react-audio-visualize';
 import { BiMicrophone } from "react-icons/bi";
+import Plyr from "plyr-react";
 
 export const getStyle = () => {
     const style = document.createElement("style")
@@ -14,7 +15,8 @@ let isConnected = false;
 export default function AudioPreview({
     containerRef,
     audioRef,
-    blob
+    blob,
+    blobUrl
 }) {
     const [isPlaying, setIsPlaying] = useState(true); // Track if audio is playing
     const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder>()
@@ -27,7 +29,9 @@ export default function AudioPreview({
         width: 0,
         height: 0
     })
+    const [audioSource, setAudioSource] = useState(null);
 
+    const plyrRef = useRef(null);
     const svgMicRef = useRef(null)
     const analyserRef = useRef(null);
     const dataArrayRef = useRef(null);
@@ -187,6 +191,37 @@ export default function AudioPreview({
         setupAnalyser()
     };
 
+    useEffect(() => {
+        if (blobUrl) {
+            // loadBlob(blobUrl);
+            setAudioSource({
+                type: "audio",
+                sources: [
+                    {
+                        src: blobUrl,
+                        type: "audio/webm", // Replace with your actual audio format
+                    },
+                ],
+            });
+        }
+    }, [blobUrl]);
+
+    const options = {
+        controls: [
+            "play",
+            "mute",
+            "progress",
+            "current-time",
+            "duration",
+            "volume",
+        ],
+        keyboard: {
+            global: true,
+        },
+        crossorigin: "anonymous", // Add CORS support
+    };
+
+
     return (
         <div className={style["audio-container"]} ref={containerRef}>
             <div className={style["audio-absolute"]}>
@@ -215,7 +250,8 @@ export default function AudioPreview({
                     />
                 </span>
             }
-            <audio
+              <Plyr ref={plyrRef} source={audioSource} options={options} />
+            {/* <audio
                 ref={audioRef}
                 style={{
                     height: "30px",
@@ -233,7 +269,25 @@ export default function AudioPreview({
                 onLoadedMetadata={handleLoadedMetadata} // Set duration when metadata is loaded
                 onEnded={handleAudioEnded} // Stop animation when audio ends
                 onPlay={handleAudioPlay} // Start animation when audio plays
-            ></audio>
+            ></audio> */}
+            <style>
+                {`
+                    .plyr {
+                        height: auto;
+                        width: 100%;
+                        position: absolute;
+                        bottom: 0;
+                    }
+                    .plyr__progress--played {
+                        background-color: #ff5733 !important; /* Your custom color */
+                    }
+                    .plyr__controls {
+                        background-color: rgba(35, 153, 219, 0.8) !important;
+                        padding: 16px 10px! important;
+                        color: white !important
+                    }
+                `}
+            </style>
         </div>
     )
 }

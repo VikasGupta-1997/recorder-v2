@@ -28,7 +28,7 @@ function PreviewPage() {
     const url = useRef('')
     const containerRef = useRef(null)
 
-    console.log(blobUrl,"blobblob1", blob, )
+    console.log(blobUrl, "blobblob1", blob,)
     const playPartialRecording = async () => {
         try {
             // Convert available chunks to a Blob
@@ -53,6 +53,7 @@ function PreviewPage() {
 
                     setBlob(newBlob);
                     setBlobUrl(newBlobUrl);
+                    setVideoLoading(false)
                     // window.postMessage({type: "SEND_FROM_PREVIEW", data: newBlobUrl}, '*')
                     // Revoke old URL to prevent memory leaks
                     if (url.current) {
@@ -77,47 +78,56 @@ function PreviewPage() {
             function async(message) {
                 console.log("MESSAAGE", message)
                 switch (message.type) {
-                    case "RECORDING_CHUNK_PREVIEW":{
+                    case "RECORDING_CHUNK_PREVIEW": {
                         // Debug log to see chunk format
                         console.log('Received chunk format:', {
                             index: message.index,
                             dataStart: message.data.substring(0, 50) + '...',
                             dataLength: message.data.length
                         });
-                        
+
                         receivedChunks[message.index] = message.data;
                         console.log(`Received chunk ${message.index}`);
-                
+
                         // Try to start playing the video when enough data is received
                         if (!isPlaying && receivedChunks.length >= 5) { // Assuming 5 chunks are sufficient to start
                             isPlaying = true;
                             playPartialRecording();
                         }
-                
+
                         if (message.isLastChunk) {
                             console.log("All chunks received. Reassembling...");
                             playPartialRecording(); // Play the complete recording
                         }
                     }
-                    break;
+                        break;
                 }
             }
         )
     }
 
+    const sendPostMessage = (message) => {
+        window.parent.postMessage(message, "*");
+    }
+
     useEffect(() => {
         chrome.storage.local.get(["isAudioOnly", "saving_in_indexdb"], async (result) => {
             console.log("resultresult", result)
+            sendPostMessage({ type: "IS_CONTENT_TYPE", isAudioOnly: result?.isAudioOnly })
             if (!result?.saving_in_indexdb) {
-                setVideoLoading(false)
+                // setVideoLoading(false)
             }
             if (result?.isAudioOnly) {
                 setIsAudio('audio');
+                if(audioRef.current){
+                    console.log("audioRef.current", url.current)
+                    audioRef.current.src = url.current;
+                }
             } else {
                 setIsAudio('video');
             }
         });
-    }, []);
+    }, [blobUrl]);
 
     useLayoutEffect(() => {
 
@@ -127,8 +137,8 @@ function PreviewPage() {
             console.log("Message received in iframe:", message);
             // if(message.)
             // Handle the message from the parent
-          });
-        
+        });
+
         onMountListeners()
     }, [])
 
@@ -143,8 +153,7 @@ function PreviewPage() {
 
     const changeMode = () => {
         console.log("MODE")
-        setIsEditMode(prev => !prev)
-        window.parent.postMessage({ type: "SEND_FROM_PREVIEW", blob: blob }, "*");
+        sendPostMessage({ type: "SEND_FROM_PREVIEW", blob: blob })
     }
 
     const handleCancelEditing = () => {
@@ -157,9 +166,6 @@ function PreviewPage() {
                 <span className={style["title"]} >
                     {`Rec-11122024-desktop.${isAudio === 'video' ? 'mp4' : 'mp3'}`}
                     {" "}
-                    <span className={style["edit-icon"]} >
-                        <FaRegEdit color={'white'} size={10} />
-                    </span>
                 </span>
                 {isEditMode && <span>
                     <button onClick={handleCancelEditing} className={style["rounded-btn"]}>cancel</button>
@@ -168,12 +174,9 @@ function PreviewPage() {
             <div className={style["ref-wrapper"]}>
                 {isAudio === 'video' && <VideoPreview blob={blob} blobUrl={blobUrl} />
                 }
-                {isAudio === 'audio' && <AudioPreview blob={blob} audioRef={audioRef} containerRef={containerRef} />}
+                {isAudio === 'audio' && <AudioPreview blob={blob} blobUrl={blobUrl} audioRef={audioRef} containerRef={containerRef} />}
             </div>
-            {isEditMode ? null : <div className={`${style['edit-mode-btn']}`} > <button className={`${style["rounded-btn"]} ${style['publish-btn']}`} onClick={changeMode} >Edit Video</button></div>}
-            {isEditMode && <div className={style["editing-control-wrapper"]} >
-                <EditingControls blobUrl={blobUrl} />
-            </div>}
+            <div className={`${style['edit-mode-btn']}`} > <button className={`${style["rounded-btn"]} ${style['publish-btn']}`} onClick={changeMode} >Edit Video</button></div>
         </div>
     );
 }
