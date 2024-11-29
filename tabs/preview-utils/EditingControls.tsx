@@ -32,10 +32,15 @@ const EditingControls = ({ blobUrl, timeData, blob }) => {
         end: 1,
         dragInteracted: false,
         startTime: 0,
-        endTime: 0
+        endTime: 0,
+        duration: 0
     });
 
     const [cursorPosition, setCursorPosition] = useState(0);
+
+    const sendMessage = (message) => {
+        window.parent.postMessage(message, "*");
+    }
 
     const handleMouseDown = (e, handle) => {
         e.preventDefault();
@@ -154,7 +159,8 @@ const EditingControls = ({ blobUrl, timeData, blob }) => {
                 setDuration(videoDuration);
                 setTrimState(prev => ({
                     ...prev,
-                    endTime: videoDuration
+                    endTime: videoDuration,
+                    duration: videoDuration
                 }));
             });
 
@@ -184,6 +190,147 @@ const EditingControls = ({ blobUrl, timeData, blob }) => {
     };
 
     console.log("trimStatetrimState", trimState)
+
+    const processAudioWithAuphonic = async (audioBlob) => {
+        try {
+            // You'll need to replace these with your actual Auphonic credentials
+            const AUPHONIC_USERNAME = 'your_username';
+            const AUPHONIC_PASSWORD = 'your_password';
+
+            // Create FormData with the audio file
+            const formData = new FormData();
+            formData.append('input_file', audioBlob);
+            formData.append('preset', 'speech'); // or your preferred preset
+
+            // Create new production
+            const response = await fetch('https://auphonic.com/api/productions.json', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Basic ' + btoa(`${AUPHONIC_USERNAME}:${AUPHONIC_PASSWORD}`)
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to create Auphonic production');
+            }
+
+            const data = await response.json();
+            const uuid = data.data.uuid;
+
+            // Start the production
+            await fetch(`https://auphonic.com/api/production/${uuid}/start.json`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Basic ' + btoa(`${AUPHONIC_USERNAME}:${AUPHONIC_PASSWORD}`)
+                }
+            });
+
+            // Poll for completion
+            const checkStatus = async () => {
+                const statusResponse = await fetch(`https://auphonic.com/api/production/${uuid}.json`, {
+                    headers: {
+                        'Authorization': 'Basic ' + btoa(`${AUPHONIC_USERNAME}:${AUPHONIC_PASSWORD}`)
+                    }
+                });
+                const statusData = await statusResponse.json();
+                return statusData.data.status;
+            };
+
+            // Wait for processing to complete
+            let status;
+            do {
+                await new Promise(resolve => setTimeout(resolve, 2000)); // Poll every 2 seconds
+                status = await checkStatus();
+            } while (status === 'Processing');
+
+            // Download the processed file
+            if (status === 'Done') {
+                const downloadResponse = await fetch(`https://auphonic.com/api/production/${uuid}/download.json`, {
+                    headers: {
+                        'Authorization': 'Basic ' + btoa(`${AUPHONIC_USERNAME}:${AUPHONIC_PASSWORD}`)
+                    }
+                });
+                const processedBlob = await downloadResponse.blob();
+                return processedBlob;
+            }
+
+            throw new Error('Processing failed');
+        } catch (error) {
+            console.error('Error processing audio with Auphonic:', error);
+            throw error;
+        }
+    };
+
+    const handleTrim = async (cut) => {
+        try {
+            if (!blob) {
+                console.error("No blob available for trimming");
+                return;
+            }
+
+            // Send message to cut video
+            const message = {
+                type: "cut-video",
+                blob: blob,
+                startTime: trimState.startTime,
+                endTime: trimState.endTime,
+                cut: cut,
+                duration: trimState.duration,
+                encode: false,
+            };
+
+            console.log("Sending trim message:", {
+                startTime: trimState.startTime,
+                endTime: trimState.endTime,
+                duration: trimState.duration
+            });
+
+            // Send the message to process the trim
+            sendMessage(message);
+
+            // If it's audio, we can process it with Auphonic
+            if (blob.type.startsWith('audio/')) {
+                try {
+                    const processedBlob = await processAudioWithAuphonic(blob);
+                    // Send the processed blob back
+                    sendMessage({
+                        type: "updated-blob",
+                        blob: processedBlob
+                    });
+                } catch (error) {
+                    console.error('Failed to process audio:', error);
+                }
+            }
+
+            // Reset trim state after sending
+            setTrimState(prev => ({
+                ...prev,
+                start: 0,
+                end: 1,
+                startTime: 0,
+                endTime: prev.duration,
+                dragInteracted: false
+            }));
+
+            // Reset wavesurfer region if it exists
+            if (waveSurferRef.current) {
+                waveSurferRef.current.seekTo(0);
+            }
+        } catch (error) {
+            console.error("Error in handleTrim:", error);
+        }
+    };
+
+    const handleClick = (action) => {
+        console.log("Action clicked:", action);
+        if(action === 'trim'){
+            handleTrim(false);
+        }
+        if(action === 'cut'){ 
+            handleTrim(true);
+        }
+    };
 
     return (
         <>
@@ -253,7 +400,7 @@ const EditingControls = ({ blobUrl, timeData, blob }) => {
                 <div className={styles["editing-actions"]} >
                     {
                         ["cut", "trim", "delete recording", "publish"].map(action => (
-                            <button key={action} className={action === 'publish' ? styles["publish-btn"] : ""} >
+                            <button onClick={() => handleClick(action)} key={action} className={action === 'publish' ? styles["publish-btn"] : ""} >
                                 {["cut", "trim"].includes(action) && <span  >
                                     {action === 'cut' ? <BsScissors fontSize={14} color="10abd9" /> : <MdOutlineCrop fontSize={14} color="10abd9" />}
                                 </span>}

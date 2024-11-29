@@ -24,12 +24,14 @@ function PreviewPage() {
     const [blobUrl, setBlobUrl] = useState(null)
     const [loadingVideo, setVideoLoading] = useState(true)
     const [isEditMode, setIsEditMode] = useState(false)
+    const [originalVideo, setOriginalVideo] = useState({blob: new Blob() , url: ''})
     const [blob, setBlob] = useState(null)
     const [timeData, setTimeData] = useState({time: 0, updatePlayerTime: false})
     const url = useRef('')
     const containerRef = useRef(null)
 
     console.log(blobUrl, "blobblob1", blob,)
+
     const playPartialRecording = async () => {
         try {
             // Convert available chunks to a Blob
@@ -51,7 +53,6 @@ function PreviewPage() {
                     console.log("newBlob1121", newBlob)
                     const newBlobUrl = URL.createObjectURL(newBlob);
                     console.log("newBlobUrl11221", newBlobUrl)
-
                     setBlob(newBlob);
                     setBlobUrl(newBlobUrl);
                     setVideoLoading(false)
@@ -61,6 +62,7 @@ function PreviewPage() {
                         URL.revokeObjectURL(url.current);
                     }
                     url.current = newBlobUrl;
+                    return { newBlob, newBlobUrl }
                 } catch (fetchError) {
                     console.error('Error fetching or processing blob:', fetchError);
                     // Handle the error appropriately, maybe set an error state
@@ -76,7 +78,7 @@ function PreviewPage() {
 
     const onMountListeners = () => {
         chrome.runtime.onMessage.addListener(
-            function async(message) {
+            async function async(message) {
                 console.log("MESSAAGE", message)
                 switch (message.type) {
                     case "RECORDING_CHUNK_PREVIEW": {
@@ -98,7 +100,12 @@ function PreviewPage() {
 
                         if (message.isLastChunk) {
                             console.log("All chunks received. Reassembling...");
-                            playPartialRecording(); // Play the complete recording
+                            
+                            const { newBlob, newBlobUrl } = await playPartialRecording(); // Play the complete recording
+                            setOriginalVideo({
+                                blob: newBlob,
+                                url: newBlobUrl
+                            })
                         }
                     }
                         break;
@@ -131,13 +138,22 @@ function PreviewPage() {
     }, [blobUrl]);
 
     useLayoutEffect(() => {
-
         window.addEventListener("message", (event) => {
-            // Make sure the message is coming from a trusted source
             const message = event.data;
             console.log("Message received in iframe:", message);
-            // if(message.)
-            // Handle the message from the parent
+            if(message.type === "updated-blob"){
+                console.log("Received updated blob:", message.blob);
+                // Update the blob and blobUrl for the preview
+                const newBlobUrl = URL.createObjectURL(message.blob);
+                setBlob(message.blob);
+                setBlobUrl(newBlobUrl);
+                
+                // Cleanup old blob URL
+                if (url.current) {
+                    URL.revokeObjectURL(url.current);
+                }
+                url.current = newBlobUrl;
+            }
         });
 
         onMountListeners()
@@ -160,6 +176,20 @@ function PreviewPage() {
 
     const handleCancelEditing = () => {
         setIsEditMode(false)
+        console.log("originalVideooriginalVideo", originalVideo)
+        const newBlobUrl = URL.createObjectURL(originalVideo?.blob);
+        setBlob(originalVideo?.blob);
+        setBlobUrl(newBlobUrl);
+        if (url.current) {
+            URL.revokeObjectURL(url.current);
+        }
+        url.current = newBlobUrl;
+        // if(audioRef.current){
+        //     // console.log("audioRef.current", url.current)
+        //     audioRef.current.src = newBlobUrl;
+        // }
+        
+
     }
     console.log("timeData", timeData)
     return (

@@ -15,6 +15,7 @@
   "dependencies": {
     "@plasmohq/messaging": "^0.6.2",
     "@plasmohq/storage": "^1.11.0",
+    "@types/wavesurfer.js": "^6.0.12",
     "lodash.debounce": "^4.0.8",
     "plasmo": "0.89.3",
     "plyr-react": "^5.3.0",
@@ -25,7 +26,7 @@
     "react-icons": "^5.3.0",
     "react-player": "^2.16.0",
     "react-select": "^5.8.1",
-    "wavesurfer.js": "^7.8.8"
+    "wavesurfer.js": "^7.8.9"
   },
   "devDependencies": {
     "@ianvs/prettier-plugin-sort-imports": "4.3.1",

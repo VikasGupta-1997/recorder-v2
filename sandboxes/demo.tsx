@@ -6,6 +6,7 @@ import { FaRegEdit } from "react-icons/fa";
 import VideoPreview from "~tabs/preview-utils/VideoPreview";
 import AudioPreview from "~tabs/preview-utils/AudioPreview";
 import EditingControls from "~tabs/preview-utils/EditingControls";
+import cutVideo, { toBase64 } from "~utils/cutVideo";
 
 export const getStyle = () => {
   const style = document.createElement("style")
@@ -32,7 +33,7 @@ const DemoSand = () => {
   };
 
   useEffect(() => {
-    const handleIframeMessage = (event) => {
+    const handleIframeMessage = async (event) => {
 
 
       const message = event.data;
@@ -62,6 +63,35 @@ const DemoSand = () => {
       if (message.type === "GO_TO_PREVIEW") {
         setEditMode(false)
       }
+
+      if (message.type === "cut-video") {
+        console.log("MEsasage", message)
+
+        try {
+          const blob = await cutVideo(
+            ffmpegInstance.current,
+            message.blob,
+            message.startTime,
+            message.endTime,
+            message.cut,
+            message.duration,
+            message.encode
+          );
+          console.log("blob11312", blob)
+         
+          const base64 = await toBase64(blob);
+          sendMessage({
+            type: "updated-blob",
+            base64: base64,
+            addToHistory: true,
+            blob: blob
+          });
+        } catch (error) {
+          sendMessage({ type: "ffmpeg-error", error: JSON.stringify(error) });
+        }
+
+      }
+
     };
 
     window.addEventListener("message", handleIframeMessage);
