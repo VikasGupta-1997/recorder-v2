@@ -181,8 +181,8 @@ function PreviewPage() {
             }
             {(isAudio === 'audio') && <AudioPreview blobUrl={blobUrl} blob={blob} audioRef={audioRef} containerRef={containerRef} />}
           </div>
-          {(isEditMode) ? null : <div className={`${style['edit-mode-btn']}`} > <button className={`${style["rounded-btn"]} ${style['publish-btn']}`} onClick={changeMode} >Edit Video</button></div>}
-          {<div className={style["editing-control-wrapper"]} >
+          {(!isEditMode) && <div className={`${style['edit-mode-btn']}`} > <button className={`${style["rounded-btn"]} ${style['publish-btn']}`} onClick={changeMode} >Edit Video</button></div>}
+          {(isEditMode) &&  <div className={style["editing-control-wrapper"]} >
             <EditingControls blob={blob} timeData={timeData} blobUrl={blobUrl} />
           </div>}
         </div>
