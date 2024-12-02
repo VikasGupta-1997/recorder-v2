@@ -18,19 +18,24 @@ let isPlaying = false;
 
 
 function PreviewPage() {
-    const videoRef = useRef(null)
     const audioRef = useRef(null);
+
+    const [contentState, setContentState] = useState({
+        blobUrl: null,
+        loadingVideo: true,
+        isEditMode: false,
+        originalVideo: {
+            blob: new Blob() , url: ''
+        },
+        blob: null,
+        timeData: {time: 0, updatePlayerTime: false}
+    })
+
     const [isAudio, setIsAudio] = useState('ideal')
-    const [blobUrl, setBlobUrl] = useState(null)
-    const [loadingVideo, setVideoLoading] = useState(true)
-    const [isEditMode, setIsEditMode] = useState(false)
-    const [originalVideo, setOriginalVideo] = useState({blob: new Blob() , url: ''})
-    const [blob, setBlob] = useState(null)
-    const [timeData, setTimeData] = useState({time: 0, updatePlayerTime: false})
     const url = useRef('')
     const containerRef = useRef(null)
 
-    console.log(blobUrl, "blobblob1", blob,)
+    // console.log(blobUrl, "blobblob1", blob,)
 
     const playPartialRecording = async () => {
         try {
@@ -53,9 +58,16 @@ function PreviewPage() {
                     console.log("newBlob1121", newBlob)
                     const newBlobUrl = URL.createObjectURL(newBlob);
                     console.log("newBlobUrl11221", newBlobUrl)
-                    setBlob(newBlob);
-                    setBlobUrl(newBlobUrl);
-                    setVideoLoading(false)
+                    setContentState(prev => ({
+                        ...prev,
+                        blob: newBlob,
+                        blobUrl: newBlobUrl,
+                        loadingVideo: false
+                    }))
+                    // setBlob(newBlob);
+                    // setBlobUrl(newBlobUrl);
+                    // setVideoLoading(false)
+
                     // window.postMessage({type: "SEND_FROM_PREVIEW", data: newBlobUrl}, '*')
                     // Revoke old URL to prevent memory leaks
                     if (url.current) {
@@ -102,10 +114,17 @@ function PreviewPage() {
                             console.log("All chunks received. Reassembling...");
                             
                             const { newBlob, newBlobUrl } = await playPartialRecording(); // Play the complete recording
-                            setOriginalVideo({
-                                blob: newBlob,
-                                url: newBlobUrl
-                            })
+                            // setOriginalVideo({
+                            //     blob: newBlob,
+                            //     url: newBlobUrl
+                            // })
+                            setContentState(prev => ({
+                                ...prev,
+                                originalVideo: {
+                                    blob: newBlob,
+                                    url: newBlobUrl
+                                }
+                            }))
                         }
                     }
                         break;
@@ -135,7 +154,7 @@ function PreviewPage() {
                 setIsAudio('video');
             }
         });
-    }, [blobUrl]);
+    }, [contentState.blobUrl]);
 
     useLayoutEffect(() => {
         window.addEventListener("message", (event) => {
@@ -145,8 +164,13 @@ function PreviewPage() {
                 console.log("Received updated blob:", message.blob);
                 // Update the blob and blobUrl for the preview
                 const newBlobUrl = URL.createObjectURL(message.blob);
-                setBlob(message.blob);
-                setBlobUrl(newBlobUrl);
+                setContentState(prev => ({
+                    ...prev,
+                    blob: message.blob,
+                    blobUrl: newBlobUrl
+                }))
+                // setBlob(message.blob);
+                // setBlobUrl(newBlobUrl);
                 
                 // Cleanup old blob URL
                 if (url.current) {
@@ -159,7 +183,7 @@ function PreviewPage() {
         onMountListeners()
     }, [])
 
-    if (loadingVideo) {
+    if (contentState.loadingVideo) {
         return (
             <div className={style["loading-container"]} >
                 <div className={style["loader"]}></div>
@@ -170,16 +194,23 @@ function PreviewPage() {
 
     const changeMode = () => {
         console.log("MODE")
-        setIsEditMode(prev => !prev)
+        setContentState(prev => ({...prev, isEditMode: !contentState.isEditMode}))
+        // setIsEditMode(prev => !prev)
         // sendPostMessage({ type: "SEND_FROM_PREVIEW", blob: blob })
     }
 
     const handleCancelEditing = () => {
-        setIsEditMode(false)
-        console.log("originalVideooriginalVideo", originalVideo)
-        const newBlobUrl = URL.createObjectURL(originalVideo?.blob);
-        setBlob(originalVideo?.blob);
-        setBlobUrl(newBlobUrl);
+        // setIsEditMode(false)
+        // console.log("originalVideooriginalVideo", originalVideo)
+        const newBlobUrl = URL.createObjectURL(contentState.originalVideo?.blob);
+        // setBlob(originalVideo?.blob);
+        // setBlobUrl(newBlobUrl);
+        setContentState(prev => ({
+            ...prev, 
+            isEditMode: false,
+            blob: prev.originalVideo.blob,
+            blobUrl: newBlobUrl
+        }))
         if (url.current) {
             URL.revokeObjectURL(url.current);
         }
@@ -191,7 +222,7 @@ function PreviewPage() {
         
 
     }
-    console.log("timeData", timeData)
+    // console.log("timeData", timeData)
     return (
         <div className={style["container"]}>
           <h1 className={style["heading-title"]}>
@@ -202,18 +233,18 @@ function PreviewPage() {
                 <FaRegEdit color={'white'} size={10} />
               </span>
             </span>
-            {isEditMode && <span>
+            {contentState.isEditMode && <span>
               <button onClick={handleCancelEditing} className={style["rounded-btn"]}>cancel</button>
             </span>}
           </h1>
           <div className={style["ref-wrapper"]}>
-            {(isAudio === 'video') && <VideoPreview setTimeData={setTimeData} blob={blob} blobUrl={blobUrl} />
+            {(isAudio === 'video') && <VideoPreview setContentState={setContentState}  blobUrl={ contentState.blobUrl} />
             }
-            {(isAudio === 'audio') && <AudioPreview blobUrl={blobUrl} blob={blob} audioRef={audioRef} containerRef={containerRef} />}
+            {(isAudio === 'audio') && <AudioPreview blobUrl={contentState.blobUrl} blob={contentState.blob} audioRef={audioRef} containerRef={containerRef} />}
           </div>
-          {(!isEditMode) && <div className={`${style['edit-mode-btn']}`} > <button className={`${style["rounded-btn"]} ${style['publish-btn']}`} onClick={changeMode} >Edit Video</button></div>}
-          {(isEditMode) &&  <div className={style["editing-control-wrapper"]} >
-            <EditingControls blob={blob} timeData={timeData} blobUrl={blobUrl} />
+          {(!contentState.isEditMode) && <div className={`${style['edit-mode-btn']}`} > <button className={`${style["rounded-btn"]} ${style['publish-btn']}`} onClick={changeMode} >Edit Video</button></div>}
+          {(contentState.isEditMode) &&  <div className={style["editing-control-wrapper"]} >
+            <EditingControls blob={contentState.blob} timeData={contentState.timeData} blobUrl={contentState.blobUrl} />
           </div>}
         </div>
     );

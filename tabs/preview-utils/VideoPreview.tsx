@@ -12,8 +12,7 @@ export const getStyle = () => {
 
 export default function VideoPreview({
     blobUrl,
-    blob,
-    setTimeData
+    setContentState
 }) {
     const plyrRef = useRef(null);
     const [videoSource, setVideoSource] = useState(null);
@@ -42,10 +41,17 @@ export default function VideoPreview({
         if (plyrRef.current && plyrRef.current.plyr) {
           // Check when the video is playing, update the time in real time
           plyrRef.current.plyr.on("timeupdate", () => {
-            setTimeData({
-                time: plyrRef.current.plyr.currentTime,
-                updatePlayerTime: false
-            })
+            setContentState(prev => ({
+                ...prev,
+                timeData: {
+                    time: plyrRef.current.plyr.currentTime,
+                    updatePlayerTime: false
+                }
+            }))
+            // setTimeData({
+            //     time: plyrRef.current.plyr.currentTime,
+            //     updatePlayerTime: false
+            // })
             // setContentState((prevContentState) => ({
             //   ...prevContentState,
             //   time: plyrRef.current.plyr.currentTime,
