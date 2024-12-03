@@ -17,7 +17,8 @@ function VideoPreview({
     const {
         plyrRef,
         isEditMode,
-        updateCursorPosition
+        updateCursorPosition,
+        waveSurferRef
     } = usePreview();
 
     const [videoSource, setVideoSource] = useState(null);
@@ -41,6 +42,16 @@ function VideoPreview({
             });
         }
     }, [blobUrl]);
+
+    useEffect(() => {
+        if (waveSurferRef.current) {
+            waveSurferRef.current.on('seeking', () => {
+                const currentTime = waveSurferRef.current.getCurrentTime();
+                plyrRef.current.plyr.currentTime = currentTime;
+                updateCursorPosition(currentTime);
+            })
+        }
+    }, [waveSurferRef.current]);
 
     const handleClick = () => {
         if (plyrRef.current && plyrRef.current.plyr && isEditMode) {

@@ -20,7 +20,8 @@ export default function AudioPreview({
 }) {
     const {
         isEditMode,
-        updateCursorPosition
+        updateCursorPosition,
+        waveSurferRef
     } = usePreview();
 
     const [isPlaying, setIsPlaying] = useState(true); // Track if audio is playing
@@ -198,6 +199,18 @@ export default function AudioPreview({
         setIsPlaying(true); // Start bouncing effect when audio plays
         setupAnalyser()
     };
+
+    useEffect(() => {
+        if (waveSurferRef.current) {
+            waveSurferRef.current.on('seeking', () => {
+                const currentTime = waveSurferRef.current.getCurrentTime();
+                if (audioRef.current) {
+                    audioRef.current.currentTime = currentTime; // Set the current time of the audio element
+                }
+                updateCursorPosition(currentTime);
+            })
+        }
+    }, [waveSurferRef.current]);
 
     useEffect(() => {
         if (blobUrl) {
