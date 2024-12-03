@@ -1,8 +1,9 @@
 import styleText from "data-text:../preview.module.css"
 import * as style from '../preview.module.css'
-import { useRef, useState, useEffect, memo } from "react"
+import { useRef, useState, useEffect, memo, useLayoutEffect } from "react"
 import Plyr from "plyr-react";
 import "plyr-react/plyr.css";
+import { usePreview } from "../previewContext";
 
 export const getStyle = () => {
     const style = document.createElement("style")
@@ -12,11 +13,14 @@ export const getStyle = () => {
 
 function VideoPreview({
     blobUrl,
-    setTimeS,
-    plyrRef
 }) {
+    const {
+        plyrRef,
+        isEditMode,
+        updateCursorPosition
+    } = usePreview();
+
     const [videoSource, setVideoSource] = useState(null);
-    const [isSet, setIsSet] = useState(false);
 
     const bl = async (url) => {
         let blob = await fetch(url).then(r => r.blob());
@@ -39,39 +43,12 @@ function VideoPreview({
     }, [blobUrl]);
 
     const handleClick = () => {
-        setIsSet(true);
-        // if (isSet) return;
-        if (plyrRef.current && plyrRef.current.plyr) {
-            // 
+        if (plyrRef.current && plyrRef.current.plyr && isEditMode) {
             plyrRef.current.plyr.on("timeupdate", () => {
-                console.log("Videow time update:", plyrRef.current.plyr.currentTime);
-                setTimeS(plyrRef.current.plyr.currentTime)
+                updateCursorPosition(plyrRef.current.plyr.currentTime)
             });
         }
     };
-
-    // useEffect(() => {
-    //     if (isSet) return;
-    //     const handleKeyPress = () => {
-    //         if (plyrRef.current && plyrRef.current.plyr) {
-    //             setIsSet(true);
-    //             plyrRef.current.plyr.on("timeupdate", () => {
-    //                 console.log("Video time update from key press:", plyrRef.current.plyr.currentTime);
-    //                 setContentState(prev => ({
-    //                     ...prev,
-    //                     timeData: {
-    //                         time: plyrRef.current.plyr.currentTime,
-    //                         updatePlayerTime: false
-    //                     }
-    //                 }));
-    //             });
-    //         }
-    //     };
-    //     window.addEventListener("keydown", handleKeyPress);
-    //     return () => {
-    //         window.removeEventListener("keydown", handleKeyPress);
-    //     };
-    // }, [isSet]);
 
     const options = {
         controls: [
@@ -96,7 +73,7 @@ function VideoPreview({
     }
 
     return (
-        <div className={style["react-player-wrapper-video"]}>
+        <div onClick={handleClick} className={style["react-player-wrapper-video"]}>
             <Plyr
                 ref={plyrRef}
                 source={videoSource}

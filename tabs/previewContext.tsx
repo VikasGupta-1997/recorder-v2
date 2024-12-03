@@ -8,12 +8,14 @@ let isPlaying = false;
 export function PreviewProvider({ children }: { children: React.ReactNode }) {
     const waveSurferRef = useRef<WaveSurfer | null>(null);
     const audioRef = useRef(null);
+    const customCursorRef = useRef(null);
 
     const [blobUrl, setBlobUrl] = useState(null)
     const [originalVideo, setOriginalVideo] = useState({
         blob: new Blob(), url: ''
     })
     const [isAudio, setIsAudio] = useState('ideal')
+    const plyrRef = useRef(null);
 
     const [loadingVideo, setLoadingVideo] = useState(true)
     // const [originalVideo, setOriginalVideo] = useState({
@@ -24,6 +26,8 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     const [history, setHistory] = useState([])
     const [redoHistory, setRedoHistory] = useState([])
     const [isEditMode, setIsEditMode] = useState(false)
+    const [videoTime, setVideoTime] = useState(0)
+    const [duration, setDuration] = useState(0);
 
     const [trimState, setTrimState] = useState({
         start: 0,
@@ -118,13 +122,6 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                                 blob: newBlob,
                                 url: newBlobUrl
                             })
-                            // setContentState(prev => ({
-                            //     ...prev,
-                            //     originalVideo: {
-                            //         blob: newBlob,
-                            //         url: newBlobUrl
-                            //     }
-                            // }))
                         }
                     }
                         break;
@@ -132,6 +129,16 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
             }
         )
     }
+
+    const updateCursorPosition = (currentTime) => {
+        if (!customCursorRef.current) return;
+        // Get the parent container's width (where the waveform is rendered)
+        const containerRect = customCursorRef.current.parentElement.getBoundingClientRect();
+        const containerWidth = containerRect.width;
+
+        const position = (currentTime / duration) * containerWidth;
+        customCursorRef.current.style.left = `${position}px`;
+    };
 
     const addToHistory = (newState) => {
         // Add the current state to history before applying new changes
@@ -336,7 +343,14 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         changeMode,
         isEditMode,
         handleUndo,
-        handleRedo
+        handleRedo,
+        plyrRef,
+        videoTime, 
+        setVideoTime,
+        customCursorRef,
+        duration, 
+        setDuration,
+        updateCursorPosition
     };
 
     return (

@@ -3,7 +3,7 @@ import * as style from '../preview.module.css'
 import { useEffect, useRef, useState } from "react"
 import { AudioVisualizer, LiveAudioVisualizer } from 'react-audio-visualize';
 import { BiMicrophone } from "react-icons/bi";
-import Plyr from "plyr-react";
+import { usePreview } from "../previewContext";
 
 export const getStyle = () => {
     const style = document.createElement("style")
@@ -18,6 +18,11 @@ export default function AudioPreview({
     blob,
     blobUrl
 }) {
+    const {
+        isEditMode,
+        updateCursorPosition
+    } = usePreview();
+
     const [isPlaying, setIsPlaying] = useState(true); // Track if audio is playing
     const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder>()
     const [analyseRefS, setAnalyseRefS] = useState(null);
@@ -158,6 +163,9 @@ export default function AudioPreview({
     // Handle time updates to track progress
     const handleTimeUpdate = () => {
         if (audioRef.current) {
+            if(isEditMode){
+                updateCursorPosition(audioRef.current.currentTime)
+            }
             setCurrentTime(audioRef.current.currentTime);
         }
     }
@@ -264,7 +272,7 @@ export default function AudioPreview({
                     // paddingBottom: 8
                 }}
                 controls
-                autoPlay
+                // autoPlay
                 onTimeUpdate={handleTimeUpdate} // Update progress
                 onLoadedMetadata={handleLoadedMetadata} // Set duration when metadata is loaded
                 onEnded={handleAudioEnded} // Stop animation when audio ends

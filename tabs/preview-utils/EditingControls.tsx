@@ -17,8 +17,6 @@ export const getStyle = () => {
 const EditingControls = ({ 
     setShowGhost,
     showGhost,
-    setDuration,
-    duration
  }) => {
 
     const {
@@ -31,7 +29,10 @@ const EditingControls = ({
         addToHistory,
         handleUndo,
         handleRedo,
-        redoHistory
+        redoHistory,
+        customCursorRef,
+        setDuration,
+        duration
     } = usePreview();
 
     const waveContainerRef = useRef<HTMLDivElement>(null);
@@ -40,7 +41,6 @@ const EditingControls = ({
     const endHandleRef = useRef(null);
     const isDragging = useRef(false);
     const activeHandle = useRef(null);
-    const customCursorRef = useRef(null);
     const ghostCursorRef = useRef(null);
     // const [showGhost, setShowGhost] = useState(false);
     const mouseDown = useRef(false);
