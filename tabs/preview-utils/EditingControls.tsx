@@ -30,7 +30,8 @@ const EditingControls = ({
         waveSurferRef,
         addToHistory,
         handleUndo,
-        handleRedo
+        handleRedo,
+        redoHistory
     } = usePreview();
 
     const waveContainerRef = useRef<HTMLDivElement>(null);
@@ -208,13 +209,13 @@ const EditingControls = ({
       }, [history]);
 
 
-//   useEffect(() => {
-//     if (redoHistory.length > 0) {
-//       setRedoDisabled(false);
-//     } else {
-//       setRedoDisabled(true);
-//     }
-//   }, [redoHistory]);
+  useEffect(() => {
+    if (redoHistory.length > 0) {
+      setRedoDisabled(false);
+    } else {
+      setRedoDisabled(true);
+    }
+  }, [redoHistory]);
 
     const toTimeStamp = (time) => {
         const minutes = Math.floor(time / 60);
@@ -452,4 +453,4 @@ const EditingControls = ({
     );
 }
 
-export default memo(EditingControls)
+export default (EditingControls)

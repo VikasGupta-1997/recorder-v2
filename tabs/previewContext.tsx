@@ -133,14 +133,17 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         )
     }
 
-    const addToHistory = (trimState) => {
-        console.log(history, "trimState12121", trimState)
-        const newHistory = [...history, { ...trimState }]
-        // const newHistory = historyObject.push(trimState)
-        console.log(newHistory, "NEw Histry===>", )
-        // historyObject.push(newHistory)
-        // console.log("historyObject121", historyObject)
-        setHistory(newHistory)
+    const addToHistory = (newState) => {
+        // Add the current state to history before applying new changes
+        const newHistory = [...history, { 
+            trimState: { ...trimState },
+            blob: blob,
+            blobUrl: blobUrl
+        }];
+        setHistory(newHistory);
+        
+        // Clear redo history since we're creating a new branch
+        setRedoHistory([]);
     }
 
     const sendPostMessage = (message) => {
@@ -174,7 +177,11 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                 console.log("Received updated blob:", message.blob);
                 // Update the blob and blobUrl for the preview
                 const newBlobUrl = URL.createObjectURL(message.blob);
-                addToHistory({ ...trimState, blob: blob })
+                addToHistory({ 
+                    trimState: { ...trimState },
+                    blob: blob,
+                    blobUrl: blobUrl
+                });
                 setBlobUrl(newBlobUrl)
                 setBlob(message.blob)
 
@@ -241,38 +248,84 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     }
 
     const handleUndo = () => {
-        if(history.length > 0){
-            const newHistory = [...history]
-            const lastD = newHistory.at(-1) as any
-            setRedoHistory([...redoHistory, { ...lastD }])
-            if(lastD?.blob){
-                setBlob(lastD.blob)
-                const newBlobUrl = URL.createObjectURL(lastD.blob);
+        if (history.length > 0) {
+            // Get the last state from history
+            const lastState = history[history.length - 1];
+            
+            // Save current state to redo history
+            const currentState = {
+                trimState: { ...trimState },
+                blob: blob,
+                blobUrl: blobUrl
+            };
+            setRedoHistory([...redoHistory, currentState]);
+            
+            // Restore the previous state
+            if (lastState.blob) {
+                const newBlobUrl = URL.createObjectURL(lastState.blob);
+                setBlob(lastState.blob);
                 setBlobUrl(newBlobUrl);
+                
+                // Cleanup old blob URL
+                if (url.current) {
+                    URL.revokeObjectURL(url.current);
+                }
+                url.current = newBlobUrl;
             }
-            setTrimState({...lastD})
-            newHistory.splice(-1);
-            setHistory(newHistory)
+            
+            setTrimState(lastState.trimState);
+            
+            // Remove the last state from history
+            setHistory(history.slice(0, -1));
         }
     }
 
     const handleRedo = () => {
-        console.log("handleRedo")
-    }
+        if (redoHistory.length > 0) {
+            // Get the last state from redo history
+            const redoState = redoHistory[redoHistory.length - 1];
+            
+            // Save current state to history
+            const currentState = {
+                trimState: { ...trimState },
+                blob: blob,
+                blobUrl: blobUrl
+            };
+            setHistory([...history, currentState]);
+            
+            // Restore the redo state
+            if (redoState.blob) {
+                const newBlobUrl = URL.createObjectURL(redoState.blob);
+                setBlob(redoState.blob);
+                setBlobUrl(newBlobUrl);
+                
+                // Cleanup old blob URL
+                if (url.current) {
+                    URL.revokeObjectURL(url.current);
+                }
+                url.current = newBlobUrl;
+            }
+            
+            setTrimState(redoState.trimState);
+            
+            // Remove the used redo state
+            setRedoHistory(redoHistory.slice(0, -1));
+        }
+    };
 
     const value = {
         playPartialRecording,
-        blobUrl, 
+        blobUrl,
         setBlobUrl,
         loadingVideo,
         setLoadingVideo,
-        blob, 
+        blob,
         setBlob,
-        trimState, 
+        trimState,
         setTrimState,
-        history, 
+        history,
         setHistory,
-        redoHistory, 
+        redoHistory,
         setRedoHistory,
         waveSurferRef,
         originalVideo,
