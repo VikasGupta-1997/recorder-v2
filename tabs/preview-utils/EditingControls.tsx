@@ -3,9 +3,10 @@ import { BsScissors } from "react-icons/bs"
 import { MdOutlineCrop } from "react-icons/md"
 import styleText from "data-text:../preview.module.css"
 import * as styles from '../preview.module.css'
-import { useEffect, useRef, useState } from "react"
+import { memo, useEffect, useRef, useState } from "react"
 import WaveSurfer from "wavesurfer.js"
 import WaveformGenerator from "~tabs/waveform-generator"
+import { usePreview } from "~tabs/previewContext"
 
 export const getStyle = () => {
     const style = document.createElement("style")
@@ -13,9 +14,26 @@ export const getStyle = () => {
     return style
 }
 
-const EditingControls = ({ blobUrl, timeData, blob }) => {
+const EditingControls = ({ 
+    setShowGhost,
+    showGhost,
+    setDuration,
+    duration
+ }) => {
+
+    const {
+        blob,
+        blobUrl,
+        setTrimState,
+        trimState,
+        history,
+        waveSurferRef,
+        addToHistory,
+        handleUndo,
+        handleRedo
+    } = usePreview();
+
     const waveContainerRef = useRef<HTMLDivElement>(null);
-    const waveSurferRef = useRef<WaveSurfer | null>(null);
     const trimmerRef = useRef(null);
     const startHandleRef = useRef(null);
     const endHandleRef = useRef(null);
@@ -23,18 +41,19 @@ const EditingControls = ({ blobUrl, timeData, blob }) => {
     const activeHandle = useRef(null);
     const customCursorRef = useRef(null);
     const ghostCursorRef = useRef(null);
-    const [showGhost, setShowGhost] = useState(false);
+    // const [showGhost, setShowGhost] = useState(false);
     const mouseDown = useRef(false);
-    const [duration, setDuration] = useState(0);
-
-    const [trimState, setTrimState] = useState({
-        start: 0,
-        end: 1,
-        dragInteracted: false,
-        startTime: 0,
-        endTime: 0,
-        duration: 0
-    });
+    // const [duration, setDuration] = useState(0);
+    const [undoDisabled, setUndoDisabled] = useState(true);
+    const [redoDisabled, setRedoDisabled] = useState(true);
+    // const [trimState, setTrimState] = useState({
+    //     start: 0,
+    //     end: 1,
+    //     dragInteracted: false,
+    //     startTime: 0,
+    //     endTime: 0,
+    //     duration: 0
+    // });
 
     const [cursorPosition, setCursorPosition] = useState(0);
 
@@ -90,6 +109,8 @@ const EditingControls = ({ blobUrl, timeData, blob }) => {
     };
 
     const handleMouseUp = () => {
+        console.log("NOW MOUSE LEFT!!")
+        addToHistory(trimState)
         isDragging.current = false;
         activeHandle.current = null;
         mouseDown.current = false;
@@ -178,6 +199,23 @@ const EditingControls = ({ blobUrl, timeData, blob }) => {
         };
     }, [blobUrl]);
 
+    useEffect(() => {
+        if (history.length > 0) {
+          setUndoDisabled(false);
+        } else {
+          setUndoDisabled(true);
+        }
+      }, [history]);
+
+
+//   useEffect(() => {
+//     if (redoHistory.length > 0) {
+//       setRedoDisabled(false);
+//     } else {
+//       setRedoDisabled(true);
+//     }
+//   }, [redoHistory]);
+
     const toTimeStamp = (time) => {
         const minutes = Math.floor(time / 60);
         const seconds = Math.floor(time - minutes * 60);
@@ -188,8 +226,6 @@ const EditingControls = ({ blobUrl, timeData, blob }) => {
             return `${minutes}:${seconds}`;
         }
     };
-
-    console.log("trimStatetrimState", trimState)
 
     const processAudioWithAuphonic = async (audioBlob) => {
         try {
@@ -292,31 +328,31 @@ const EditingControls = ({ blobUrl, timeData, blob }) => {
             // If it's audio, we can process it with Auphonic
             if (blob.type.startsWith('audio/')) {
                 try {
-                    const processedBlob = await processAudioWithAuphonic(blob);
+                    // const processedBlob = await processAudioWithAuphonic(blob);
                     // Send the processed blob back
-                    sendMessage({
-                        type: "updated-blob",
-                        blob: processedBlob
-                    });
+                    // sendMessage({
+                    //     type: "updated-blob",
+                    //     blob: processedBlob
+                    // });
                 } catch (error) {
                     console.error('Failed to process audio:', error);
                 }
             }
 
             // Reset trim state after sending
-            setTrimState(prev => ({
-                ...prev,
-                start: 0,
-                end: 1,
-                startTime: 0,
-                endTime: prev.duration,
-                dragInteracted: false
-            }));
+            // setTrimState(prev => ({
+            //     ...prev,
+            //     start: 0,
+            //     end: 1,
+            //     startTime: 0,
+            //     endTime: prev.duration,
+            //     dragInteracted: false
+            // }));
 
             // Reset wavesurfer region if it exists
-            if (waveSurferRef.current) {
-                waveSurferRef.current.seekTo(0);
-            }
+            // if (waveSurferRef.current) {
+            //     waveSurferRef.current.seekTo(0);
+            // }
         } catch (error) {
             console.error("Error in handleTrim:", error);
         }
@@ -393,8 +429,8 @@ const EditingControls = ({ blobUrl, timeData, blob }) => {
             </div>
             <div className={styles["editing-container"]}>
                 <div className={styles["redo-undo"]} >
-                    <div className="undo" > <LiaUndoAltSolid color="10abd9" fontSize={24} /> </div>
-                    <div className="redo" > <LiaRedoAltSolid color="10abd9" fontSize={24} /> </div>
+                    <button disabled={undoDisabled} className="undo" onClick={handleUndo} > <LiaUndoAltSolid  color="10abd9" fontSize={24} /> </button>
+                    <button disabled={redoDisabled} className="redo" onClick={handleRedo} > <LiaRedoAltSolid  color="10abd9" fontSize={24} /> </button>
                 </div>
 
                 <div className={styles["editing-actions"]} >
@@ -416,4 +452,4 @@ const EditingControls = ({ blobUrl, timeData, blob }) => {
     );
 }
 
-export default EditingControls
+export default memo(EditingControls)

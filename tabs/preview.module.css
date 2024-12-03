@@ -304,6 +304,19 @@ video {
     gap: 24px;
 }
 
+.redo-undo button {
+    border: none;
+    background: none;
+    cursor: pointer;
+}
+.redo-undo button:disabled svg {
+    opacity: 0.5;
+}
+.redo-undo button svg {
+    opacity: 1;
+}
+
+
 .editing-container .editing-actions {
     display: flex;
     align-items: center;
