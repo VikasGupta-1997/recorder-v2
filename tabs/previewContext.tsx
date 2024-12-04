@@ -320,6 +320,79 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
+    const processAudioWithAuphonic = async (audioBlob) => {
+        try {
+            console.log("processAudioWithAuphonic called@@", audioBlob)
+            // You'll need to replace these with your actual Auphonic credentials
+            const AUPHONIC_USERNAME = 'bigcommand';
+            const AUPHONIC_PASSWORD = 'zbp@hty3gnb.AFB1hqc';
+
+            // Create FormData with the audio file
+            const formData = new FormData();
+            // formData.append('input_file', audioBlob);
+            formData.append('input_file', audioBlob, 'audio_file.mp3');
+            formData.append('preset', 'em7Cac7GkJzhH8yw7qDfWo'); // or your preferred preset
+
+            // Create new production
+            const response = await fetch('https://auphonic.com/api/simple/productions.json', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Basic ' + btoa(`${AUPHONIC_USERNAME}:${AUPHONIC_PASSWORD}`)
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to create Auphonic production');
+            }
+
+            const data = await response.json();
+            const uuid = data.data.uuid;
+
+            // Start the production
+            await fetch(`https://auphonic.com/api/production/${uuid}/start.json`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Basic ' + btoa(`${AUPHONIC_USERNAME}:${AUPHONIC_PASSWORD}`)
+                }
+            });
+
+            // Poll for completion
+            const checkStatus = async () => {
+                const statusResponse = await fetch(`https://auphonic.com/api/production/${uuid}.json`, {
+                    headers: {
+                        'Authorization': 'Basic ' + btoa(`${AUPHONIC_USERNAME}:${AUPHONIC_PASSWORD}`)
+                    }
+                });
+                const statusData = await statusResponse.json();
+                return statusData.data.status;
+            };
+
+            // Wait for processing to complete
+            let status;
+            do {
+                await new Promise(resolve => setTimeout(resolve, 2000)); // Poll every 2 seconds
+                status = await checkStatus();
+            } while (status === 'Processing');
+
+            // Download the processed file
+            if (status === 'Done') {
+                const downloadResponse = await fetch(`https://auphonic.com/api/production/${uuid}/download.json`, {
+                    headers: {
+                        'Authorization': 'Basic ' + btoa(`${AUPHONIC_USERNAME}:${AUPHONIC_PASSWORD}`)
+                    }
+                });
+                const processedBlob = await downloadResponse.blob();
+                return processedBlob;
+            }
+
+            throw new Error('Processing failed');
+        } catch (error) {
+            console.error('Error processing audio with Auphonic:', error);
+            throw error;
+        }
+    };
+
     const value = {
         playPartialRecording,
         blobUrl,
@@ -350,7 +423,8 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         customCursorRef,
         duration, 
         setDuration,
-        updateCursorPosition
+        updateCursorPosition,
+        processAudioWithAuphonic
     };
 
     return (
