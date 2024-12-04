@@ -68,7 +68,6 @@
           "ffmpeg/*",
           "sandboxes/*",
           "sandboxes/demo.tsx",
-          "sandboxes/customIframe.tsx",
           "context.tsx"
         ],
         "matches": [

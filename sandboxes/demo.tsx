@@ -1,11 +1,5 @@
-import { useContext, useEffect, useRef, useState } from "react";
-import { ContentStateContext } from "~context";
+import { useEffect, useRef, useState } from "react";
 import styleText from "data-text:../tabs/preview.module.css"
-import * as style from '../tabs/preview.module.css'
-import { FaRegEdit } from "react-icons/fa";
-import VideoPreview from "~tabs/preview-utils/VideoPreview";
-import AudioPreview from "~tabs/preview-utils/AudioPreview";
-import EditingControls from "~tabs/preview-utils/EditingControls";
 import cutVideo, { toBase64 } from "~utils/cutVideo";
 
 export const getStyle = () => {
@@ -16,17 +10,10 @@ export const getStyle = () => {
 
 const DemoSand = () => {
   const iframeRef = useRef(null);
+  const scriptLoaded = useRef(false);
   const ffmpegInstance = useRef<any>(null);
-  const [videoData, setVideoData] = useState(null)
   const [editMode, setEditMode] = useState(false)
-  const [isAudio, setIsAudio] = useState('ideal')
-  const [isEditMode, setIsEditMode] = useState(false)
-  const [blob, setBlob] = useState(null)
-  const [blobUrl, setBlobUrl] = useState(null)
-  const url = useRef('')
-  const containerRef = useRef(null)
-
-  const audioRef = useRef(null);
+  const triggerLoad = useRef(false)
 
   const sendMessage = (message) => {
     iframeRef.current.contentWindow.postMessage(message, "*");
@@ -34,30 +21,10 @@ const DemoSand = () => {
 
   useEffect(() => {
     const handleIframeMessage = async (event) => {
-
-
       const message = event.data;
       console.log("Message received in sandbox from iframe:", message);
       if (message.type === "SEND_FROM_PREVIEW") {
-        console.log("YEAH CALLED!!", message.blob)
         setEditMode(true)
-        setVideoData(message.blob)
-        const newBlobUrl = URL.createObjectURL(message.blob);
-        console.log("newBlobUrlnewBlobUrl", newBlobUrl)
-        setBlobUrl(newBlobUrl)
-        // const vid = document.getElementById('vid-sand') as HTMLVideoElement
-        // console.log("vidvid", vid)
-        // vid.src = newBlobUrl;
-        // vid.play()
-        // bl(message.data)
-      }
-
-      if (message.type === "IS_CONTENT_TYPE") {
-        if (message.isAudioOnly) {
-          setIsAudio('audio')
-        } else {
-          setIsAudio('video')
-        }
       }
 
       if (message.type === "GO_TO_PREVIEW") {
@@ -65,8 +32,6 @@ const DemoSand = () => {
       }
 
       if (message.type === "cut-video") {
-        console.log("MEsasage", message)
-
         try {
           const blob = await cutVideo(
             ffmpegInstance.current,
@@ -89,9 +54,12 @@ const DemoSand = () => {
         } catch (error) {
           sendMessage({ type: "ffmpeg-error", error: JSON.stringify(error) });
         }
-
       }
 
+      if(message.type === "load-ffmpeg") {
+        triggerLoad.current = true;
+        loadFfmpeg()
+      }
     };
 
     window.addEventListener("message", handleIframeMessage);
@@ -103,6 +71,9 @@ const DemoSand = () => {
 
 
   const loadFfmpeg = async () => {
+    if (!scriptLoaded.current) return;
+    if (!triggerLoad.current) return;
+    if (ffmpegInstance.current) return;
     try {
       const { createFFmpeg } = (window as any)?.FFmpeg;
 
@@ -122,53 +93,31 @@ const DemoSand = () => {
       console.log("Loading FFmpeg...");
       await ffmpegInstance.current.load();
       console.log("FFmpeg Loaded!", ffmpegInstance.current?.isLoaded());
-
+      sendMessage({ type: "ffmpeg-loaded" });
       // Notify the parent (background or popup script) that FFmpeg is ready
       // window.parent.postMessage({ type: "ready" }, "*");
     } catch (error) {
+      sendMessage({
+        type: "ffmpeg-load-error",
+        error: JSON.stringify(error),
+      });
       console.error("Error loading FFmpeg:", error);
     }
   };
-  const goToPreview = () => {
-    console.log("goToPreview")
-    setEditMode(false)
-  }
-
-  const handleChildData = () => {
-    console.log("videoDatavideoData", videoData)
-    sendMessage({ type: "EDITED_VIDEO", blob: videoData })
-  }
 
   useEffect(() => {
-    console.log(" chrome.runtime112", chrome.runtime)
     //   Load FFmpeg script dynamically
     const script = document.createElement("script");
     script.src = "/vendor/ffmpeg.min.js";
     script.async = true;
 
-    script.onload = loadFfmpeg;
+    script.onload = () => {
+      scriptLoaded.current = true;
+      loadFfmpeg();
+    } 
 
     document.body.appendChild(script);
-
-
-    return () => {
-      // Cleanup
-      // document.body.removeChild(script);
-      // window.removeEventListener('message', handleMessage);
-    };
   }, []);
-
-  console.log("editModeeditMode", editMode)
-
-
-  const changeMode = () => {
-    console.log("MODE")
-    setIsEditMode(prev => !prev)
-  }
-
-  const handleCancelEditing = () => {
-    setIsEditMode(false)
-  }
 
   return <>
     <>
@@ -188,31 +137,6 @@ const DemoSand = () => {
           }}
         ></iframe>
       </div>
-      {/* <div style={{ display: editMode ? 'block' : 'none' }}>
-        <div className={style["container"]}>
-          <h1 className={style["heading-title"]}>
-            <span className={style["title"]} >
-              {`Rec-11122024-desktop.${isAudio === 'video' ? 'mp4' : 'mp3'}`}
-              {" "}
-              <span className={style["edit-icon"]} >
-                <FaRegEdit color={'white'} size={10} />
-              </span>
-            </span>
-            {isEditMode && <span>
-              <button onClick={handleCancelEditing} className={style["rounded-btn"]}>cancel</button>
-            </span>}
-          </h1>
-          <div className={style["ref-wrapper"]}>
-            {(isAudio === 'video' && editMode) && <VideoPreview blob={blob} blobUrl={blobUrl} />
-            }
-            {(isAudio === 'audio' && editMode) && <AudioPreview blobUrl={blobUrl} blob={blob} audioRef={audioRef} containerRef={containerRef} />}
-          </div>
-          {(isEditMode && editMode) ? null : <div className={`${style['edit-mode-btn']}`} > <button className={`${style["rounded-btn"]} ${style['publish-btn']}`} onClick={changeMode} >Edit Video</button></div>}
-          {<div className={style["editing-control-wrapper"]} >
-            <EditingControls blobUrl={blobUrl} />
-          </div>}
-        </div>
-      </div> */}
     </>
   </>;
 };

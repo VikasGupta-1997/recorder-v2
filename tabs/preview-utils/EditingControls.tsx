@@ -3,9 +3,8 @@ import { BsScissors } from "react-icons/bs"
 import { MdOutlineCrop } from "react-icons/md"
 import styleText from "data-text:../preview.module.css"
 import * as styles from '../preview.module.css'
-import { memo, useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import WaveSurfer from "wavesurfer.js"
-import WaveformGenerator from "~tabs/waveform-generator"
 import { usePreview } from "~tabs/previewContext"
 
 export const getStyle = () => {
@@ -34,7 +33,9 @@ const EditingControls = ({
         setDuration,
         duration,
         processAudioWithAuphonic,
-        isAudio
+        isAudio,
+        setIsFfmpegRunning,
+        ffmpegRunning
     } = usePreview();
 
     const waveContainerRef = useRef<HTMLDivElement>(null);
@@ -44,20 +45,9 @@ const EditingControls = ({
     const isDragging = useRef(false);
     const activeHandle = useRef(null);
     const ghostCursorRef = useRef(null);
-    // const [showGhost, setShowGhost] = useState(false);
     const mouseDown = useRef(false);
-    // const [duration, setDuration] = useState(0);
     const [undoDisabled, setUndoDisabled] = useState(true);
     const [redoDisabled, setRedoDisabled] = useState(true);
-    // const [trimState, setTrimState] = useState({
-    //     start: 0,
-    //     end: 1,
-    //     dragInteracted: false,
-    //     startTime: 0,
-    //     endTime: 0,
-    //     duration: 0
-    // });
-
     const [cursorPosition, setCursorPosition] = useState(0);
 
     const sendMessage = (message) => {
@@ -270,7 +260,8 @@ const EditingControls = ({
                     console.error('Failed to process audio:', error);
                 }
             }
-
+            console.log("Now running!!")
+            setIsFfmpegRunning(true)
             // Reset trim state after sending
             // setTrimState(prev => ({
             //     ...prev,
@@ -365,14 +356,14 @@ const EditingControls = ({
             </div>
             <div className={styles["editing-container"]}>
                 <div className={styles["redo-undo"]} >
-                    <button disabled={undoDisabled} className="undo" onClick={handleUndo} > <LiaUndoAltSolid  color="10abd9" fontSize={24} /> </button>
-                    <button disabled={redoDisabled} className="redo" onClick={handleRedo} > <LiaRedoAltSolid  color="10abd9" fontSize={24} /> </button>
+                    <button disabled={undoDisabled || ffmpegRunning} className="undo" onClick={handleUndo} > <LiaUndoAltSolid  color="10abd9" fontSize={24} /> </button>
+                    <button disabled={redoDisabled || ffmpegRunning} className="redo" onClick={handleRedo} > <LiaRedoAltSolid  color="10abd9" fontSize={24} /> </button>
                 </div>
 
                 <div className={styles["editing-actions"]} >
                     {
                         ["cut", "trim", "delete recording", "publish"].map(action => (
-                            <button onClick={() => handleClick(action)} key={action} className={action === 'publish' ? styles["publish-btn"] : ""} >
+                            <button disabled={ffmpegRunning} onClick={() => handleClick(action)} key={action} className={action === 'publish' ? styles["publish-btn"] : ""} >
                                 {["cut", "trim"].includes(action) && <span  >
                                     {action === 'cut' ? <BsScissors fontSize={14} color="10abd9" /> : <MdOutlineCrop fontSize={14} color="10abd9" />}
                                 </span>}

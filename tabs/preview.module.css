@@ -32,6 +32,11 @@
     border-bottom-right-radius: 8px;
 }
 
+.error {
+    color: rgb(165, 7, 7);
+    font-weight: 600;
+}
+
 .video-controls button {
     border: none;
     background: none;
@@ -316,6 +321,12 @@ video {
     opacity: 1;
 }
 
+.editing-actions button:disabled {
+    opacity: 0.5;
+}
+.editing-actions button {
+    opacity: 1;
+}
 
 .editing-container .editing-actions {
     display: flex;

@@ -18,9 +18,6 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     const plyrRef = useRef(null);
 
     const [loadingVideo, setLoadingVideo] = useState(true)
-    // const [originalVideo, setOriginalVideo] = useState({
-    //     blob: new Blob() , url: ''
-    // })
     const [blob, setBlob] = useState(null)
     const url = useRef('')
     const [history, setHistory] = useState([])
@@ -28,7 +25,9 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     const [isEditMode, setIsEditMode] = useState(false)
     const [videoTime, setVideoTime] = useState(0)
     const [duration, setDuration] = useState(0);
-
+    const [isFfmpegLoaded, setIsFfmpegLoaded] = useState(false)
+    const [ffmpegLoadError, setFfmpegLoadError] = useState(false)
+    const [ffmpegRunning, setIsFfmpegRunning] = useState(false)
     const [trimState, setTrimState] = useState({
         start: 0,
         end: 1,
@@ -61,18 +60,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                     console.log("newBlobUrl11221", newBlobUrl)
                     setBlobUrl(newBlobUrl)
                     setBlob(newBlob)
-                    // setContentState(prev => ({
-                    //     ...prev,
-                    //     // blob: newBlob,
-                    //     // blobUrl: newBlobUrl,
-                    //     // loadingVideo: false
-                    // }))
                     setLoadingVideo(false)
-                    // setBlob(newBlob);
-                    // setBlobUrl(newBlobUrl);
-                    // setVideoLoading(false)
-
-                    // window.postMessage({type: "SEND_FROM_PREVIEW", data: newBlobUrl}, '*')
                     // Revoke old URL to prevent memory leaks
                     if (url.current) {
                         URL.revokeObjectURL(url.current);
@@ -158,6 +146,10 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     }
 
     useEffect(() => {
+        sendPostMessage({ type: "load-ffmpeg" });
+    }, [])
+
+    useEffect(() => {
         chrome.storage.local.get(["isAudioOnly", "saving_in_indexdb"], async (result) => {
             console.log("resultresult", result)
             sendPostMessage({ type: "IS_CONTENT_TYPE", isAudioOnly: result?.isAudioOnly })
@@ -179,7 +171,6 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     useLayoutEffect(() => {
         window.addEventListener("message", (event) => {
             const message = event.data;
-            console.log("Message received in iframe:", message);
             if (message.type === "updated-blob") {
                 console.log("Received updated blob:", message.blob);
                 // Update the blob and blobUrl for the preview
@@ -202,6 +193,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                     endTime: prev.duration,
                     dragInteracted: false
                 }));
+                setIsFfmpegRunning(false)
                 if (waveSurferRef.current) {
                     waveSurferRef.current.seekTo(0);
                 }
@@ -213,6 +205,14 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                     URL.revokeObjectURL(url.current);
                 }
                 url.current = newBlobUrl;
+            }
+            if (message.type === "ffmpeg-loaded"){
+                setIsFfmpegLoaded(true)
+                console.log("ffmpeg-loaded Call from Demo!!")
+            }
+            if (message.type === "ffmpeg-load-error") {
+                console.log("ffmpeg-load-error==>", message)
+                setFfmpegLoadError(true)
             }
         });
 
@@ -424,7 +424,11 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         duration, 
         setDuration,
         updateCursorPosition,
-        processAudioWithAuphonic
+        processAudioWithAuphonic,
+        isFfmpegLoaded,
+        ffmpegLoadError,
+        setIsFfmpegRunning,
+        ffmpegRunning
     };
 
     return (

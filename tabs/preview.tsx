@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { FaRegEdit } from "react-icons/fa";
 import styleText from "data-text:./preview.module.css"
 import * as style from './preview.module.css'
@@ -23,6 +23,9 @@ function PreviewPage() {
         handleCancelEditing,
         changeMode,
         isEditMode,
+        isFfmpegLoaded,
+        ffmpegLoadError,
+        ffmpegRunning
     } = usePreview();
     const [showGhost, setShowGhost] = useState(false);
     const containerRef = useRef(null)
@@ -46,7 +49,7 @@ function PreviewPage() {
                     </span>
                 </span>
                 {isEditMode && <span>
-                    <button onClick={handleCancelEditing} className={style["rounded-btn"]}>cancel</button>
+                    <button onClick={handleCancelEditing} disabled={ffmpegRunning} className={style["rounded-btn"]}>cancel</button>
                 </span>}
             </h1>
             <div className={style["ref-wrapper"]}>
@@ -54,7 +57,8 @@ function PreviewPage() {
                 }
                 {(isAudio === 'audio') && <AudioPreview blobUrl={blobUrl} blob={blob} audioRef={audioRef} containerRef={containerRef} />}
             </div>
-            {(!isEditMode) && <div className={`${style['edit-mode-btn']}`} > <button className={`${style["rounded-btn"]} ${style['publish-btn']}`} onClick={changeMode} >Edit Video</button></div>}
+            {(!isEditMode) && <div className={`${style['edit-mode-btn']}`} > <button className={`${style["rounded-btn"]} ${style['publish-btn']}`} disabled={!isFfmpegLoaded || ffmpegRunning} onClick={changeMode} >Edit Video</button></div>}
+            {ffmpegLoadError && <p className={`${style['error']}`}>Cannot edit video, editing tool not supported for you browser !!</p>}
             {(isEditMode) && <div className={style["editing-control-wrapper"]} >
                 <EditingControls
                     setShowGhost={setShowGhost}
