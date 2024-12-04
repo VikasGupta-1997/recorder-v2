@@ -212,6 +212,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
             }
             if (message.type === "ffmpeg-load-error") {
                 console.log("ffmpeg-load-error==>", message)
+                setIsFfmpegLoaded(true)
                 setFfmpegLoadError(true)
             }
         });
