@@ -323,22 +323,14 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     };
 
     const processAudioWithAuphonic = async (audioBlob, isAudio) => {
-        // const AUPHONIC_USERNAME = 'bigcommand';
-        // const AUPHONIC_PASSWORD = 'zbp@hty3gnb.AFB1hqc';
-        // const AUTH_HEADER = {
-        //     'Authorization': 'Basic ' + btoa(`${AUPHONIC_USERNAME}:${AUPHONIC_PASSWORD}`)
-        // };
-
-        console.log("isAudioisAudio", isAudio, audioBlob.type)
-        // const AUPHONIC_USERNAME = 'bigcommand';
-        const AUPHONIC_USERNAME = 'vikasgupta'
-        // const AUPHONIC_PASSWORD = 'zbp@hty3gnb.AFB1hqc';
-        const AUPHONIC_PASSWORD = 'Adilo@0987';
-        // const PRESET = 'em7Cac7GkJzhH8yw7qDfWo'
-        const PRESET = '5xSyFBQF99eQzN4rGXJKGg'
+        const AUPHONIC_USERNAME = 'bigcommand';
+        const AUPHONIC_PASSWORD = 'zbp@hty3gnb.AFB1hqc';
         const AUTH_HEADER = {
             'Authorization': 'Basic ' + btoa(`${AUPHONIC_USERNAME}:${AUPHONIC_PASSWORD}`)
         };
+        const audio = isAudio === 'audio' 
+        console.log("isAudioisAudio", audio, audioBlob.type)
+        const PRESET = 'em7Cac7GkJzhH8yw7qDfWo'
         setIspublishing(true)
         try {
             console.log("processAudioWithAuphonic called with Blob:", audioBlob);
@@ -348,11 +340,10 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
             const timestamp = Date.now(); // Get current timestamp in milliseconds
             const randomString = Math.random().toString(36).substring(2, 10);
             // Step 1: Create a new production
-            const fileName = isAudio === 'audio' ? `audio_${timestamp}_${randomString}` : `video_${timestamp}_${randomString}`
-            // formData.append('input_file', audioBlob, fileName);
-            formData.append('input_file', new File([audioBlob], fileName + (isAudio === 'audio' ? '.mp3' : '.mov') , { type: audioBlob.type }));
+            const fileName = audio ? `audio_${timestamp}_${randomString}` : `video_${timestamp}_${randomString}`
+            formData.append('input_file', audioBlob, (fileName + (audio ? '.mp3' : '.mp4')));
+            // formData.append('input_file', new File([audioBlob], fileName + (audio? '.mp3' : '.mp4') , { type: audioBlob.type }));
             formData.append('preset', PRESET);
-
             const productionResponse = await fetch('https://auphonic.com/api/simple/productions.json', {
                 method: 'POST',
                 headers: AUTH_HEADER,
@@ -422,31 +413,13 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
             // Step 4: Handle completion
             // if (status === 'Done') { // when checking for status_string
             if (status === 3) { // when checking for status 
-                
-                //Send this url to backend
-                const urlTobeSent = `https://auphonic.com/api/download/audio-result/${uuid}/${fileName}.mp3`
+                console.log("STAUOS ")
+                const urlTobeSent = `https://auphonic.com/api/download/audio-result/${uuid}/${fileName}.${audio ? 'mp3' : 'mp4'}`
                 console.log("urlTobeSent", urlTobeSent)
                 setIspublishing(false)
                 console.log("Production completed. Downloading the processed file...");
-                // const downloadResponse = await fetch(`https://auphonic.com/api/production/${uuid}/download.json`, {
-                //     headers: AUTH_HEADER
-                // });
-                const downloadResponse = await fetch(`https://auphonic.com/api/production/${uuid}.json`, {
-                    method: 'GET',
-                    headers: AUTH_HEADER,
-                });
-                const resolvedRes = await downloadResponse.json()
-                console.log(resolvedRes, "downloadResponse121212", downloadResponse)
-                if (!downloadResponse.ok) {
-                    const errorText = await downloadResponse.text();
-                    console.error("Error downloading processed file:", errorText);
-                    throw new Error(`Download failed: ${downloadResponse.statusText}`);
-                }
-
-                const processedBlob = await downloadResponse.blob();
-                console.log("Processed file downloaded successfully.", processedBlob);
-                return processedBlob;
             } else {
+                setIspublishing(false)
                 console.error("Production did not complete successfully:", status);
                 throw new Error(`Processing failed with status: ${status}`);
             }

@@ -72,9 +72,10 @@ function PreviewPage() {
                     />
                 </div>}
             </span>
-            {isPublishing && <><div className={style["full-screen-loader"]}>
-            </div>
-                <div className={style['overlay']} ></div></>}
+            {isPublishing && <>
+                <div className={style["full-screen-loader"]} />
+                <div className={style['overlay']} />
+            </>}
         </div>
     );
 }
