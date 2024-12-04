@@ -506,20 +506,6 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     sendResponse(isRecordingFromSystemTab)
   }
 
-  if (message.type === 'RENDER_NEW_RECORDING') {
-    chrome.tabs.create({ url: chrome.runtime.getURL('tabs/NewPreview.html') }, async (tab) => {
-      // chrome.tabs.sendMessage(tab.id, { type: "RECORDING_COMPLETED" }, function () { })
-      chrome.tabs.onUpdated.addListener(function listener(tabId, info) {
-        if (tabId === tab.id && info.status === 'complete') {
-          chrome.tabs.onUpdated.removeListener(listener);
-          setTimeout(() => {
-            chrome.runtime.sendMessage({ type: "OPEN_NEW_PREVIEW", blobUrl: message.blobUrl })
-          }, 100)
-        }
-      });
-    });
-  }
-
   if (message.type === 'RECORDING_END') {
     if (message?.isToOpenPreview === 'setToFalse') {
       isToOpenPreview = false

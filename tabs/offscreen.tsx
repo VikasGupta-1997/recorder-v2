@@ -1,5 +1,4 @@
 import { useContext, useEffect, useRef, useState } from "react"
-import  { ContentStateContext } from "~context";
 import { saveRecordingToIndexedDB } from "~utils/saveRecordingToIndexedDB";
 
 let isRecordingStarted = false;
@@ -904,13 +903,9 @@ const OffScreen = () => {
   }, [])
 
   return <div className="videoRef" >
-    {/* {
-      <ContentStateContext.Provider value={base64} > */}
         {showVideo && <div id="floating-video">
           <video id="recording-output" ref={videoRef} width="200" height="150" muted></video>
         </div>}
-      {/* </ContentStateContext.Provider>
-    } */}
   </div>
 }
 

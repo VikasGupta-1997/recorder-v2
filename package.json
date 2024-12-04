@@ -67,8 +67,7 @@
           "vendor/*",
           "ffmpeg/*",
           "sandboxes/*",
-          "sandboxes/demo.tsx",
-          "context.tsx"
+          "sandboxes/demo.tsx"
         ],
         "matches": [
           "<all_urls>"
