@@ -58,8 +58,8 @@ function PreviewPage() {
                 {(isAudio === 'audio') && <AudioPreview blobUrl={blobUrl} blob={blob} audioRef={audioRef} containerRef={containerRef} />}
             </div>
             {(!isEditMode) && <div className={`${style['edit-mode-btn']}`} > <button className={`${style["rounded-btn"]} ${style['publish-btn']}`} disabled={!isFfmpegLoaded || ffmpegRunning} onClick={changeMode} >Edit Video</button></div>}
-            {isFfmpegLoaded && <p>Please wait editing tool is loading...</p>}
-            {ffmpegLoadError && <p className={`${style['error']}`}>Cannot edit video, editing tool not supported for you browser !!</p>}
+            {!isFfmpegLoaded && <p>Please wait editing tool is loading...</p>}
+            {ffmpegLoadError && <p className={`${style['error']}`}>Cannot edit video, editing tool not supported for your browser !!</p>}
             {(isEditMode) && <div className={style["editing-control-wrapper"]} >
                 <EditingControls
                     setShowGhost={setShowGhost}

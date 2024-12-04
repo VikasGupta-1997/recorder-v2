@@ -130,13 +130,13 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
 
     const addToHistory = (newState) => {
         // Add the current state to history before applying new changes
-        const newHistory = [...history, { 
+        const newHistory = [...history, {
             trimState: { ...trimState },
             blob: blob,
             blobUrl: blobUrl
         }];
         setHistory(newHistory);
-        
+
         // Clear redo history since we're creating a new branch
         setRedoHistory([]);
     }
@@ -175,7 +175,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                 console.log("Received updated blob:", message.blob);
                 // Update the blob and blobUrl for the preview
                 const newBlobUrl = URL.createObjectURL(message.blob);
-                addToHistory({ 
+                addToHistory({
                     trimState: { ...trimState },
                     blob: blob,
                     blobUrl: blobUrl
@@ -206,7 +206,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                 }
                 url.current = newBlobUrl;
             }
-            if (message.type === "ffmpeg-loaded"){
+            if (message.type === "ffmpeg-loaded") {
                 setIsFfmpegLoaded(true)
                 console.log("ffmpeg-loaded Call from Demo!!")
             }
@@ -259,7 +259,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         if (history.length > 0) {
             // Get the last state from history
             const lastState = history[history.length - 1];
-            
+
             // Save current state to redo history
             const currentState = {
                 trimState: { ...trimState },
@@ -267,22 +267,22 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                 blobUrl: blobUrl
             };
             setRedoHistory([...redoHistory, currentState]);
-            
+
             // Restore the previous state
             if (lastState.blob) {
                 const newBlobUrl = URL.createObjectURL(lastState.blob);
                 setBlob(lastState.blob);
                 setBlobUrl(newBlobUrl);
-                
+
                 // Cleanup old blob URL
                 if (url.current) {
                     URL.revokeObjectURL(url.current);
                 }
                 url.current = newBlobUrl;
             }
-            
+
             setTrimState(lastState.trimState);
-            
+
             // Remove the last state from history
             setHistory(history.slice(0, -1));
         }
@@ -292,7 +292,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         if (redoHistory.length > 0) {
             // Get the last state from redo history
             const redoState = redoHistory[redoHistory.length - 1];
-            
+
             // Save current state to history
             const currentState = {
                 trimState: { ...trimState },
@@ -300,99 +300,144 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                 blobUrl: blobUrl
             };
             setHistory([...history, currentState]);
-            
+
             // Restore the redo state
             if (redoState.blob) {
                 const newBlobUrl = URL.createObjectURL(redoState.blob);
                 setBlob(redoState.blob);
                 setBlobUrl(newBlobUrl);
-                
+
                 // Cleanup old blob URL
                 if (url.current) {
                     URL.revokeObjectURL(url.current);
                 }
                 url.current = newBlobUrl;
             }
-            
+
             setTrimState(redoState.trimState);
-            
+
             // Remove the used redo state
             setRedoHistory(redoHistory.slice(0, -1));
         }
     };
 
-    const processAudioWithAuphonic = async (audioBlob) => {
+    const processAudioWithAuphonic = async (audioBlob, isAudio) => {
+        const AUPHONIC_USERNAME = 'bigcommand';
+        const AUPHONIC_PASSWORD = 'zbp@hty3gnb.AFB1hqc';
+        const AUTH_HEADER = {
+            'Authorization': 'Basic ' + btoa(`${AUPHONIC_USERNAME}:${AUPHONIC_PASSWORD}`)
+        };
+
         try {
-            console.log("processAudioWithAuphonic called@@", audioBlob)
-            // You'll need to replace these with your actual Auphonic credentials
-            const AUPHONIC_USERNAME = 'bigcommand';
-            const AUPHONIC_PASSWORD = 'zbp@hty3gnb.AFB1hqc';
+            console.log("processAudioWithAuphonic called with Blob:", audioBlob);
 
-            // Create FormData with the audio file
+            // Step 1: Create a new production
             const formData = new FormData();
-            // formData.append('input_file', audioBlob);
-            formData.append('input_file', audioBlob, 'audio_file.mp3');
-            formData.append('preset', 'em7Cac7GkJzhH8yw7qDfWo'); // or your preferred preset
+            const timestamp = Date.now(); // Get current timestamp in milliseconds
+            const randomString = Math.random().toString(36).substring(2, 10);
+            // Step 1: Create a new production
+            const fileName = isAudio === 'audio' ? `audio_${timestamp}_${randomString}.mp3` : `video_${timestamp}_${randomString}.mov`
+            formData.append('input_file', audioBlob, fileName);
+            formData.append('preset', 'em7Cac7GkJzhH8yw7qDfWo');
 
-            // Create new production
-            const response = await fetch('https://auphonic.com/api/simple/productions.json', {
+            const productionResponse = await fetch('https://auphonic.com/api/simple/productions.json', {
                 method: 'POST',
-                headers: {
-                    'Authorization': 'Basic ' + btoa(`${AUPHONIC_USERNAME}:${AUPHONIC_PASSWORD}`)
-                },
+                headers: AUTH_HEADER,
                 body: formData
             });
 
-            if (!response.ok) {
-                throw new Error('Failed to create Auphonic production');
+            if (!productionResponse.ok) {
+                const errorText = await productionResponse.text();
+                console.error("Failed to create Auphonic production:", errorText);
+                throw new Error(`Production creation failed: ${productionResponse.statusText}`);
             }
 
-            const data = await response.json();
-            const uuid = data.data.uuid;
+            const productionData = await productionResponse.json();
+            const uuid = productionData?.data?.uuid;
 
-            // Start the production
-            await fetch(`https://auphonic.com/api/production/${uuid}/start.json`, {
+            if (!uuid) {
+                console.error("UUID not found in production response:", productionData);
+                throw new Error("Failed to retrieve production UUID");
+            }
+            console.log("Production created with UUID:", uuid);
+
+            // Step 2: Start the production
+            const startResponse = await fetch(`https://auphonic.com/api/production/${uuid}/start.json`, {
                 method: 'POST',
-                headers: {
-                    'Authorization': 'Basic ' + btoa(`${AUPHONIC_USERNAME}:${AUPHONIC_PASSWORD}`)
-                }
+                headers: AUTH_HEADER
             });
 
-            // Poll for completion
+            if (!startResponse.ok) {
+                const errorText = await startResponse.text();
+                console.error("Failed to start Auphonic production:", errorText);
+                throw new Error(`Production start failed: ${startResponse.statusText}`);
+            }
+            console.log("Production started successfully.");
+
+            // Step 3: Poll for completion
             const checkStatus = async () => {
-                const statusResponse = await fetch(`https://auphonic.com/api/production/${uuid}.json`, {
-                    headers: {
-                        'Authorization': 'Basic ' + btoa(`${AUPHONIC_USERNAME}:${AUPHONIC_PASSWORD}`)
+                try {
+                    const statusResponse = await fetch(`https://auphonic.com/api/production/${uuid}/status.json`, {
+                        headers: AUTH_HEADER
+                    });
+
+                    if (!statusResponse.ok) {
+                        const errorText = await statusResponse.text();
+                        console.error("Error fetching production status:", errorText);
+                        throw new Error(`Failed to fetch production status: ${statusResponse.statusText}`);
                     }
-                });
-                const statusData = await statusResponse.json();
-                return statusData.data.status;
+
+                    const statusData = await statusResponse.json();
+                    console.log("Current production status:", statusData.data.status_string);
+                    // return statusData?.data?.status_string; // when checking for status_string
+                    return  statusData?.data?.status; // when checking for status 
+                } catch (error) {
+                    console.error("Error during status check:", error);
+                    throw error;
+                }
             };
 
-            // Wait for processing to complete
             let status;
             do {
                 await new Promise(resolve => setTimeout(resolve, 2000)); // Poll every 2 seconds
                 status = await checkStatus();
-            } while (status === 'Processing');
+            }  while ([1, 4, 5].includes(status)); // when checking for status 
+            // } while ( ["Audio Encoding",  "Audio Processing"].includes(status)); // when checking for status_string
 
-            // Download the processed file
-            if (status === 'Done') {
-                const downloadResponse = await fetch(`https://auphonic.com/api/production/${uuid}/download.json`, {
-                    headers: {
-                        'Authorization': 'Basic ' + btoa(`${AUPHONIC_USERNAME}:${AUPHONIC_PASSWORD}`)
-                    }
+            console.log("Final production status:", status);
+
+            // Step 4: Handle completion
+            // if (status === 'Done') { // when checking for status_string
+            if (status === 3) { // when checking for status 
+                console.log("Production completed. Downloading the processed file...");
+                // const downloadResponse = await fetch(`https://auphonic.com/api/production/${uuid}/download.json`, {
+                //     headers: AUTH_HEADER
+                // });
+                const downloadResponse = await fetch(`https://auphonic.com/api/production/${uuid}.json`, {
+                    method: 'GET',
+                    headers: AUTH_HEADER,
                 });
-                const processedBlob = await downloadResponse.blob();
-                return processedBlob;
-            }
+                const resolvedRes = await downloadResponse.json()
+                console.log(resolvedRes, "downloadResponse121212", downloadResponse)
+                if (!downloadResponse.ok) {
+                    const errorText = await downloadResponse.text();
+                    console.error("Error downloading processed file:", errorText);
+                    throw new Error(`Download failed: ${downloadResponse.statusText}`);
+                }
 
-            throw new Error('Processing failed');
+                const processedBlob = await downloadResponse.blob();
+                console.log("Processed file downloaded successfully.", processedBlob);
+                return processedBlob;
+            } else {
+                console.error("Production did not complete successfully:", status);
+                throw new Error(`Processing failed with status: ${status}`);
+            }
         } catch (error) {
-            console.error('Error processing audio with Auphonic:', error);
-            throw error;
+            console.error("Error processing audio with Auphonic:", error);
+            throw error; // Re-throw the error for further handling if needed
         }
     };
+
 
     const value = {
         playPartialRecording,
@@ -419,10 +464,10 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         handleUndo,
         handleRedo,
         plyrRef,
-        videoTime, 
+        videoTime,
         setVideoTime,
         customCursorRef,
-        duration, 
+        duration,
         setDuration,
         updateCursorPosition,
         processAudioWithAuphonic,

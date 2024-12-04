@@ -289,9 +289,9 @@ const EditingControls = ({
         if(action === 'cut'){ 
             handleTrim(true);
         }
-        if(action === 'publish' && isAudio === 'audio'){
-            console.log("publish called", blob)
-            processAudioWithAuphonic(blob)
+        if(action === 'publish'){
+            console.log("publish called", blob, isAudio)
+            processAudioWithAuphonic(blob, isAudio)
         }
     };
 
