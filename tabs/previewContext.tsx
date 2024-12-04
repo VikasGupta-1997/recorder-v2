@@ -28,6 +28,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     const [isFfmpegLoaded, setIsFfmpegLoaded] = useState(false)
     const [ffmpegLoadError, setFfmpegLoadError] = useState(false)
     const [ffmpegRunning, setIsFfmpegRunning] = useState(false)
+    const [isPublishing, setIspublishing] = useState(false)
     const [trimState, setTrimState] = useState({
         start: 0,
         end: 1,
@@ -322,12 +323,23 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     };
 
     const processAudioWithAuphonic = async (audioBlob, isAudio) => {
-        const AUPHONIC_USERNAME = 'bigcommand';
-        const AUPHONIC_PASSWORD = 'zbp@hty3gnb.AFB1hqc';
+        // const AUPHONIC_USERNAME = 'bigcommand';
+        // const AUPHONIC_PASSWORD = 'zbp@hty3gnb.AFB1hqc';
+        // const AUTH_HEADER = {
+        //     'Authorization': 'Basic ' + btoa(`${AUPHONIC_USERNAME}:${AUPHONIC_PASSWORD}`)
+        // };
+
+        console.log("isAudioisAudio", isAudio, audioBlob.type)
+        // const AUPHONIC_USERNAME = 'bigcommand';
+        const AUPHONIC_USERNAME = 'vikasgupta'
+        // const AUPHONIC_PASSWORD = 'zbp@hty3gnb.AFB1hqc';
+        const AUPHONIC_PASSWORD = 'Adilo@0987';
+        // const PRESET = 'em7Cac7GkJzhH8yw7qDfWo'
+        const PRESET = '5xSyFBQF99eQzN4rGXJKGg'
         const AUTH_HEADER = {
             'Authorization': 'Basic ' + btoa(`${AUPHONIC_USERNAME}:${AUPHONIC_PASSWORD}`)
         };
-
+        setIspublishing(true)
         try {
             console.log("processAudioWithAuphonic called with Blob:", audioBlob);
 
@@ -336,9 +348,10 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
             const timestamp = Date.now(); // Get current timestamp in milliseconds
             const randomString = Math.random().toString(36).substring(2, 10);
             // Step 1: Create a new production
-            const fileName = isAudio === 'audio' ? `audio_${timestamp}_${randomString}.mp3` : `video_${timestamp}_${randomString}.mov`
-            formData.append('input_file', audioBlob, fileName);
-            formData.append('preset', 'em7Cac7GkJzhH8yw7qDfWo');
+            const fileName = isAudio === 'audio' ? `audio_${timestamp}_${randomString}` : `video_${timestamp}_${randomString}`
+            // formData.append('input_file', audioBlob, fileName);
+            formData.append('input_file', new File([audioBlob], fileName + (isAudio === 'audio' ? '.mp3' : '.mov') , { type: audioBlob.type }));
+            formData.append('preset', PRESET);
 
             const productionResponse = await fetch('https://auphonic.com/api/simple/productions.json', {
                 method: 'POST',
@@ -402,13 +415,18 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                 await new Promise(resolve => setTimeout(resolve, 2000)); // Poll every 2 seconds
                 status = await checkStatus();
             }  while ([1, 4, 5].includes(status)); // when checking for status 
-            // } while ( ["Audio Encoding",  "Audio Processing"].includes(status)); // when checking for status_string
+            // } while ( ["Audio Encoding",  "Audio Processing", "Waiting"].includes(status)); // when checking for status_string
 
             console.log("Final production status:", status);
 
             // Step 4: Handle completion
             // if (status === 'Done') { // when checking for status_string
             if (status === 3) { // when checking for status 
+                
+                //Send this url to backend
+                const urlTobeSent = `https://auphonic.com/api/download/audio-result/${uuid}/${fileName}.mp3`
+                console.log("urlTobeSent", urlTobeSent)
+                setIspublishing(false)
                 console.log("Production completed. Downloading the processed file...");
                 // const downloadResponse = await fetch(`https://auphonic.com/api/production/${uuid}/download.json`, {
                 //     headers: AUTH_HEADER
@@ -433,10 +451,17 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                 throw new Error(`Processing failed with status: ${status}`);
             }
         } catch (error) {
+            setIspublishing(false)
             console.error("Error processing audio with Auphonic:", error);
             throw error; // Re-throw the error for further handling if needed
         }
     };
+
+    useEffect(() => {
+          window.onbeforeunload = function () {
+            return true;
+          };
+      }, []);
 
 
     const value = {
@@ -474,7 +499,8 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         isFfmpegLoaded,
         ffmpegLoadError,
         setIsFfmpegRunning,
-        ffmpegRunning
+        ffmpegRunning,
+        isPublishing
     };
 
     return (

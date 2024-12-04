@@ -25,7 +25,8 @@ function PreviewPage() {
         isEditMode,
         isFfmpegLoaded,
         ffmpegLoadError,
-        ffmpegRunning
+        ffmpegRunning,
+        isPublishing
     } = usePreview();
     const [showGhost, setShowGhost] = useState(false);
     const containerRef = useRef(null)
@@ -40,32 +41,40 @@ function PreviewPage() {
 
     return (
         <div className={style["container"]}>
-            <h1 className={style["heading-title"]}>
-                <span className={style["title"]} >
-                    {`Rec-11122024-desktop.${isAudio === 'video' ? 'mp4' : 'mp3'}`}
-                    {" "}
-                    <span className={style["edit-icon"]} >
-                        <FaRegEdit color={'white'} size={10} />
+            <span className={style["span-wrapper"]} style={{
+                pointerEvents: isPublishing ? 'none' : 'initial'
+            }} >
+                <h1 className={style["heading-title"]}>
+                    <span className={style["title"]} >
+                        {`Rec-11122024-desktop.${isAudio === 'video' ? 'mp4' : 'mp3'}`}
+                        {" "}
+                        <span className={style["edit-icon"]} >
+                            <FaRegEdit color={'white'} size={10} />
+                        </span>
                     </span>
-                </span>
-                {isEditMode && <span>
-                    <button onClick={handleCancelEditing} disabled={ffmpegRunning} className={style["rounded-btn"]}>cancel</button>
-                </span>}
-            </h1>
-            <div className={style["ref-wrapper"]}>
-                {(isAudio === 'video') && <VideoPreview blobUrl={blobUrl} />
-                }
-                {(isAudio === 'audio') && <AudioPreview blobUrl={blobUrl} blob={blob} audioRef={audioRef} containerRef={containerRef} />}
+                    {isEditMode && <span>
+                        <button onClick={handleCancelEditing} disabled={ffmpegRunning || isPublishing} className={style["rounded-btn"]}>cancel</button>
+                    </span>}
+                </h1>
+                <div className={style["ref-wrapper"]}>
+                    {(isAudio === 'video') && <VideoPreview blobUrl={blobUrl} />
+                    }
+                    {(isAudio === 'audio') && <AudioPreview blobUrl={blobUrl} blob={blob} audioRef={audioRef} containerRef={containerRef} />}
+                </div>
+                {(!isEditMode) && <div className={`${style['edit-mode-btn']}`} > <button className={`${style["rounded-btn"]} ${style['publish-btn']}`} disabled={!isFfmpegLoaded || ffmpegRunning || isPublishing} onClick={changeMode} >Edit Video</button></div>}
+                {isPublishing && <p className={style["publishing-load-text"]} >Publishing content please wait and do not close the window till upload is not complete.</p>}
+                {!isFfmpegLoaded && <p>Please wait editing tool is loading...</p>}
+                {ffmpegLoadError && <p className={`${style['error']}`}>Cannot edit video, editing tool not supported for your browser !!</p>}
+                {(isEditMode) && <div className={style["editing-control-wrapper"]} >
+                    <EditingControls
+                        setShowGhost={setShowGhost}
+                        showGhost={showGhost}
+                    />
+                </div>}
+            </span>
+            {isPublishing && <><div className={style["full-screen-loader"]}>
             </div>
-            {(!isEditMode) && <div className={`${style['edit-mode-btn']}`} > <button className={`${style["rounded-btn"]} ${style['publish-btn']}`} disabled={!isFfmpegLoaded || ffmpegRunning} onClick={changeMode} >Edit Video</button></div>}
-            {!isFfmpegLoaded && <p>Please wait editing tool is loading...</p>}
-            {ffmpegLoadError && <p className={`${style['error']}`}>Cannot edit video, editing tool not supported for your browser !!</p>}
-            {(isEditMode) && <div className={style["editing-control-wrapper"]} >
-                <EditingControls
-                    setShowGhost={setShowGhost}
-                    showGhost={showGhost}
-                />
-            </div>}
+                <div className={style['overlay']} ></div></>}
         </div>
     );
 }

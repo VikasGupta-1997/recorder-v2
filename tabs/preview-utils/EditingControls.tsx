@@ -35,7 +35,8 @@ const EditingControls = ({
         processAudioWithAuphonic,
         isAudio,
         setIsFfmpegRunning,
-        ffmpegRunning
+        ffmpegRunning,
+        isPublishing
     } = usePreview();
 
     const waveContainerRef = useRef<HTMLDivElement>(null);
@@ -114,7 +115,7 @@ const EditingControls = ({
     };
 
     const handleWaveformClick = (e) => {
-        if (!waveContainerRef.current || !duration) return;
+        if (!waveContainerRef.current || !duration || isPublishing) return;
 
         const containerRect = waveContainerRef.current.getBoundingClientRect();
         const clickX = e.clientX - containerRect.left;
@@ -129,7 +130,7 @@ const EditingControls = ({
     };
 
     const handleWaveformMouseMove = (e) => {
-        if (!waveContainerRef.current || isDragging.current) return;
+        if (!waveContainerRef.current || isDragging.current || isPublishing) return;
 
         const containerRect = waveContainerRef.current.getBoundingClientRect();
         const mouseX = e.clientX - containerRect.left;
@@ -141,12 +142,14 @@ const EditingControls = ({
     };
 
     const handleWaveformMouseEnter = () => {
+        if(isPublishing) return;
         if (!isDragging.current) {
             setShowGhost(true);
         }
     };
 
     const handleWaveformMouseLeave = () => {
+        if(isPublishing) return
         setShowGhost(false);
     };
 
@@ -356,14 +359,14 @@ const EditingControls = ({
             </div>
             <div className={styles["editing-container"]}>
                 <div className={styles["redo-undo"]} >
-                    <button disabled={undoDisabled || ffmpegRunning} className="undo" onClick={handleUndo} > <LiaUndoAltSolid  color="10abd9" fontSize={24} /> </button>
-                    <button disabled={redoDisabled || ffmpegRunning} className="redo" onClick={handleRedo} > <LiaRedoAltSolid  color="10abd9" fontSize={24} /> </button>
+                    <button disabled={undoDisabled || ffmpegRunning || isPublishing} className="undo" onClick={handleUndo} > <LiaUndoAltSolid  color="10abd9" fontSize={24} /> </button>
+                    <button disabled={redoDisabled || ffmpegRunning || isPublishing} className="redo" onClick={handleRedo} > <LiaRedoAltSolid  color="10abd9" fontSize={24} /> </button>
                 </div>
 
                 <div className={styles["editing-actions"]} >
                     {
                         ["cut", "trim", "delete recording", "publish"].map(action => (
-                            <button disabled={ffmpegRunning} onClick={() => handleClick(action)} key={action} className={action === 'publish' ? styles["publish-btn"] : ""} >
+                            <button disabled={ffmpegRunning || isPublishing} onClick={() => handleClick(action)} key={action} className={action === 'publish' ? styles["publish-btn"] : ""} >
                                 {["cut", "trim"].includes(action) && <span  >
                                     {action === 'cut' ? <BsScissors fontSize={14} color="10abd9" /> : <MdOutlineCrop fontSize={14} color="10abd9" />}
                                 </span>}
