@@ -18,7 +18,8 @@ function VideoPreview({
         plyrRef,
         isEditMode,
         updateCursorPosition,
-        waveSurferRef
+        waveSurferRef,
+        duration
     } = usePreview();
 
     const [videoSource, setVideoSource] = useState(null);
@@ -53,6 +54,18 @@ function VideoPreview({
         }
     }, [waveSurferRef.current]);
 
+    useEffect(() => {
+        if (duration && plyrRef.current?.plyr) {
+            // Force a reload of the player with new duration
+            const currentTime = plyrRef.current.plyr.currentTime;
+            plyrRef.current.plyr.source = {
+                ...videoSource,
+                duration: duration
+            };
+            plyrRef.current.plyr.currentTime = currentTime;
+        }
+    }, [duration, videoSource]);
+
     const handleClick = () => {
         if (plyrRef.current && plyrRef.current.plyr && isEditMode) {
             plyrRef.current.plyr.on("timeupdate", () => {
@@ -76,7 +89,8 @@ function VideoPreview({
         keyboard: {
             global: true,
         },
-        crossorigin: 'anonymous'
+        crossorigin: 'anonymous',
+        duration: duration || undefined
     }
 
     if (!videoSource) {

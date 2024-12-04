@@ -21,7 +21,8 @@ export default function AudioPreview({
     const {
         isEditMode,
         updateCursorPosition,
-        waveSurferRef
+        waveSurferRef,
+        duration: contextDuration  // Get duration from context
     } = usePreview();
 
     const [isPlaying, setIsPlaying] = useState(true); // Track if audio is playing
@@ -63,6 +64,49 @@ export default function AudioPreview({
             // document.body.removeChild(script);
         };
     }, [containerRef])
+
+    useEffect(() => {
+        if (contextDuration && audioRef.current) {
+            console.log("contextDuration", contextDuration)
+            // Update the duration state
+            setDuration(contextDuration);
+            
+            // Create a custom time display element
+            // const timeDisplay = document.createElement('div');
+            // timeDisplay.className = style['custom-duration'];
+            // timeDisplay.textContent = formatTime(contextDuration);
+            
+            // Add it after the audio element
+            if (audioRef.current.parentNode) {
+                // audioRef.current.parentNode.appendChild(timeDisplay);
+            }
+
+            // Update the progress bar max value
+            const progressBar = audioRef.current.querySelector('input[type="range"]');
+            if (progressBar) {
+                progressBar.max = contextDuration;
+            }
+
+            // Cleanup function to remove the time display
+            return () => {
+                // const timeDisplay = document.querySelector(`.${style['custom-duration']}`);
+                // if (timeDisplay) {
+                //     timeDisplay.remove();
+                // }
+            };
+        }
+    }, [contextDuration]);
+
+    useEffect(() => {
+        if (contextDuration && audioRef.current) {
+            console.log("contextDuration", contextDuration)
+            // Set the duration directly on the audio element
+            audioRef.current.duration = contextDuration;
+            // Force duration update event
+            const event = new Event('durationchange');
+            audioRef.current.dispatchEvent(event);
+        }
+    }, [contextDuration]);
 
     const setupAnalyser = () => {
         if (isConnected) {
@@ -171,8 +215,8 @@ export default function AudioPreview({
         }
     }
     const handleLoadedMetadata = () => {
-        if (audioRef.current) {
-            setDuration(audioRef.current.duration); // Set the duration when the audio metadata is loaded
+        if (audioRef.current && !contextDuration) {
+            setDuration(audioRef.current.duration); // Only set if we don't have context duration
         }
     };
 
@@ -242,6 +286,12 @@ export default function AudioPreview({
         crossorigin: "anonymous", // Add CORS support
     };
 
+    // Helper function to format time
+    const formatTime = (seconds) => {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = Math.floor(seconds % 60);
+        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    };
 
     return (
         <div className={style["audio-container"]} ref={containerRef}>
@@ -281,8 +331,6 @@ export default function AudioPreview({
                     paddingLeft: '6px',
                     position: 'absolute',
                     bottom: '5px',
-                    // alignSelf: 'flex-end',
-                    // paddingBottom: 8
                 }}
                 controls
                 // autoPlay
@@ -290,9 +338,18 @@ export default function AudioPreview({
                 onLoadedMetadata={handleLoadedMetadata} // Set duration when metadata is loaded
                 onEnded={handleAudioEnded} // Stop animation when audio ends
                 onPlay={handleAudioPlay} // Start animation when audio plays
+                data-duration={contextDuration} // Add duration as a data attribute
             ></audio>
             <style>
                 {`
+                    .${style['custom-duration']} {
+                        position: absolute;
+                        bottom: 12px;
+                        right: 20px;
+                        color: white;
+                        z-index: 1000;
+                        display: none;
+                    }
                     .plyr {
                         height: auto;
                         width: 100%;
