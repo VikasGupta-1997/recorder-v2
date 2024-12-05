@@ -16,6 +16,7 @@ let recordedStreamBase64 = null
 
 let micOnlyRecorder = null;
 let micOnlyChunks = []
+let vidStream;
 
 const OffScreen = () => {
   const [audioVideoStreams, setAudioVideoStreams] = useState({ audioTrack: null, videoTrack: null })
@@ -56,27 +57,27 @@ const OffScreen = () => {
     let chunkIndex = 0;
 
     while (chunkIndex * chunkSize < base64Data.length) {
-        const chunk = base64Data.slice(chunkIndex * chunkSize, (chunkIndex + 1) * chunkSize); // No more type error
-        chrome.runtime.sendMessage({
-            type: "RECORDING_CHUNK",
-            data: chunk,
-            index: chunkIndex,
-            isLastChunk: (chunkIndex + 1) * chunkSize >= base64Data.length
-        });
-        console.log(`Sent chunk ${chunkIndex}`);
-        chunkIndex++;
-    }
-    chrome.runtime.sendMessage({
-        type: "RECORDING_CHUNK_UPLOAD_COMPLETE",
+      const chunk = base64Data.slice(chunkIndex * chunkSize, (chunkIndex + 1) * chunkSize); // No more type error
+      chrome.runtime.sendMessage({
+        type: "RECORDING_CHUNK",
+        data: chunk,
         index: chunkIndex,
         isLastChunk: (chunkIndex + 1) * chunkSize >= base64Data.length
+      });
+      console.log(`Sent chunk ${chunkIndex}`);
+      chunkIndex++;
+    }
+    chrome.runtime.sendMessage({
+      type: "RECORDING_CHUNK_UPLOAD_COMPLETE",
+      index: chunkIndex,
+      isLastChunk: (chunkIndex + 1) * chunkSize >= base64Data.length
     });
     console.log("All chunks sent.");
   }
 
   useEffect(() => {
-    if(isPreviewOpened){
-      if(base64Data){
+    if (isPreviewOpened) {
+      if (base64Data) {
         console.log("base64Data1121", base64Data)
         setTimeout(() => {
           setIsPreviewOpened(false)
@@ -86,8 +87,8 @@ const OffScreen = () => {
     }
   }, [isPreviewOpened, base64Data])
 
-  const resetAll = (showVideo?: any) => {
-    if(showVideo !== "restart_camonly"){
+  const resetAll = async (showVideo?: any) => {
+    if (showVideo !== "restart_camonly") {
       isCamOnlyRecordingDiscarded = false
       isMicOnlyRecordingDiscarded = false
     }
@@ -98,13 +99,39 @@ const OffScreen = () => {
       setMediaRecorder(null);
       recorder = null
     }
-    if(camOnlyRecorder) {
+
+    if (vidStream) {
+      // Stop all tracks in the MediaStream
+      vidStream.getTracks().forEach((track) => track.stop());
+
+      // Optional: Clear the video container or remove the video element
+      const container = document.getElementById('video-container');
+      if (container) {
+        container.innerHTML = ''; // Clear all children (removes the video element)
+      }
+
+      // Exit Picture-in-Picture if active
+      if (document.pictureInPictureElement) {
+        try {
+          await document.exitPictureInPicture();
+          console.log("Exited Picture-in-Picture mode.");
+        } catch (error) {
+          console.error("Error exiting Picture-in-Picture:", error);
+        }
+      }
+
+      console.log("Video stream stopped, and resources released.");
+    } else {
+      console.warn("No active video stream to stop.");
+    }
+
+    if (camOnlyRecorder) {
       camOnlyRecorder?.stop()
       camOnlyRecorder?.stream?.getTracks()?.forEach(track => track?.stop());
       setCamOnlyStream(null)
       camOnlyRecorder = null
     }
-    if(micOnlyRecorder){
+    if (micOnlyRecorder) {
       console.log("SEtIfg Off", micOnlyRecorder)
       micOnlyRecorder?.stop()
       micOnlyRecorder?.stream?.getTracks()?.forEach(track => track?.stop());
@@ -203,60 +230,60 @@ const OffScreen = () => {
     const offscreenContext = offscreenCanvas.getContext("2d");
 
     // Function to draw frames on the recording canvas
-    
+
 
     // const drawFrame = () => {
     //   // Draw the background
     //   recordingContext.fillStyle = "black";
     //   recordingContext.fillRect(0, 0, recordingCanvas.width, recordingCanvas.height);
-    
+
     //   // Define position for the circular webcam display
     //   const webcamX = 4; // 4 pixels padding from the left
     //   const webcamY = recordingCanvas.height - offscreenCanvas.height - 8; // Position at the bottom with 8 pixels padding
-    
+
     //   // Clear the OffscreenCanvas (for the webcam) with transparency
     //   offscreenContext.clearRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
-    
+
     //   // Draw the webcam video on the OffscreenCanvas (before clipping)
     //   offscreenContext.drawImage(webcamVideo, 0, 0, offscreenCanvas.width, offscreenCanvas.height);
-    
+
     //   // Define the circular area for the webcam view
     //   const radius = offscreenCanvas.width / 2; // Use half the width/height for the radius
     //   const centerX = offscreenCanvas.width / 2; // Center horizontally
     //   const centerY = offscreenCanvas.height / 2; // Center vertically
-    
+
     //   // Clip to a circular path
     //   offscreenContext.beginPath();
     //   offscreenContext.arc(centerX, centerY, radius, 0, Math.PI * 2);
     //   offscreenContext.clip();
-    
+
     //   // Clear the OffscreenCanvas again to keep the area outside the circle transparent
     //   offscreenContext.clearRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
-    
+
     //   // Draw the webcam image again within the circular area
     //   offscreenContext.drawImage(webcamVideo, 0, 0, offscreenCanvas.width, offscreenCanvas.height);
-    
+
     //   // Draw the circular webcam view onto the recording canvas
     //   recordingContext.drawImage(offscreenCanvas, webcamX, webcamY);
-    
+
     //   // Calculate the dimensions for the screen video
     //   const screenAspectRatio = screenVideo.videoWidth / screenVideo.videoHeight;
     //   const canvasWidth = recordingCanvas.width * 0.85 - 8; // 85% of canvas width with 8 pixels padding
     //   const canvasHeight = recordingCanvas.height;
-    
+
     //   let screenWidth = canvasWidth;
     //   let screenHeight = screenWidth / screenAspectRatio;
-    
+
     //   // Adjust dimensions to ensure the screen video fits within the canvas
     //   if (screenHeight > canvasHeight) {
     //     screenHeight = canvasHeight;
     //     screenWidth = screenHeight * screenAspectRatio;
     //   }
-    
+
     //   // Center the screen video vertically
     //   const screenX = offscreenCanvas.width + 8; // 8 pixels gap after the webcam
     //   const screenY = (recordingCanvas.height - screenHeight) / 2;
-    
+
     //   // Draw the screen video
     //   recordingContext.drawImage(screenVideo, screenX, screenY, screenWidth, screenHeight);
     // };
@@ -265,82 +292,82 @@ const OffScreen = () => {
       // Fill the background with black
       recordingContext.fillStyle = "black";
       recordingContext.fillRect(0, 0, recordingCanvas.width, recordingCanvas.height);
-  
+
       // Define the circular area for the webcam display
       const radius = offscreenCanvas.width / 2; // Use half the width/height for the radius
       const centerX = offscreenCanvas.width / 2; // Center horizontally
       const centerY = offscreenCanvas.height / 2; // Center vertically
-  
+
       // Clear the offscreen canvas before drawing
       offscreenContext.clearRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
-  
+
       // Clip the offscreen context to a circular path
       offscreenContext.beginPath();
       offscreenContext.arc(centerX, centerY, radius, 0, Math.PI * 2);
       offscreenContext.closePath();
       offscreenContext.clip();
-  
+
       // Draw the webcam video within the clipped circular area
       offscreenContext.drawImage(webcamVideo, 0, 0, offscreenCanvas.width, offscreenCanvas.height);
-  
+
       // Calculate dimensions and position for screen recording
       const screenX = offscreenCanvas.width + 8; // Align with 8 pixels padding from the webcam
       const screenWidth = recordingCanvas.width - screenX; // Calculate remaining width
       const screenHeight = screenVideo.videoHeight * (screenWidth / screenVideo.videoWidth); // Maintain aspect ratio
       const screenY = (recordingCanvas.height - screenHeight) / 2; // Center vertically
-  
+
       // Calculate the webcam position to align with the bottom of the screen recording view
       const webcamX = 4; // 4 pixels padding from the left
       const webcamY = screenY + screenHeight - offscreenCanvas.height; // Align webcam to the bottom of screen recording
-  
+
       // Draw the circular webcam view onto the recording canvas
       recordingContext.drawImage(offscreenCanvas, webcamX, webcamY);
-  
+
       // Draw the screen video
       recordingContext.drawImage(screenVideo, screenX, screenY, screenWidth, screenHeight);
-  };
-  
-  
+    };
+
+
 
     // const drawFrame = () => {
     //   // Fill the background with black
     //   recordingContext.fillStyle = "black";
     //   recordingContext.fillRect(0, 0, recordingCanvas.width, recordingCanvas.height);
-  
+
     //   // Define the circular area for the webcam display
     //   const radius = offscreenCanvas.width / 2; // Use half the width/height for the radius
     //   const centerX = offscreenCanvas.width / 2; // Center horizontally
     //   const centerY = offscreenCanvas.height / 2; // Center vertically
-  
+
     //   // Clear the offscreen canvas before drawing
     //   offscreenContext.clearRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
-  
+
     //   // Clip the offscreen context to a circular path
     //   offscreenContext.beginPath();
     //   offscreenContext.arc(centerX, centerY, radius, 0, Math.PI * 2);
     //   offscreenContext.closePath();
     //   offscreenContext.clip();
-  
+
     //   // Draw the webcam video within the clipped circular area
     //   offscreenContext.drawImage(webcamVideo, 0, 0, offscreenCanvas.width, offscreenCanvas.height);
-  
+
     //   // Draw the circular webcam view onto the recording canvas
     //   const webcamX = 8; // 8 pixels padding from the left
     //   const webcamY = recordingCanvas.height - offscreenCanvas.height - 8; // Align at the bottom with 8 pixels padding
     //   recordingContext.drawImage(offscreenCanvas, webcamX, webcamY);
-  
+
     //   // Draw the screen video on the remaining canvas
     //   const screenX = offscreenCanvas.width + 16; // Place next to the webcam with padding
     //   const screenWidth = recordingCanvas.width - screenX - 8; // Remaining width after webcam and padding
     //   const screenHeight = screenVideo.videoHeight * (screenWidth / screenVideo.videoWidth); // Maintain aspect ratio
-  
+
     //   // Align the screen video baseline with the webcam baseline
     //   const screenY = recordingCanvas.height - screenHeight - 8; // Align at the bottom with 8 pixels padding
-  
+
     //   // Draw the screen video
     //   recordingContext.drawImage(screenVideo, screenX, screenY, screenWidth, screenHeight);
     // };
-  
+
     const drawInterval = setInterval(drawFrame, 1000 / 30); // 30 fps
 
     const combinedStream = new MediaStream([
@@ -497,16 +524,56 @@ const OffScreen = () => {
     videoRef.current.requestPictureInPicture().catch(console.error);
   };
 
+  // const appendVideoOrNot = async () => {
+  //   if (recordSelections?.cameraRecording?.value && !recordSelections?.cameraRecording?.disable) {
+  //     const vidStream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: recordSelections?.cameraRecording?.value } });
+  //     videoRef.current.srcObject = vidStream;
+  //     videoRef.current.onloadedmetadata = () => {
+  //       console.log("PLAYED!!!!")
+  //       videoRef.current.play();
+  //       trigger_in()
+  //     }
+  //   }
+  // }
+
   const appendVideoOrNot = async () => {
     if (recordSelections?.cameraRecording?.value && !recordSelections?.cameraRecording?.disable) {
-      const vidStream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: recordSelections?.cameraRecording?.value } });
-      videoRef.current.srcObject = vidStream;
-      videoRef.current.onloadedmetadata = () => {
-        videoRef.current.play();
-        trigger_in()
+      try {
+        // Get the video stream from the selected device
+        vidStream = await navigator.mediaDevices.getUserMedia({
+          video: { deviceId: recordSelections?.cameraRecording?.value },
+        });
+
+        // Create a new video element
+        const videoElement = document.createElement('video');
+        videoElement.srcObject = vidStream;
+        videoElement.autoplay = true; // Start playback automatically
+        videoElement.muted = true; // Mute the video to avoid feedback
+        videoElement.style.width = '400px'; // Set desired width
+        videoElement.style.height = '300px'; // Set desired height
+        videoElement.style.border = '2px solid #000'; // Optional styling
+
+        // Play the video once metadata is loaded
+        videoElement.onloadedmetadata = () => {
+          console.log("PLAYED!!!!");
+          videoElement.play();
+          videoElement.requestPictureInPicture().catch(console.error);
+        };
+
+        // Append the video element to the desired parent element
+        const container = document.getElementById('floating-video'); // Replace with your container ID
+        console.log(container, "documentdocument", document,)
+        if (container) {
+          container.appendChild(videoElement);
+        } else {
+          console.error("Container element not found!");
+        }
+      } catch (error) {
+        console.error("Error accessing the camera:", error);
       }
     }
-  }
+  };
+
 
   useEffect(() => {
     if (showVideo) {
@@ -595,70 +662,70 @@ const OffScreen = () => {
   const saveMicRecording = async () => {
     console.log("saveMicRecording called!!")
     const blob = new Blob(micOnlyChunks, {
-        type: 'audio/webm; codecs=opus'
+      type: 'audio/webm; codecs=opus'
     });
-    function onComplete(){
-        const url = (URL as any).createObjectURL(blob);
-         console.log("url1122", url)
-         if(!isMicOnlyRecordingDiscarded){
-          chrome.runtime.sendMessage({
-            type: 'OPEN_PREVIEW_TAB',
-            videoUrl: url,
-            isAudioOnly: true
+    function onComplete() {
+      const url = (URL as any).createObjectURL(blob);
+      console.log("url1122", url)
+      if (!isMicOnlyRecordingDiscarded) {
+        chrome.runtime.sendMessage({
+          type: 'OPEN_PREVIEW_TAB',
+          videoUrl: url,
+          isAudioOnly: true
         });
-        chrome.runtime.sendMessage({type: "RECORDING_IN_PROGRESS_END"})
-         }
-       
-        // Create a download link
-        //  const url = URL.createObjectURL(blob);
-        //  const downloadLink = document.createElement("a");
-        //  downloadLink.href = url;
-        //  downloadLink.download = "recording12Mic.webm"; // Set the filename for download
-        //  downloadLink.style.display = "none";
- 
-        //  // Append link to the body and click to start download
-        //  document.body.appendChild(downloadLink);
-        //  downloadLink.click();
- 
-        //  // Clean up after download
-        //  document.body.removeChild(downloadLink);
-        //  URL.revokeObjectURL(url); // Release the URL object
-         resetAll()
-         micOnlyChunks = []
-        // console.log("url1122", url)
-        // chrome.runtime.sendMessage({
-        //     type: 'OPEN_PREVIEW_TAB',
-        //     videoUrl: url,
-        //     isAudioOnly: true
-        // });
-        // chrome.runtime.sendMessage({type: "RECORDING_IN_PROGRESS_END"})
+        chrome.runtime.sendMessage({ type: "RECORDING_IN_PROGRESS_END" })
+      }
+
+      // Create a download link
+      //  const url = URL.createObjectURL(blob);
+      //  const downloadLink = document.createElement("a");
+      //  downloadLink.href = url;
+      //  downloadLink.download = "recording12Mic.webm"; // Set the filename for download
+      //  downloadLink.style.display = "none";
+
+      //  // Append link to the body and click to start download
+      //  document.body.appendChild(downloadLink);
+      //  downloadLink.click();
+
+      //  // Clean up after download
+      //  document.body.removeChild(downloadLink);
+      //  URL.revokeObjectURL(url); // Release the URL object
+      resetAll()
+      micOnlyChunks = []
+      // console.log("url1122", url)
+      // chrome.runtime.sendMessage({
+      //     type: 'OPEN_PREVIEW_TAB',
+      //     videoUrl: url,
+      //     isAudioOnly: true
+      // });
+      // chrome.runtime.sendMessage({type: "RECORDING_IN_PROGRESS_END"})
     }
     onComplete()
-    if(!isMicOnlyRecordingDiscarded){
+    if (!isMicOnlyRecordingDiscarded) {
       const base64Data = await saveRecordingToIndexedDB(blob)
       recordedStreamBase64 = base64Data
       setBase64Data(base64Data)
 
     }
-};
+  };
 
   const recordMicOnly = async selections => {
     console.log("recordMicOnly121", selections)
-    const stream = await navigator.mediaDevices.getUserMedia({audio: {deviceId: selections?.micRecording?.value}});
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: selections?.micRecording?.value } });
     micOnlyRecorder = new MediaRecorder(stream);
     micOnlyRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-            micOnlyChunks.push(event.data);
-        }
+      if (event.data.size > 0) {
+        micOnlyChunks.push(event.data);
+      }
     };
     micOnlyRecorder.onstop = saveMicRecording;
     micOnlyRecorder.start();
     micOnlyRecorder.onstart = () => {
-        console.log("YES STYARTED")
-        micOnlyChunks = []
-        chrome.runtime.sendMessage({ type: 'startTimer' })
-        isRecordingStarted = true
-        chrome.runtime.sendMessage({type: "RECORDING_IN_PROGRESS"})
+      console.log("YES STYARTED")
+      micOnlyChunks = []
+      chrome.runtime.sendMessage({ type: 'startTimer' })
+      isRecordingStarted = true
+      chrome.runtime.sendMessage({ type: "RECORDING_IN_PROGRESS" })
     }
     // setIsRecordingStartedS(true)
     console.log('Recording started...');
@@ -684,7 +751,7 @@ const OffScreen = () => {
 
       const blob = new Blob(camOnlyChunks, { type: 'video/webm' });
       // Convert Blob to Base64
-      console.log(isCamOnlyRecordingDiscarded,"onstop", blob)
+      console.log(isCamOnlyRecordingDiscarded, "onstop", blob)
       function onComplete() {
         console.log("Recording saved to IndexedDB", isCamOnlyRecordingDiscarded)
         const url = (URL as any).createObjectURL(blob);
@@ -694,30 +761,30 @@ const OffScreen = () => {
         //  downloadLink.href = url;
         //  downloadLink.download = "recording.webm"; // Set the filename for download
         //  downloadLink.style.display = "none";
- 
+
         //  // Append link to the body and click to start download
         //  document.body.appendChild(downloadLink);
         //  downloadLink.click();
- 
+
         //  // Clean up after download
         //  document.body.removeChild(downloadLink);
         //  URL.revokeObjectURL(url); // Release the URL object
- 
+
         // console.log("BLOB URL", url, chrome?.storage)
-        if(!isCamOnlyRecordingDiscarded){
+        if (!isCamOnlyRecordingDiscarded) {
           chrome.runtime.sendMessage({
             type: 'OPEN_PREVIEW_TAB',
             videoUrl: url
           });
-          chrome.runtime.sendMessage({type: "CLOSE_CAM_ONLY_WINDOW"})
+          chrome.runtime.sendMessage({ type: "CLOSE_CAM_ONLY_WINDOW" })
           chrome.runtime.sendMessage({ type: "RECORDING_IN_PROGRESS_END" })
         }
         camOnlyChunks = []
         resetAll()
       }
-      console.log("SHould Not call",isCamOnlyRecordingDiscarded)
+      console.log("SHould Not call", isCamOnlyRecordingDiscarded)
       onComplete()
-      if(!isCamOnlyRecordingDiscarded) {
+      if (!isCamOnlyRecordingDiscarded) {
         console.log("CAM RECORDIGN ENDEDDD!!!!")
         const base64Data = await saveRecordingToIndexedDB(blob)
         recordedStreamBase64 = base64Data
@@ -741,36 +808,36 @@ const OffScreen = () => {
 
   const onMountListners = () => {
     chrome.runtime.onMessage.addListener(
-      function async(message,sender, sendResponse) {
+      function async(message, sender, sendResponse) {
         switch (message.type) {
           case "END_CAM_ONLY_RECORDING": {
             console.log("END_CAM_ONLY_RECORDING", camOnlyRecorder)
             camOnlyRecorder?.stop()
           }
-          break;
+            break;
           case "PREVIEW_OPENED_SUCCESSFULY": {
             console.log("OPned preview")
             setIsPreviewOpened(true)
           }
-          break;
+            break;
           case "OPEN_SANDBOX": {
             console.log("OFFSCREEN OPEN_SANDBOX!!!")
             // use window.open to create a popup
-            const sandboxWin = window.open(chrome.runtime.getURL('sandboxes/demo.html'),"SANDBOXED!","height=800,width=500");       
+            const sandboxWin = window.open(chrome.runtime.getURL('sandboxes/demo.html'), "SANDBOXED!", "height=800,width=500");
             // fire a postMessage event to the sandbox. Inspect the sandbox and see the 
-              // message in the console.
-              setTimeout(() => {
-                console.log("SENDING!!!!")
-                sandboxWin.postMessage({"message":"It works!!"}, "*");
-              }, 4000)
+            // message in the console.
+            setTimeout(() => {
+              console.log("SENDING!!!!")
+              sandboxWin.postMessage({ "message": "It works!!" }, "*");
+            }, 4000)
           }
-          break;
+            break;
           case "END_MIC_ONLY_RECORDING": {
             isMicOnlyRecordingDiscarded = false
             console.log("END_CAM_ONLY_RECORDING", micOnlyRecorder)
             micOnlyRecorder?.stop()
           }
-          break;
+            break;
           case "START_CAM_ONLY_RECORDING": {
             console.log("START_CAM_ONLY_RECORDING", message)
             camOnlyChunks = []
@@ -781,24 +848,24 @@ const OffScreen = () => {
             console.log("START_MIC_ONLY_RECORDING", message)
             recordMicOnly(message?.data)
           }
-          break;
+            break;
           case "PAUSE_CAMONLY_TIMER": {
             camOnlyRecorder?.pause()
             chrome.runtime.sendMessage({ type: 'pauseTimer' })
           }
-          break;
+            break;
           case "AUDIOONLY_RECORDING_DELETE": {
             isMicOnlyRecordingDiscarded = true
             chrome.runtime.sendMessage({ type: 'stopTimer' })
             micOnlyRecorder?.stop()
           }
-          break;
+            break;
           case "AUDIOONLY_RECORDING_RESTART": {
             isMicOnlyRecordingDiscarded = true
             chrome.runtime.sendMessage({ type: 'stopTimer' })
             micOnlyChunks = []
           }
-          break;
+            break;
           case "DELETE_CAMONLY_RECORDING": {
             console.log("DELETE!!!CALLLEDDD")
             isCamOnlyRecordingDiscarded = true
@@ -806,31 +873,31 @@ const OffScreen = () => {
             camOnlyRecorder?.stop()
 
           }
-          break;
+            break;
           case "RESTART_CAMONLY_RECORDING": {
             // camOnlyChunks = []
             isCamOnlyRecordingDiscarded = true
             resetAll("restart_camonly")
             sendResponse("close")
           }
-          break;
+            break;
           case "RESTART_MICONLY_RECORDING": {
             // camOnlyChunks = []
             isMicOnlyRecordingDiscarded = true
             resetAll("restart_camonly")
             sendResponse("close")
           }
-          break;
+            break;
           case "PLAY_CAMONLY_TIMER": {
             camOnlyRecorder?.resume()
             chrome.runtime.sendMessage({ type: 'resumeTimer' })
           }
-          break;
+            break;
           case "START_RECORDING_OFFSCREEN": {
             console.log("MESS OFF", message)
             if (message?.isCamOnly) {
               chrome.runtime.sendMessage({ type: "OPEN_CAM_ONLY_RECORDING", selections: message?.data })
-            } else if(message?.isAudioOnly){
+            } else if (message?.isAudioOnly) {
               console.log("Audio Only Recording!!", message)
               chrome.runtime.sendMessage({ type: "OPEN_MIC_ONLY_RECORDING", selections: message?.data })
             } else {
@@ -866,13 +933,13 @@ const OffScreen = () => {
             console.log("PAUSE OFFSCREEN MIC ONLY", micOnlyRecorder)
             micOnlyRecorder?.pause()
           }
-          break;
+            break;
           case "AUDIOONLY_RECORDING_PLAY": {
             console.log("PLAY OFFSCREEN MIC ONLY", micOnlyRecorder)
             chrome.runtime.sendMessage({ type: 'resumeTimer' })
             micOnlyRecorder?.resume()
           }
-          break;
+            break;
           case "RECORDING_PLAY_OFFSCREEN": {
             recorder?.resume()
             // setRecorderState('play')
@@ -903,9 +970,9 @@ const OffScreen = () => {
   }, [])
 
   return <div className="videoRef" >
-        {showVideo && <div id="floating-video">
-          <video id="recording-output" ref={videoRef} width="200" height="150" muted></video>
-        </div>}
+    {showVideo && <div id="floating-video">
+      <video id="recording-output" ref={videoRef} width="200" height="150" muted></video>
+    </div>}
   </div>
 }
 
