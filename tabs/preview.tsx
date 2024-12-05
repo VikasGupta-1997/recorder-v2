@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FaRegEdit } from "react-icons/fa";
 import styleText from "data-text:./preview.module.css"
 import * as style from './preview.module.css'
@@ -6,6 +6,7 @@ import VideoPreview from "./preview-utils/VideoPreview";
 import AudioPreview from "./preview-utils/AudioPreview";
 import EditingControls from "./preview-utils/EditingControls";
 import { PreviewProvider, usePreview } from "./previewContext";
+import AsyncSelect from 'react-select/async';
 
 export const getStyle = () => {
     const style = document.createElement("style")
@@ -13,12 +14,40 @@ export const getStyle = () => {
     return style
 }
 
+const AsyncPresetsDropDown = ({getPresets}) => {
+    const loadOptions = async () => {
+        try {
+            const presets = await getPresets();
+            return presets.map(preset => ({
+                label: preset.preset_name, // adjust according to your preset object structure
+                value: preset.uuid   // adjust according to your preset object structure
+            }));
+        } catch (error) {
+            return [];
+        }
+    };
+
+    return (
+        <AsyncSelect
+            cacheOptions
+            defaultOptions
+            loadOptions={loadOptions}
+            placeholder="Select a preset"
+            className={style["preset-select"]}
+            onChange={(selectedOption) => {
+                console.log("Selected:", selectedOption);
+            }}
+            isSearchable={false}
+        />
+    )
+}
+
 function PreviewPage() {
     const {
         loadingVideo,
         blob,
         blobUrl,
-        isAudio,
+        // isAudio,
         audioRef,
         handleCancelEditing,
         changeMode,
@@ -26,10 +55,24 @@ function PreviewPage() {
         isFfmpegLoaded,
         ffmpegLoadError,
         ffmpegRunning,
-        isPublishing
+        isPublishing,
+        getPresets
     } = usePreview();
     const [showGhost, setShowGhost] = useState(false);
+    const [isAudio, setIsAudio] = useState('ideal')
     const containerRef = useRef(null)
+
+    useEffect(() => {
+        chrome.storage.local.get(["isAudioOnly", "saving_in_indexdb"], async (result) => {
+            console.log("resultresult", result)
+            if (result?.isAudioOnly) {
+                setIsAudio('audio');
+            } else {
+                setIsAudio('video');
+            }
+        });
+    }, [blobUrl]);
+
 
     if (loadingVideo) {
         return (
@@ -38,7 +81,7 @@ function PreviewPage() {
             </div>
         )
     }
-
+    console.log("isAudio1212", isAudio)
     return (
         <div className={style["container"]}>
             <span className={style["span-wrapper"]} style={{
@@ -76,6 +119,7 @@ function PreviewPage() {
                 <div className={style["full-screen-loader"]} />
                 <div className={style['overlay']} />
             </>}
+            {/* <AsyncPresetsDropDown getPresets={getPresets} /> */}
         </div>
     );
 }
