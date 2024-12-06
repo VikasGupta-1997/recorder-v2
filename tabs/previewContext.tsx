@@ -20,6 +20,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     const [originalVideo, setOriginalVideo] = useState({
         blob: new Blob(), url: ''
     })
+    const originalDuration = useRef(0)
     const [isAudio, setIsAudio] = useState('ideal')
     const plyrRef = useRef(null);
 
@@ -35,6 +36,8 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     const [ffmpegLoadError, setFfmpegLoadError] = useState(false)
     const [ffmpegRunning, setIsFfmpegRunning] = useState(false)
     const [isPublishing, setIspublishing] = useState(false)
+    const [videoSource, setVideoSource] = useState(null);
+
     const [trimState, setTrimState] = useState({
         start: 0,
         end: 1,
@@ -274,6 +277,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
             URL.revokeObjectURL(url.current);
         }
         url.current = newBlobUrl;
+        setDuration(originalDuration.current)
         // if(audioRef.current){
         //     // console.log("audioRef.current", url.current)
         //     audioRef.current.src = newBlobUrl;
@@ -485,7 +489,10 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         setIsFfmpegRunning,
         ffmpegRunning,
         isPublishing,
-        getPresets
+        getPresets,
+        originalDuration,
+        videoSource, 
+        setVideoSource
     };
 
     return (

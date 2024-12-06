@@ -19,10 +19,11 @@ function VideoPreview({
         isEditMode,
         updateCursorPosition,
         waveSurferRef,
-        duration
+        duration,
+        setVideoSource,
+        videoSource
     } = usePreview();
 
-    const [videoSource, setVideoSource] = useState(null);
 
     const bl = async (url) => {
         let blob = await fetch(url).then(r => r.blob());

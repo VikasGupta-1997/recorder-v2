@@ -36,7 +36,8 @@ const EditingControls = ({
         isAudio,
         setIsFfmpegRunning,
         ffmpegRunning,
-        isPublishing
+        isPublishing,
+        originalDuration
     } = usePreview();
 
     const waveContainerRef = useRef<HTMLDivElement>(null);
@@ -174,6 +175,9 @@ const EditingControls = ({
             waveSurferRef.current.on('ready', () => {
                 const videoDuration = waveSurferRef.current.getDuration();
                 setDuration(videoDuration);
+                if(!originalDuration.current) {
+                    originalDuration.current = videoDuration
+                }
                 setTrimState(prev => ({
                     ...prev,
                     endTime: videoDuration,
