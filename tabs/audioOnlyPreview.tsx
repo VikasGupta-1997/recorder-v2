@@ -2,10 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { FaRegEdit } from "react-icons/fa";
 import styleText from "data-text:./preview.module.css"
 import * as style from './preview.module.css'
-import VideoPreview from "./preview-utils/VideoPreview";
 import AudioPreview from "./preview-utils/AudioPreview";
 import EditingControls from "./preview-utils/EditingControls";
-import { PreviewProvider, usePreview } from "./previewContext";
+import { AudioOnlyPreviewProvider, useAudioOnlyPreview } from "./audioOnlyPreviewContext";
 import AsyncSelect from 'react-select/async';
 
 export const getStyle = () => {
@@ -58,7 +57,7 @@ function PreviewPage() {
         isPublishing,
         getPresets,
         getDynamicTimestamp
-    } = usePreview();
+    } = useAudioOnlyPreview();
     const [showGhost, setShowGhost] = useState(false);
     const containerRef = useRef(null)
 
@@ -88,7 +87,7 @@ function PreviewPage() {
             }} >
                 <h1 className={style["heading-title"]}>
                     <span className={style["title"]} >
-                        {`Rec-${getDynamicTimestamp()}-desktop.mp4`}
+                        {`Rec-${getDynamicTimestamp()}-desktop.mp3`}
                         {" "}
                         <span className={style["edit-icon"]} >
                             <FaRegEdit color={'white'} size={10} />
@@ -99,7 +98,7 @@ function PreviewPage() {
                     </span>}
                 </h1>
                 <div className={style["ref-wrapper"]}>
-                    <VideoPreview blobUrl={blobUrl} />
+                    <AudioPreview blobUrl={blobUrl} blob={blob} audioRef={audioRef} containerRef={containerRef} />
                 </div>
                 {(!isEditMode) && <div className={`${style['edit-mode-btn']}`} > <button className={`${style["rounded-btn"]} ${style['publish-btn']}`} disabled={!isFfmpegLoaded || ffmpegRunning || isPublishing} onClick={changeMode} >Edit Video</button></div>}
                 {isPublishing && <p className={style["publishing-load-text"]} >Publishing content please wait and do not close the window till upload is not complete.</p>}
@@ -107,8 +106,8 @@ function PreviewPage() {
                 {ffmpegLoadError && <p className={`${style['error']}`}>Cannot edit video, editing tool not supported for your browser !!</p>}
                 {(isEditMode) && <div className={style["editing-control-wrapper"]} >
                     <EditingControls
-                        isAudio={false}
-                        usePreview={usePreview}
+                        isAudio={true}
+                        usePreview={useAudioOnlyPreview}
                         setShowGhost={setShowGhost}
                         showGhost={showGhost}
                     />
@@ -125,9 +124,9 @@ function PreviewPage() {
 
 const ContextWrappedPreview = () => {
     return (
-        <PreviewProvider>
+        <AudioOnlyPreviewProvider>
             <PreviewPage />
-        </PreviewProvider>
+        </AudioOnlyPreviewProvider>
     )
 }
 

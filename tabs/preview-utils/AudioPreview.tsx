@@ -3,7 +3,7 @@ import * as style from '../preview.module.css'
 import { useEffect, useRef, useState } from "react"
 import { AudioVisualizer, LiveAudioVisualizer } from 'react-audio-visualize';
 import { BiMicrophone } from "react-icons/bi";
-import { usePreview } from "../previewContext";
+import { useAudioOnlyPreview } from "../audioOnlyPreviewContext";
 
 export const getStyle = () => {
     const style = document.createElement("style")
@@ -23,7 +23,7 @@ export default function AudioPreview({
         updateCursorPosition,
         waveSurferRef,
         duration: contextDuration  // Get duration from context
-    } = usePreview();
+    } = useAudioOnlyPreview();
 
     const [isPlaying, setIsPlaying] = useState(true); // Track if audio is playing
     const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder>()

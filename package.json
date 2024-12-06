@@ -67,7 +67,8 @@
           "vendor/*",
           "ffmpeg/*",
           "sandboxes/*",
-          "sandboxes/demo.tsx"
+          "sandboxes/demo.tsx",
+          "sandboxes/audioDemo.tsx"
         ],
         "matches": [
           "<all_urls>"
@@ -76,7 +77,8 @@
     ],
     "sandbox": {
       "pages": [
-        "sandboxes/demo.tsx"
+        "sandboxes/demo.tsx",
+        "sandbox/audioDemo.tsx"
       ]
     },
     "cross_origin_embedder_policy": {

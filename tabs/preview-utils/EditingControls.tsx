@@ -5,7 +5,7 @@ import styleText from "data-text:../preview.module.css"
 import * as styles from '../preview.module.css'
 import { useEffect, useRef, useState } from "react"
 import WaveSurfer from "wavesurfer.js"
-import { usePreview } from "~tabs/previewContext"
+// import { usePreview } from "~tabs/previewContext"
 
 export const getStyle = () => {
     const style = document.createElement("style")
@@ -16,6 +16,8 @@ export const getStyle = () => {
 const EditingControls = ({ 
     setShowGhost,
     showGhost,
+    usePreview,
+    isAudio
  }) => {
 
     const {
@@ -33,11 +35,10 @@ const EditingControls = ({
         setDuration,
         duration,
         processAudioWithAuphonic,
-        isAudio,
         setIsFfmpegRunning,
         ffmpegRunning,
         isPublishing,
-        originalDuration
+        originalDuration,
     } = usePreview();
 
     const waveContainerRef = useRef<HTMLDivElement>(null);
@@ -253,43 +254,14 @@ const EditingControls = ({
 
             // Send the message to process the trim
             sendMessage(message);
-
-            // If it's audio, we can process it with Auphonic
-            if (blob.type.startsWith('audio/')) {
-                try {
-                    // const processedBlob = await processAudioWithAuphonic(blob);
-                    // Send the processed blob back
-                    // sendMessage({
-                    //     type: "updated-blob",
-                    //     blob: processedBlob
-                    // });
-                } catch (error) {
-                    console.error('Failed to process audio:', error);
-                }
-            }
-            console.log("Now running!!")
             setIsFfmpegRunning(true)
-            // Reset trim state after sending
-            // setTrimState(prev => ({
-            //     ...prev,
-            //     start: 0,
-            //     end: 1,
-            //     startTime: 0,
-            //     endTime: prev.duration,
-            //     dragInteracted: false
-            // }));
-
-            // Reset wavesurfer region if it exists
-            // if (waveSurferRef.current) {
-            //     waveSurferRef.current.seekTo(0);
-            // }
         } catch (error) {
             console.error("Error in handleTrim:", error);
         }
     };
 
     const handleClick = (action) => {
-        console.log("Action clicked:", action, isAudio);
+        console.log("Action clicked:", action);
         if(action === 'trim'){
             handleTrim(false);
         }
@@ -297,7 +269,7 @@ const EditingControls = ({
             handleTrim(true);
         }
         if(action === 'publish'){
-            console.log("publish called", blob, isAudio)
+            console.log("publish called", blob)
             processAudioWithAuphonic(blob, isAudio)
         }
     };

@@ -5,13 +5,13 @@ const PreviewContext = createContext<any>(undefined);
 const receivedChunks = [];
 let isPlaying = false;
 const auphonicUrl = 'https://auphonic.com/api'
-const AUPHONIC_USERNAME = 'bigcommand';
-const AUPHONIC_PASSWORD = 'zbp@hty3gnb.AFB1hqc';
+const AUPHONIC_USERNAME = 'vikasgupta';
+const AUPHONIC_PASSWORD = 'Adilo@0987';
 const AUTH_HEADER = {
     'Authorization': 'Basic ' + btoa(`${AUPHONIC_USERNAME}:${AUPHONIC_PASSWORD}`)
 };
 
-export function PreviewProvider({ children }: { children: React.ReactNode }) {
+export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNode }) {
     const waveSurferRef = useRef<WaveSurfer | null>(null);
     const audioRef = useRef(null);
     const customCursorRef = useRef(null);
@@ -347,7 +347,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
-    const processAudioWithAuphonic = async (audioBlob, isAudio, presetUuid = 'em7Cac7GkJzhH8yw7qDfWo') => {
+    const processAudioWithAuphonic = async (audioBlob, isAudio, presetUuid) => {
         const audio = isAudio === 'audio' 
         console.log("isAudioisAudio", audio, audioBlob.type, presetUuid)
         setIspublishing(true)
@@ -513,10 +513,10 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     );
 }
 
-export function usePreview() {
+export function useAudioOnlyPreview() {
     const context = useContext(PreviewContext);
     if (!context) {
-        throw new Error('usePreview must be used within a PreviewProvider');
+        throw new Error('usePreview must be used within a AudioOnlyPreviewProvider');
     }
     return context;
 }
