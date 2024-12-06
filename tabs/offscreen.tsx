@@ -462,6 +462,8 @@ const OffScreen = () => {
           //Add Webcam in bottom corner of screen recorded
           setIsWindowOnlyRecording(true)
         } else {
+          console.log("NOW APPEND VIDEO@!!!")
+          appendVideoOrNot(selections?.cameraRecording)
           setShowVideo(true)
         }
       }
@@ -521,65 +523,21 @@ const OffScreen = () => {
   };
 
   function trigger_in() {
+    console.log("TriggeerCalled!!")
     videoRef.current.requestPictureInPicture().catch(console.error);
   };
 
-  // const appendVideoOrNot = async () => {
-  //   if (recordSelections?.cameraRecording?.value && !recordSelections?.cameraRecording?.disable) {
-  //     const vidStream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: recordSelections?.cameraRecording?.value } });
-  //     videoRef.current.srcObject = vidStream;
-  //     videoRef.current.onloadedmetadata = () => {
-  //       console.log("PLAYED!!!!")
-  //       videoRef.current.play();
-  //       trigger_in()
-  //     }
-  //   }
-  // }
-
-  const appendVideoOrNot = async () => {
-    if (recordSelections?.cameraRecording?.value && !recordSelections?.cameraRecording?.disable) {
-      try {
-        // Get the video stream from the selected device
-        vidStream = await navigator.mediaDevices.getUserMedia({
-          video: { deviceId: recordSelections?.cameraRecording?.value },
-        });
-
-        // Create a new video element
-        const videoElement = document.createElement('video');
-        videoElement.srcObject = vidStream;
-        videoElement.autoplay = true; // Start playback automatically
-        videoElement.muted = true; // Mute the video to avoid feedback
-        videoElement.style.width = '400px'; // Set desired width
-        videoElement.style.height = '300px'; // Set desired height
-        videoElement.style.border = '2px solid #000'; // Optional styling
-
-        // Play the video once metadata is loaded
-        videoElement.onloadedmetadata = () => {
-          console.log("PLAYED!!!!");
-          videoElement.play();
-          videoElement.requestPictureInPicture().catch(console.error);
-        };
-
-        // Append the video element to the desired parent element
-        const container = document.getElementById('floating-video'); // Replace with your container ID
-        console.log(container, "documentdocument", document,)
-        if (container) {
-          container.appendChild(videoElement);
-        } else {
-          console.error("Container element not found!");
-        }
-      } catch (error) {
-        console.error("Error accessing the camera:", error);
+  const appendVideoOrNot = async (cameraRecording) => {
+    if (cameraRecording?.value && !cameraRecording?.disable) {
+      const vidStream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: cameraRecording?.value } });
+      videoRef.current.srcObject = vidStream;
+      videoRef.current.onloadedmetadata = () => {
+        videoRef.current.play();
+        trigger_in()
       }
     }
   };
 
-
-  useEffect(() => {
-    if (showVideo) {
-      appendVideoOrNot()
-    }
-  }, [showVideo])
   const streamRef = useRef({ videoTrack: null, audioTrack: null })
   const recordStream = () => {
     const { videoTrack, audioTrack } = audioVideoStreams
@@ -970,9 +928,12 @@ const OffScreen = () => {
   }, [])
 
   return <div className="videoRef" >
-    {showVideo && <div id="floating-video">
+    <div id="floating-video">
       <video id="recording-output" ref={videoRef} width="200" height="150" muted></video>
-    </div>}
+    </div>
+    {/* {showVideo && <div id="floating-video">
+      <video id="recording-output" ref={videoRef} width="200" height="150" muted></video>
+    </div>} */}
   </div>
 }
 
