@@ -1,4 +1,6 @@
 
+import {sendToContentScript} from '@plasmohq/messaging'
+
 const OFFSCREEN_URL = chrome.runtime.getURL('tabs/offscreen.html');
 const createOffscreenDocument = async () => {
   try {
@@ -753,6 +755,34 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     // } else {
     //   isToOpenPreview = true
     // }
+  }
+})
+
+chrome.commands.onCommand.addListener(async (command) => {
+  try {
+    // Get the active tab
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+    if (!tab?.id) return
+
+    switch (command) {
+      case "start-stop-recording":
+        // Send message to content script to toggle recording
+        await sendToContentScript({
+          type: "start-or-stop-recording",
+          tabId: tab.id
+        } as any)
+        break
+      
+      case "toggle-pause":
+        // Send message to content script to toggle pause
+        // await sendToContentScript({
+        //   name: "toggle-pause",
+        //   tabId: tab.id
+        // })
+        break
+    }
+  } catch (error) {
+    console.error("Error handling keyboard shortcut:", error)
   }
 })
 

@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { callBackConstants } from '~utils/constants'
+import { callBackConstants, defaultRecordingOptions } from '~utils/constants'
 const { START_RECORDING, DEVICE_CHANGE, HIDE_CSUI } = callBackConstants;
 // import { useStorage } from "@plasmohq/storage/hook";
 import useStorage from "../useStorageCustom";
@@ -162,18 +162,69 @@ const CustomButton = () => {
       chrome.runtime.onMessage.addListener(
         function async(message, sender, sendResponse) {
           switch (message.type) {
+            case "start-or-stop-recording": {
+              chrome.storage.local.get(["isRecordingInProgress", "selectedCameraRecording", "selectedMicRecording", "selectedScreenRecordings", "firstMicSet"], result => {
+                if (result.isRecordingInProgress) {
+                  chrome.runtime.sendMessage({ type: "stopTimer" })
+                  chrome.runtime.sendMessage({ type: "RECORDING_END" })
+                  chrome.runtime.sendMessage({ type: "CLEAR_RECORDING_UI" })
+                  chrome.runtime.sendMessage({ type: "END_CAM_ONLY_RECORDING" })
+                  chrome.runtime.sendMessage({ type: "END_MIC_ONLY_RECORDING" })
+                  // chrome.storage.local.set({ "isRecordingInProgress": false })
+                  try {
+                    chrome.storage.local.set({ isRecordingInProgress: false }, function () {
+                      if (chrome.runtime.lastError) {
+                        if (chrome.runtime.lastError.message.includes("MAX_WRITE_OPERATIONS_PER_MINUTE")) {
+                        } else {
+                          console.error("Other error: ", chrome.runtime.lastError.message);
+                        }
+                      } else {
+                      }
+                    });
+                  } catch (error) {
+                    console.error("Caught exception: ", error);
+                  }
+                } else {
+                  let selections = {};
+                  if (!result?.selectedScreenRecordings) {
+                    selections["screenRecording"] = defaultRecordingOptions.screenOptions
+                  } else {
+                    selections["screenRecording"] = result.selectedScreenRecordings
+                  }
+
+                  if (!result.selectedMicRecording) {
+                    if (result.firstMicSet) {
+                      selections["micRecording"] = result.firstMicSet
+                    } else {
+                      selections["micRecording"] = defaultRecordingOptions.micOptions
+                    }
+                  } else {
+                    selections["micRecording"] = result.selectedMicRecording
+                  }
+
+                  if (!result.selectedCameraRecording) {
+                    selections["cameraRecording"] = defaultRecordingOptions.cameraOptions
+                  } else {
+                    selections["cameraRecording"] = result.selectedCameraRecording
+                  }
+                  console.log("selections INSIDE !!", selections)
+                  chrome.runtime.sendMessage({ type: "START_TO_RECORD", data: selections, isCamOnly: false, isAudioOnly: false })
+                }
+              })
+            }
+              break;
             case "OPEN_SANDBOX": {
               // use window.open to create a popup
-            const sandboxWin = window.open(chrome.runtime.getURL('sandboxes/demo.html'),"SANDBOXED!","height=800,width=500");       
-            // fire a postMessage event to the sandbox. Inspect the sandbox and see the 
+              const sandboxWin = window.open(chrome.runtime.getURL('sandboxes/demo.html'), "SANDBOXED!", "height=800,width=500");
+              // fire a postMessage event to the sandbox. Inspect the sandbox and see the 
               // message in the console.
               setTimeout(() => {
                 console.log("SENDING content!!!!")
-                chrome.runtime.sendMessage({type: "YEAHHHH"})
-                sandboxWin.postMessage({"message":"It works!!"}, "*");
+                chrome.runtime.sendMessage({ type: "YEAHHHH" })
+                sandboxWin.postMessage({ "message": "It works!!" }, "*");
               }, 4000)
             }
-            break;
+              break;
             case "DATA_FOR_SANDBOX": {
               console.log(sender, "Try Sending from HEre!!!", sendResponse)
               setTimeout(() => {
@@ -182,7 +233,7 @@ const CustomButton = () => {
                 //   'message',
                 //   (event) => {
                 //     console.log('Sandbox window message:', event.data);
-        
+
                 //     // Send response back to background script
                 //     sendResponse(event.data);
                 //   },
@@ -244,33 +295,33 @@ const CustomButton = () => {
       );
     }
 
-    const onPortMethodAttach = () => {
-      chrome.runtime.onConnect.addListener((port) => {
-        console.log('Connected to background script:', port.name);
-    
-        port.onMessage.addListener((message) => {
-          console.log('Message from background script via port:', message);
-    
-          // Forward the message to the sandboxed page
-          window.postMessage({ type: 'from-extension', data: message.base64 }, '*');
-        });
-    
-        // Listen for messages from the sandboxed page
-        window.addEventListener('message', (event) => {
-          if (event.source !== window || event.data.type !== 'from-sandbox') return;
-    
-          console.log('Message from sandbox:', event.data);
-    
-          // Forward the message to the background script
-          port.postMessage(event.data.data);
-        });
+  const onPortMethodAttach = () => {
+    chrome.runtime.onConnect.addListener((port) => {
+      console.log('Connected to background script:', port.name);
+
+      port.onMessage.addListener((message) => {
+        console.log('Message from background script via port:', message);
+
+        // Forward the message to the sandboxed page
+        window.postMessage({ type: 'from-extension', data: message.base64 }, '*');
       });
-    };
+
+      // Listen for messages from the sandboxed page
+      window.addEventListener('message', (event) => {
+        if (event.source !== window || event.data.type !== 'from-sandbox') return;
+
+        console.log('Message from sandbox:', event.data);
+
+        // Forward the message to the background script
+        port.postMessage(event.data.data);
+      });
+    });
+  };
 
   useEffect(() => {
-    onPortMethodAttach()
+    // onPortMethodAttach()
     onMountListners();
-  }, [showToolBar])
+  }, [])
 
   useEffect(() => {
     const handleError = (message, source, lineno, colno, error) => {

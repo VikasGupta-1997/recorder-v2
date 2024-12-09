@@ -58,8 +58,24 @@
       "app.window",
       "system.display",
       "unlimitedStorage",
-      "webRequest"
+      "webRequest",
+      "commands"
     ],
+    "commands": {
+      "_execute_action": {
+        "suggested_key": {
+          "default": "Ctrl+Shift+Y"
+        },
+        "description": "Open popup"
+      },
+      "start-stop-recording": {
+        "suggested_key": {
+          "default": "Ctrl+Shift+L",
+          "mac": "Command+Shift+L"
+        },
+        "description": "Toggle recording start/stop"
+      }
+    },
     "web_accessible_resources": [
       {
         "resources": [

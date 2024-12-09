@@ -36,6 +36,11 @@ function IndexPopup() {
       }
     } else {
       micRecording = micOptions?.find(mic => mic?.label?.startsWith("Default"))
+      chrome.storage.local.get(["firstMicSet"], async result => {
+        if(!result.firstMicSet){
+           await chrome.storage.local.set({"firstMicSet": micRecording})
+        }
+      })
     }
 
     if (selections?.selectedCameraRecording) {
