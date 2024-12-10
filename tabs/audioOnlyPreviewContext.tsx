@@ -490,15 +490,15 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
             sourceBuffer.buffer = [];
             
             try {
-                const response = await fetch("http://localhost:8080/api/stream", {
-                    method: "POST",
+                const response = await fetch("http://localhost:8080/api/stream?url=https://auphonic.com/api/download/audio-result/eZSp3KANoa5kpU6EQnQLtX/new_audio_file.mp3", {
+                    method: "GET",
                     headers: {
                         "Content-Type": "application/json",
                     },
-                    body: JSON.stringify({
-                        // url: "https://auphonic.com/api/download/audio-result/iKdKsxnDujxf8fhbMMnC2S/video_1733318424532_bz8wmgpd.mp4"
-                        url: "https://auphonic.com/api/download/audio-result/eZSp3KANoa5kpU6EQnQLtX/new_audio_file.mp3",
-                    }),
+                    // body: JSON.stringify({
+                    //     // url: "https://auphonic.com/api/download/audio-result/iKdKsxnDujxf8fhbMMnC2S/video_1733318424532_bz8wmgpd.mp4"
+                    //     url: "https://auphonic.com/api/download/audio-result/eZSp3KANoa5kpU6EQnQLtX/new_audio_file.mp3",
+                    // }),
                 });
 
                 if (!response.body) throw new Error("ReadableStream not supported!");
