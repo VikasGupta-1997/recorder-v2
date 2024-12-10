@@ -56,6 +56,14 @@ video {
     margin-left: 24px;
 }
 
+.audio-main-wrap {
+    display: flex;
+    gap: 2rem;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+}
+
 .ref-wrapper {
     display: flex;
     flex-direction: column;
@@ -63,6 +71,12 @@ video {
     position: relative;
     height: 100%;
     width: 55%;
+    /* width: 45%; */
+}
+
+.auphonic-wrap {
+    display: none;
+    width: 45%;
 }
 
 .video {

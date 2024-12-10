@@ -39,6 +39,7 @@ const EditingControls = ({
         ffmpegRunning,
         isPublishing,
         originalDuration,
+        getAuphonicData
     } = usePreview();
 
     const waveContainerRef = useRef<HTMLDivElement>(null);
@@ -270,7 +271,8 @@ const EditingControls = ({
         }
         if(action === 'publish'){
             console.log("publish called", blob)
-            processAudioWithAuphonic(blob, isAudio)
+            // processAudioWithAuphonic(blob, isAudio)
+            getAuphonicData()
         }
     };
 

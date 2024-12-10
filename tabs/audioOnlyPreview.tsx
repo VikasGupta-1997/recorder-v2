@@ -56,7 +56,12 @@ function PreviewPage() {
         ffmpegRunning,
         isPublishing,
         getPresets,
-        getDynamicTimestamp
+        getDynamicTimestamp,
+        isStreamLoading,
+        auphonicAudioRef,
+        wrapAuphonicAudioRef,
+        normalAudioWrap,
+        showAuphonicWrap
     } = useAudioOnlyPreview();
     const [showGhost, setShowGhost] = useState(false);
     const containerRef = useRef(null)
@@ -97,14 +102,19 @@ function PreviewPage() {
                         <button onClick={handleCancelEditing} disabled={ffmpegRunning || isPublishing} className={style["rounded-btn"]}>cancel</button>
                     </span>}
                 </h1>
-                <div className={style["ref-wrapper"]}>
-                    <AudioPreview blobUrl={blobUrl} blob={blob} audioRef={audioRef} containerRef={containerRef} />
+                <div className={style["audio-main-wrap"]} >
+                    <div ref={normalAudioWrap} className={style["ref-wrapper"]}>
+                        <AudioPreview blobUrl={blobUrl} blob={blob} audioRef={audioRef} containerRef={containerRef} />
+                    </div>
+                    <div ref={wrapAuphonicAudioRef} className={`${style["ref-wrapper"]} ${style["auphonic-wrap"]}`}>
+                        <AudioPreview blobUrl={blobUrl} blob={blob} audioRef={auphonicAudioRef} containerRef={containerRef} />
+                    </div>
                 </div>
-                {(!isEditMode) && <div className={`${style['edit-mode-btn']}`} > <button className={`${style["rounded-btn"]} ${style['publish-btn']}`} disabled={!isFfmpegLoaded || ffmpegRunning || isPublishing} onClick={changeMode} >Edit Video</button></div>}
-                {isPublishing && <p className={style["publishing-load-text"]} >Publishing content please wait and do not close the window till upload is not complete.</p>}
+                {(!isEditMode && !showAuphonicWrap) && <div className={`${style['edit-mode-btn']}`} > <button className={`${style["rounded-btn"]} ${style['publish-btn']}`} disabled={!isFfmpegLoaded || ffmpegRunning || isPublishing} onClick={changeMode} >Edit Video</button></div>}
+                {(isPublishing && !showAuphonicWrap) && <p className={style["publishing-load-text"]} >Publishing content please wait and do not close the window till upload is not complete.</p>}
                 {!isFfmpegLoaded && <p>Please wait editing tool is loading...</p>}
                 {ffmpegLoadError && <p className={`${style['error']}`}>Cannot edit video, editing tool not supported for your browser !!</p>}
-                {(isEditMode) && <div className={style["editing-control-wrapper"]} >
+                {(isEditMode && !showAuphonicWrap) && <div className={style["editing-control-wrapper"]} >
                     <EditingControls
                         isAudio={true}
                         usePreview={useAudioOnlyPreview}
@@ -113,7 +123,7 @@ function PreviewPage() {
                     />
                 </div>}
             </span>
-            {isPublishing && <>
+            {(isPublishing || isStreamLoading) && <>
                 <div className={style["full-screen-loader"]} />
                 <div className={style['overlay']} />
             </>}

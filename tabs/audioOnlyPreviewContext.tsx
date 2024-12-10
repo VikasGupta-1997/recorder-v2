@@ -14,6 +14,7 @@ const AUTH_HEADER = {
 export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNode }) {
     const waveSurferRef = useRef<WaveSurfer | null>(null);
     const audioRef = useRef(null);
+    const auphonicAudioRef = useRef(null);
     const customCursorRef = useRef(null);
 
     const [blobUrl, setBlobUrl] = useState(null)
@@ -22,8 +23,9 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
     })
     const originalDuration = useRef(0)
     const plyrRef = useRef(null);
+    const wrapAuphonicAudioRef = useRef(null)
+    const normalAudioWrap = useRef(null)
 
-    const [loadingVideo, setLoadingVideo] = useState(true)
     const [blob, setBlob] = useState(null)
     const url = useRef('')
     const [history, setHistory] = useState([])
@@ -36,7 +38,6 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
     const [ffmpegRunning, setIsFfmpegRunning] = useState(false)
     const [isPublishing, setIspublishing] = useState(false)
     const [videoSource, setVideoSource] = useState(null);
-
     const [trimState, setTrimState] = useState({
         start: 0,
         end: 1,
@@ -45,7 +46,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
         endTime: 0,
         duration: 0
     });
-
+    const [showAuphonicWrap, setShowAuphonicWrap] = useState(false)
     const playPartialRecording = async (receivedChunks) => {
         try {
             // Convert available chunks to a Blob
@@ -69,7 +70,6 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
                     console.log("newBlobUrl11221", newBlobUrl)
                     setBlobUrl(newBlobUrl)
                     setBlob(newBlob)
-                    setLoadingVideo(false)
                     // Revoke old URL to prevent memory leaks
                     if (url.current) {
                         URL.revokeObjectURL(url.current);
@@ -154,19 +154,19 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
         window.parent.postMessage(message, "*");
     }
 
-      const getPresets = async () => {
+    const getPresets = async () => {
         try {
-          const response = await fetch(`${auphonicUrl}/presets.json`, {
-            method: 'GET',
-            headers: AUTH_HEADER,
-          });
-          const {data} = await response.json();
-          return data
+            const response = await fetch(`${auphonicUrl}/presets.json`, {
+                method: 'GET',
+                headers: AUTH_HEADER,
+            });
+            const { data } = await response.json();
+            return data
         } catch (error) {
-          console.error("Error fetching presets:", error);
-          return [];
+            console.error("Error fetching presets:", error);
+            return [];
         }
-      };
+    };
 
 
     useEffect(() => {
@@ -348,7 +348,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
     };
 
     const processAudioWithAuphonic = async (audioBlob, isAudio, presetUuid) => {
-        const audio = isAudio === 'audio' 
+        const audio = isAudio === 'audio'
         console.log("isAudioisAudio", audio, audioBlob.type, presetUuid)
         setIspublishing(true)
         try {
@@ -413,7 +413,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
                     const statusData = await statusResponse.json();
                     console.log("Current production status:", statusData.data.status_string);
                     // return statusData?.data?.status_string; // when checking for status_string
-                    return  statusData?.data?.status; // when checking for status 
+                    return statusData?.data?.status; // when checking for status 
                 } catch (error) {
                     console.error("Error during status check:", error);
                     throw error;
@@ -424,7 +424,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
             do {
                 await new Promise(resolve => setTimeout(resolve, 2000)); // Poll every 2 seconds
                 status = await checkStatus();
-            }  while ([1, 4, 5].includes(status)); // when checking for status 
+            } while ([1, 4, 5].includes(status)); // when checking for status 
             // } while ( ["Audio Encoding",  "Audio Processing", "Waiting"].includes(status)); // when checking for status_string
 
             console.log("Final production status:", status);
@@ -451,24 +451,124 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
 
     function getDynamicTimestamp() {
         const now = new Date();
-    
+
         const day = String(now.getDate()).padStart(2, '0');
         const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are zero-based
         const year = now.getFullYear();
         const hours = String(now.getHours()).padStart(2, '0');
         const minutes = String(now.getMinutes()).padStart(2, '0');
         const seconds = String(now.getSeconds()).padStart(2, '0');
-    
+
         return `${day}${month}${year}${hours}${minutes}${seconds}`;
     }
-    
+
+    const getAuphonicData = () => {
+        setShowAuphonicWrap(true);
+
+        wrapAuphonicAudioRef.current.style.display = 'block';
+        normalAudioWrap.current.style.width = "45%";
+
+        const mediaSource = new MediaSource();
+        const sourceBuffer = { buffer: [] };
+        let isBuffering = true;
+        // const BUFFER_THRESHOLD = 1024 * 512; // 512KB buffer threshold
+        const BUFFER_THRESHOLD = 10; // 512KB buffer threshold
+
+        auphonicAudioRef.current.src = URL.createObjectURL(mediaSource);
+
+        // Add buffering event listeners
+        auphonicAudioRef.current.addEventListener('waiting', () => {
+            console.log('Audio buffering... Playback paused');
+        });
+
+        auphonicAudioRef.current.addEventListener('playing', () => {
+            console.log('Audio resumed playing after buffering');
+        });
+
+        mediaSource.addEventListener("sourceopen", async () => {
+            const sb = mediaSource.addSourceBuffer('audio/mpeg');
+            sourceBuffer.buffer = [];
+            
+            try {
+                const response = await fetch("http://localhost:8080/api/stream", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        // url: "https://auphonic.com/api/download/audio-result/iKdKsxnDujxf8fhbMMnC2S/video_1733318424532_bz8wmgpd.mp4"
+                        url: "https://auphonic.com/api/download/audio-result/eZSp3KANoa5kpU6EQnQLtX/new_audio_file.mp3",
+                    }),
+                });
+
+                if (!response.body) throw new Error("ReadableStream not supported!");
+                const reader = response.body.getReader();
+                let totalBytesReceived = 0;
+
+                const appendChunk = async (chunk) => {
+                    return new Promise((resolve) => {
+                        if (!sb.updating) {
+                            sb.appendBuffer(chunk);
+                            sb.addEventListener('updateend', resolve, { once: true });
+                        } else {
+                            sb.addEventListener('updateend', () => {
+                                sb.appendBuffer(chunk);
+                                sb.addEventListener('updateend', resolve, { once: true });
+                            }, { once: true });
+                        }
+                    });
+                };
+
+                const processStream = async () => {
+                    while (true) {
+                        const { done, value } = await reader.read();
+
+                        if (done) {
+                            console.log("Stream complete! Total bytes received:", totalBytesReceived);
+                            mediaSource.endOfStream();
+                            break;
+                        }
+
+                        totalBytesReceived += value.length;
+                        await appendChunk(value);
+
+                        // Start playback when we have enough data buffered
+                        if (isBuffering && totalBytesReceived >= BUFFER_THRESHOLD) {
+                            isBuffering = false;
+                            console.log("Buffer threshold reached, starting playback...");
+                            try {
+                                await auphonicAudioRef.current.play();
+                            } catch (error) {
+                                console.error("Error starting playback:", error);
+                            }
+                        }
+                    }
+                };
+
+                processStream().catch(error => {
+                    console.error("Error processing stream:", error);
+                    mediaSource.endOfStream("network");
+                    setShowAuphonicWrap(false);
+                });
+
+            } catch (err) {
+                console.error("Error during streaming:", err);
+                mediaSource.endOfStream("network");
+                setShowAuphonicWrap(false);
+            }
+        });
+
+        // Add error handling for MediaSource
+        mediaSource.addEventListener("error", (e) => {
+            console.error("MediaSource error:", e);
+            setShowAuphonicWrap(false);
+        });
+    };
 
     const value = {
         playPartialRecording,
         blobUrl,
         setBlobUrl,
-        loadingVideo,
-        setLoadingVideo,
         blob,
         setBlob,
         trimState,
@@ -501,9 +601,14 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
         isPublishing,
         getPresets,
         originalDuration,
-        videoSource, 
+        videoSource,
         setVideoSource,
-        getDynamicTimestamp
+        getDynamicTimestamp,
+        getAuphonicData,
+        auphonicAudioRef,
+        wrapAuphonicAudioRef,
+        normalAudioWrap,
+        showAuphonicWrap
     };
 
     return (
