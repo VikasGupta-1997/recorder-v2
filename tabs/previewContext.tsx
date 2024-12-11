@@ -36,7 +36,8 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     const [ffmpegRunning, setIsFfmpegRunning] = useState(false)
     const [isPublishing, setIspublishing] = useState(false)
     const [videoSource, setVideoSource] = useState(null);
-
+    const [auphonicVideoUrlPreview, setAuphonicVideoUrlPreview] = useState('')
+    const auphonicPlyrRef = useRef(null)
     const [trimState, setTrimState] = useState({
         start: 0,
         end: 1,
@@ -171,9 +172,9 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         sendPostMessage({ type: "load-ffmpeg" });
-        window.onbeforeunload = function () {
-            return true;
-        };
+        // window.onbeforeunload = function () {
+        //     return true;
+        // };
     }, [])
 
     useEffect(() => {
@@ -273,6 +274,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         if (url.current) {
             URL.revokeObjectURL(url.current);
         }
+        setAuphonicVideoUrlPreview('')
         url.current = newBlobUrl;
         setDuration(originalDuration.current)
         // if(audioRef.current){
@@ -449,6 +451,11 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
+    const showAuphonicPreview = (url) => {
+        setAuphonicVideoUrlPreview(url)
+    }
+
+
     function getDynamicTimestamp() {
         const now = new Date();
     
@@ -503,7 +510,10 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         originalDuration,
         videoSource, 
         setVideoSource,
-        getDynamicTimestamp
+        getDynamicTimestamp,
+        showAuphonicPreview,
+        auphonicPlyrRef,
+        auphonicVideoUrlPreview
     };
 
     return (

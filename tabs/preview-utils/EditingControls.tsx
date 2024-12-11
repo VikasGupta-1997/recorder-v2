@@ -17,7 +17,8 @@ const EditingControls = ({
     setShowGhost,
     showGhost,
     usePreview,
-    isAudio
+    isAudio,
+    getAuphonicData
  }) => {
 
     const {
@@ -39,7 +40,6 @@ const EditingControls = ({
         ffmpegRunning,
         isPublishing,
         originalDuration,
-        getAuphonicData
     } = usePreview();
 
     const waveContainerRef = useRef<HTMLDivElement>(null);
