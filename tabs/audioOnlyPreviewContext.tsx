@@ -490,15 +490,13 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
             sourceBuffer.buffer = [];
             
             try {
-                const response = await fetch("http://localhost:8080/api/stream", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        // url: "https://auphonic.com/api/download/audio-result/iKdKsxnDujxf8fhbMMnC2S/video_1733318424532_bz8wmgpd.mp4"
-                        url: "https://auphonic.com/api/download/audio-result/eZSp3KANoa5kpU6EQnQLtX/new_audio_file.mp3",
-                    }),
+                const response = await fetch("http://localhost:8080/api/stream-audio?url=https://auphonic.com/api/download/audio-result/eZSp3KANoa5kpU6EQnQLtX/new_audio_file.mp3", {
+                    method: "GET",
+                    
+                    // body: JSON.stringify({
+                    //     // url: "https://auphonic.com/api/download/audio-result/iKdKsxnDujxf8fhbMMnC2S/video_1733318424532_bz8wmgpd.mp4"
+                    //     url: "https://auphonic.com/api/download/audio-result/eZSp3KANoa5kpU6EQnQLtX/new_audio_file.mp3",
+                    // }),
                 });
 
                 if (!response.body) throw new Error("ReadableStream not supported!");
@@ -537,7 +535,9 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
                             isBuffering = false;
                             console.log("Buffer threshold reached, starting playback...");
                             try {
-                                await auphonicAudioRef.current.play();
+                                setTimeout(async() => {
+                                    await auphonicAudioRef.current.play();
+                                },  1000)
                             } catch (error) {
                                 console.error("Error starting playback:", error);
                             }
