@@ -490,7 +490,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
             sourceBuffer.buffer = [];
             
             try {
-                const response = await fetch("http://localhost:8080/api/stream-audio?url=https://auphonic.com/api/download/audio-result/eZSp3KANoa5kpU6EQnQLtX/new_audio_file.mp3", {
+                const response = await fetch("http://localhost:8080/api/stream-audio?url=https://auphonic.com/api/download/audio-result/beS6vmTQNGqr6M4Yo5neaV/audio_1733314734721_5kzbwl0u.mp3	", {
                     method: "GET",
                     
                     // body: JSON.stringify({

@@ -26,6 +26,8 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     const [loadingVideo, setLoadingVideo] = useState(true)
     const [blob, setBlob] = useState(null)
     const url = useRef('')
+    const auphonicPlyrRef = useRef(null)
+
     const [history, setHistory] = useState([])
     const [redoHistory, setRedoHistory] = useState([])
     const [isEditMode, setIsEditMode] = useState(false)
@@ -36,6 +38,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     const [ffmpegRunning, setIsFfmpegRunning] = useState(false)
     const [isPublishing, setIspublishing] = useState(false)
     const [videoSource, setVideoSource] = useState(null);
+    const [auphonicVideoUrlPreview, setAuphonicVideoUrlPreview] = useState('')
 
     const [trimState, setTrimState] = useState({
         start: 0,
@@ -269,6 +272,8 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
             duration: 0
         })
         setHistory([])
+        setAuphonicVideoUrlPreview('')
+
         setRedoHistory([])
         if (url.current) {
             URL.revokeObjectURL(url.current);
@@ -346,6 +351,10 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
             setRedoHistory(redoHistory.slice(0, -1));
         }
     };
+
+    const showAuphonicPreview = (url) => {
+        setAuphonicVideoUrlPreview(url)
+    }
 
     const processAudioWithAuphonic = async (audioBlob, isAudio, presetUuid = 'em7Cac7GkJzhH8yw7qDfWo') => {
         const audio = isAudio === 'audio' 
@@ -503,7 +512,10 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         originalDuration,
         videoSource, 
         setVideoSource,
-        getDynamicTimestamp
+        getDynamicTimestamp,
+        showAuphonicPreview,
+        auphonicPlyrRef,
+        auphonicVideoUrlPreview
     };
 
     return (

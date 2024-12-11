@@ -61,7 +61,8 @@ function PreviewPage() {
         auphonicAudioRef,
         wrapAuphonicAudioRef,
         normalAudioWrap,
-        showAuphonicWrap
+        showAuphonicWrap,
+        getAuphonicData
     } = useAudioOnlyPreview();
     const [showGhost, setShowGhost] = useState(false);
     const containerRef = useRef(null)
@@ -116,6 +117,7 @@ function PreviewPage() {
                 {ffmpegLoadError && <p className={`${style['error']}`}>Cannot edit video, editing tool not supported for your browser !!</p>}
                 {(isEditMode && !showAuphonicWrap) && <div className={style["editing-control-wrapper"]} >
                     <EditingControls
+                        getAuphonicData={getAuphonicData}
                         isAudio={true}
                         usePreview={useAudioOnlyPreview}
                         setShowGhost={setShowGhost}

@@ -74,6 +74,17 @@ video {
     /* width: 45%; */
 }
 
+.ref-wrapper-video {
+    display: flex;
+    flex-direction: column;
+    border-radius: 8px;
+    position: relative;
+    height: 100%;
+    /* width: 100%; */
+    width: 55%;
+    /* width: 45%; */
+}
+
 .auphonic-wrap {
     display: none;
     width: 45%;
@@ -809,3 +820,36 @@ video {
     animation: l3 1s infinite linear;
   }
   @keyframes l3 {to{transform: rotate(1turn)}}
+
+  .editing-video-wrapper {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    display: flex;
+}
+
+
+  .video-wrapper {
+    border-radius: 8px;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+    align-items: center;
+}
+
+.auphonic-video {
+    width: 100%;
+}
+
+@media (max-width: 1280px) {
+    .video-wrapper {
+        flex-wrap: wrap;
+    }
+
+    .auphonic-video  {
+        width: 60%;
+    }
+}
