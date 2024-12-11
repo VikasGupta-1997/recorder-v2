@@ -6,6 +6,7 @@ import AudioPreview from "./preview-utils/AudioPreview";
 import EditingControls from "./preview-utils/EditingControls";
 import { AudioOnlyPreviewProvider, useAudioOnlyPreview } from "./audioOnlyPreviewContext";
 import AsyncSelect from 'react-select/async';
+import NewAudioPlayer from "./preview-utils/NewAudioPlayer";
 
 export const getStyle = () => {
     const style = document.createElement("style")
@@ -105,7 +106,8 @@ function PreviewPage() {
                 </h1>
                 <div className={style["audio-main-wrap"]} >
                     <div ref={normalAudioWrap} className={style["ref-wrapper"]}>
-                        <AudioPreview blobUrl={blobUrl} blob={blob} audioRef={audioRef} containerRef={containerRef} />
+                        <NewAudioPlayer blobUrl={blobUrl} />
+                        {/* <AudioPreview blobUrl={blobUrl} blob={blob} audioRef={audioRef} containerRef={containerRef} /> */}
                     </div>
                     <div ref={wrapAuphonicAudioRef} className={`${style["ref-wrapper"]} ${style["auphonic-wrap"]}`}>
                         <AudioPreview blobUrl={blobUrl} blob={blob} audioRef={auphonicAudioRef} containerRef={containerRef} />
