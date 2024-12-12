@@ -189,10 +189,10 @@ export default function AudioPreview({
             setMediaRecorder(null);
         }
 
-        if (analyserRef.current) {
-            analyserRef.current.disconnect();
-            analyserRef.current = null;
-        }
+        // if (analyserRef.current) {
+        //     analyserRef.current.disconnect();
+        //     analyserRef.current = null;
+        // }
     };
 
     const handleAudioEnded = () => {
@@ -333,6 +333,7 @@ export default function AudioPreview({
                     bottom: '5px',
                 }}
                 controls
+                crossOrigin="anonymous"
                 // autoPlay
                 onTimeUpdate={handleTimeUpdate} // Update progress
                 onLoadedMetadata={handleLoadedMetadata} // Set duration when metadata is loaded

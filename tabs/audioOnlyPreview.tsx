@@ -108,12 +108,12 @@ function PreviewPage() {
                 </h1>
                 <div className={style["audio-main-wrap"]} >
                     <div ref={normalAudioWrap} className={style["ref-wrapper"]}>
-                        <NewAudioPlayer fromAuphonic={false} audioSource={audioSource} />
-                        {/* <AudioPreview blobUrl={blobUrl} blob={blob} audioRef={audioRef} containerRef={containerRef} /> */}
+                        {/* <NewAudioPlayer fromAuphonic={false} audioSource={audioSource} /> */}
+                        <AudioPreview blobUrl={blobUrl} blob={blob} audioRef={audioRef} containerRef={containerRef} />
                     </div>
                     {showAuphonicWrap && <div ref={wrapAuphonicAudioRef} className={`${style["ref-wrapper"]}`}>
-                        <NewAudioPlayer fromAuphonic={true} audioSource={auphonicAudioSource} />
-                        {/* <AudioPreview blobUrl={"http://localhost:8080/stream?url=https://auphonic.com/api/download/audio-result/beS6vmTQNGqr6M4Yo5neaV/audio_1733314734721_5kzbwl0u.mp3"} blob={blob} audioRef={auphonicAudioRef} containerRef={containerRef} /> */}
+                        {/* <NewAudioPlayer fromAuphonic={true} audioSource={auphonicAudioSource} /> */}
+                        <AudioPreview blobUrl={"http://localhost:8080/stream?url=https://auphonic.com/api/download/audio-result/beS6vmTQNGqr6M4Yo5neaV/audio_1733314734721_5kzbwl0u.mp3"} blob={blob} audioRef={auphonicAudioRef} containerRef={containerRef} />
                     </div>}
                 </div>
                 {(!isEditMode && !showAuphonicWrap) && <div className={`${style['edit-mode-btn-audio']}`} > <button className={`${style["rounded-btn"]} ${style['publish-btn']}`} disabled={!isFfmpegLoaded || ffmpegRunning || isPublishing} onClick={changeMode} >Edit Video</button></div>}

@@ -483,6 +483,13 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
         return `${day}${month}${year}${hours}${minutes}${seconds}`;
     }
 
+    useEffect(() => {
+        if(showAuphonicWrap){
+            console.log("auphonicAudioRef1212",auphonicAudioRef.current )
+            auphonicAudioRef.current.src = "http://localhost:8080/stream?url=https://auphonic.com/api/download/audio-result/beS6vmTQNGqr6M4Yo5neaV/audio_1733314734721_5kzbwl0u.mp3"
+        }
+    }, [showAuphonicWrap])
+
     const getAuphonicData = () => {
         setShowAuphonicWrap(true);
         setAuphonicAudioSource({
