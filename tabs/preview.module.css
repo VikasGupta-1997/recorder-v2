@@ -70,8 +70,14 @@ video {
     border-radius: 8px;
     position: relative;
     height: 100%;
-    width: 55%;
+    width: 50%;
     /* width: 45%; */
+}
+
+.plyr-wrap-audio {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
 }
 
 .ref-wrapper-video {
@@ -86,8 +92,6 @@ video {
 }
 
 .auphonic-wrap {
-    display: none;
-    width: 45%;
 }
 
 .video {
@@ -106,6 +110,7 @@ video {
     height: 500px;
     display: flex;
     border-radius: 8px;
+    flex-direction: column;
 }
 
 .audio-absolute {

@@ -16,7 +16,9 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
     const audioRef = useRef(null);
     const auphonicAudioRef = useRef(null);
     const customCursorRef = useRef(null);
-
+    const audioPlyrRef = useRef(null)
+    const [audioSource, setAudioSource] = useState(null);
+    const [auphonicAudioSource, setAuphonicAudioSource] = useState(null);
     const [blobUrl, setBlobUrl] = useState(null)
     const [originalVideo, setOriginalVideo] = useState({
         blob: new Blob(), url: ''
@@ -47,6 +49,19 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
         duration: 0
     });
     const [showAuphonicWrap, setShowAuphonicWrap] = useState(false)
+
+    const setSource = (url) => {
+        setAudioSource({
+            type: "audio",
+            sources: [
+                {
+                    src: url,
+                    type: "audio/mpeg",
+                },
+            ],
+        });
+    }
+
     const playPartialRecording = async (receivedChunks) => {
         try {
             // Convert available chunks to a Blob
@@ -69,6 +84,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
                     const newBlobUrl = URL.createObjectURL(newBlob);
                     console.log("newBlobUrl11221", newBlobUrl)
                     setBlobUrl(newBlobUrl)
+                    setSource(newBlobUrl)
                     setBlob(newBlob)
                     // Revoke old URL to prevent memory leaks
                     if (url.current) {
@@ -171,9 +187,9 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
 
     useEffect(() => {
         sendPostMessage({ type: "load-ffmpeg" });
-        window.onbeforeunload = function () {
-            return true;
-        };
+        // window.onbeforeunload = function () {
+        //     return true;
+        // };
     }, [])
 
     useEffect(() => {
@@ -206,6 +222,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
                     blobUrl: blobUrl
                 });
                 setBlobUrl(newBlobUrl)
+                setSource(newBlobUrl)
                 setBlob(message.blob)
 
 
@@ -258,6 +275,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
         const newBlobUrl = URL.createObjectURL(originalVideo?.blob);
         // setBlob(originalVideo?.blob);
         setBlobUrl(newBlobUrl);
+        setSource(newBlobUrl)
         setIsEditMode(false)
         setBlob(originalVideo.blob)
         setTrimState({
@@ -299,7 +317,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
                 const newBlobUrl = URL.createObjectURL(lastState.blob);
                 setBlob(lastState.blob);
                 setBlobUrl(newBlobUrl);
-
+                setSource(newBlobUrl)
                 // Cleanup old blob URL
                 if (url.current) {
                     URL.revokeObjectURL(url.current);
@@ -332,7 +350,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
                 const newBlobUrl = URL.createObjectURL(redoState.blob);
                 setBlob(redoState.blob);
                 setBlobUrl(newBlobUrl);
-
+                setSource(newBlobUrl)
                 // Cleanup old blob URL
                 if (url.current) {
                     URL.revokeObjectURL(url.current);
@@ -464,10 +482,18 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
 
     const getAuphonicData = () => {
         setShowAuphonicWrap(true);
-
-        wrapAuphonicAudioRef.current.style.display = 'block';
-        normalAudioWrap.current.style.width = "45%";
-
+        setAuphonicAudioSource({
+            type: "audio",
+            sources: [
+                {
+                    src: "http://localhost:8080/stream?url=https://auphonic.com/api/download/audio-result/beS6vmTQNGqr6M4Yo5neaV/audio_1733314734721_5kzbwl0u.mp3",
+                    type: "audio/mpeg",
+                },
+            ],
+        })
+        // wrapAuphonicAudioRef.current.style.display = 'block';
+        // normalAudioWrap.current.style.width = "45%";
+        return;
         const mediaSource = new MediaSource();
         const sourceBuffer = { buffer: [] };
         let isBuffering = true;
@@ -490,7 +516,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
             sourceBuffer.buffer = [];
             
             try {
-                const response = await fetch("http://localhost:8080/api/stream-audio?url=https://auphonic.com/api/download/audio-result/beS6vmTQNGqr6M4Yo5neaV/audio_1733314734721_5kzbwl0u.mp3	", {
+                const response = await fetch("http://localhost:8080/api/stream-audio?url=https://auphonic.com/api/download/audio-result/beS6vmTQNGqr6M4Yo5neaV/audio_1733314734721_5kzbwl0u.mp3", {
                     method: "GET",
                     
                     // body: JSON.stringify({
@@ -608,7 +634,11 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
         auphonicAudioRef,
         wrapAuphonicAudioRef,
         normalAudioWrap,
-        showAuphonicWrap
+        showAuphonicWrap,
+        audioSource, 
+        setAudioSource,
+        audioPlyrRef,
+        auphonicAudioSource
     };
 
     return (

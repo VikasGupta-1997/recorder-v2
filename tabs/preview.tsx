@@ -135,7 +135,7 @@ function PreviewPage() {
                             <EditingControls
                                 getAuphonicData={() => {
                                     console.log("Calle!!!")
-                                    showAuphonicPreview('http://localhost:8080/stream?url=https://auphonic.com/api/download/audio-result/NUYfWXQdYdZoAAnVxzhsGf/video_1733317538274_zkkh0nln.mp4')
+                                    showAuphonicPreview('http://localhost:8080/stream?url=https://auphonic.com/api/download/audio-result/yVt4jbLGFkHMYQu8NgNtGQ/ForBiggerBlazes.mp4')
                                 }}
                                 isAudio={false}
                                 usePreview={usePreview}

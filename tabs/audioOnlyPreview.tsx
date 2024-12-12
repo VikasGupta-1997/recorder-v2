@@ -63,7 +63,9 @@ function PreviewPage() {
         wrapAuphonicAudioRef,
         normalAudioWrap,
         showAuphonicWrap,
-        getAuphonicData
+        getAuphonicData,
+        audioSource,
+        auphonicAudioSource
     } = useAudioOnlyPreview();
     const [showGhost, setShowGhost] = useState(false);
     const containerRef = useRef(null)
@@ -86,7 +88,7 @@ function PreviewPage() {
             </div>
         )
     }
-    // console.log("isAudio1212", isAudio)
+    console.log("isAudio1212", showAuphonicWrap)
     return (
         <div className={style["container"]}>
             <span className={style["span-wrapper"]} style={{
@@ -106,12 +108,13 @@ function PreviewPage() {
                 </h1>
                 <div className={style["audio-main-wrap"]} >
                     <div ref={normalAudioWrap} className={style["ref-wrapper"]}>
-                        <NewAudioPlayer blobUrl={blobUrl} />
+                        <NewAudioPlayer audioSource={audioSource} />
                         {/* <AudioPreview blobUrl={blobUrl} blob={blob} audioRef={audioRef} containerRef={containerRef} /> */}
                     </div>
-                    <div ref={wrapAuphonicAudioRef} className={`${style["ref-wrapper"]} ${style["auphonic-wrap"]}`}>
-                        <AudioPreview blobUrl={blobUrl} blob={blob} audioRef={auphonicAudioRef} containerRef={containerRef} />
-                    </div>
+                    {showAuphonicWrap && <div ref={wrapAuphonicAudioRef} className={`${style["ref-wrapper"]}`}>
+                        <NewAudioPlayer audioSource={auphonicAudioSource} />
+                        {/* <AudioPreview blobUrl={"http://localhost:8080/stream?url=https://auphonic.com/api/download/audio-result/beS6vmTQNGqr6M4Yo5neaV/audio_1733314734721_5kzbwl0u.mp3"} blob={blob} audioRef={auphonicAudioRef} containerRef={containerRef} /> */}
+                    </div>}
                 </div>
                 {(!isEditMode && !showAuphonicWrap) && <div className={`${style['edit-mode-btn']}`} > <button className={`${style["rounded-btn"]} ${style['publish-btn']}`} disabled={!isFfmpegLoaded || ffmpegRunning || isPublishing} onClick={changeMode} >Edit Video</button></div>}
                 {(isPublishing && !showAuphonicWrap) && <p className={style["publishing-load-text"]} >Publishing content please wait and do not close the window till upload is not complete.</p>}
