@@ -4,6 +4,7 @@ import { useRef, useEffect, memo } from "react"
 import { BiMicrophone } from "react-icons/bi";
 import Plyr from "plyr-react";
 import "plyr-react/plyr.css";
+import { useAudioOnlyPreview } from "../audioOnlyPreviewContext";
 
 export const getStyle = () => {
     const style = document.createElement("style")
@@ -11,7 +12,12 @@ export const getStyle = () => {
     return style
 }
 
-const NewAudioPlayer = ({ audioSource }) => {
+const NewAudioPlayer = ({ audioSource , fromAuphonic}) => {
+    const {
+        duration,
+        waveSurferRef,
+        updateCursorPosition
+    } = useAudioOnlyPreview();
     const containerRef = useRef(null);
     const svgMicRef = useRef(null);
     const plyrRef = useRef(null);
@@ -33,7 +39,18 @@ const NewAudioPlayer = ({ audioSource }) => {
             global: true,
         },
         crossorigin: "anonymous",
+        ...(fromAuphonic ? {} : { duration: duration || undefined})
     };
+
+    useEffect(() => {
+        if (waveSurferRef.current && !fromAuphonic) {
+            waveSurferRef.current.on('seeking', () => {
+                const currentTime = waveSurferRef.current.getCurrentTime();
+                plyrRef.current.plyr.currentTime = currentTime;
+                updateCursorPosition(currentTime);
+            })
+        }
+    }, [waveSurferRef.current, fromAuphonic]);
 
     const initializeAudioContext = () => {
         const audioElement = plyrRef.current?.plyr?.media;
@@ -106,17 +123,18 @@ const NewAudioPlayer = ({ audioSource }) => {
     const handleClick = () => {
         if (plyrRef.current && plyrRef.current.plyr) {
             plyrRef.current.plyr.on("play", () => {
-                console.log("On Play Called", plyrRef.current.plyr.currentTime);
                 startVisualization();
             });
+
+            plyrRef.current.plyr.on("timeupdate", () => {
+                updateCursorPosition(plyrRef.current.plyr.currentTime)
+            })
             
             plyrRef.current.plyr.on("ended", () => {
-                console.log("On EndEDDEE Called", plyrRef.current.plyr.currentTime);
                 stopVisualization();
             });
             
             plyrRef.current.plyr.on("pause", () => {
-                console.log("On Pause Called", plyrRef.current.plyr.currentTime);
                 stopVisualization();
             });
         }
@@ -140,6 +158,18 @@ const NewAudioPlayer = ({ audioSource }) => {
             }
         };
     }, []);
+
+    useEffect(() => {
+        if (duration && plyrRef.current?.plyr &&  !fromAuphonic) {
+            // Force a reload of the player with new duration
+            const currentTime = plyrRef.current.plyr.currentTime;
+            plyrRef.current.plyr.source = {
+                ...audioSource,
+                duration: duration
+            };
+            plyrRef.current.plyr.currentTime = currentTime;
+        }
+    }, [duration, audioSource, fromAuphonic]);
 
     return (
         <div className={style["audio-container"]} ref={containerRef}>

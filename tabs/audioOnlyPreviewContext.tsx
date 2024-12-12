@@ -24,6 +24,8 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
         blob: new Blob(), url: ''
     })
     const originalDuration = useRef(0)
+    const [loadingVideo, setLoadingVideo] = useState(true)
+
     const plyrRef = useRef(null);
     const wrapAuphonicAudioRef = useRef(null)
     const normalAudioWrap = useRef(null)
@@ -86,6 +88,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
                     setBlobUrl(newBlobUrl)
                     setSource(newBlobUrl)
                     setBlob(newBlob)
+                    setLoadingVideo(false)
                     // Revoke old URL to prevent memory leaks
                     if (url.current) {
                         URL.revokeObjectURL(url.current);
@@ -638,7 +641,8 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
         audioSource, 
         setAudioSource,
         audioPlyrRef,
-        auphonicAudioSource
+        auphonicAudioSource,
+        loadingVideo
     };
 
     return (

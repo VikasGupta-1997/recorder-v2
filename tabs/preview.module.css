@@ -370,6 +370,12 @@ video {
     margin-top: 1rem;
     width: 55%;
 }
+.edit-mode-btn-audio  {
+    display: flex;
+    justify-content: end;
+    margin-top: 1rem;
+    width: 50%;
+}
 
 .editing-container .editing-actions button, .rounded-btn {
     display: flex;
