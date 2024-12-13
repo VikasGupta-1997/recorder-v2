@@ -217,76 +217,8 @@ const OffScreen = () => {
     recordingCanvas.width = 1280; // Set width (or use screenVideo.videoWidth if known)
     recordingCanvas.height = 720; // Set height (or use screenVideo.videoHeight if known)
     const recordingContext = recordingCanvas.getContext("2d");
-
-    // Load the background image
-    // const backgroundImage = new Image();
-    // backgroundImage.src = backgroundUrl; // URL of the GIF or image
-    // await new Promise((resolve) => {
-    //     backgroundImage.onload = resolve; // Wait for the image to load
-    // });
-
-    // Create OffscreenCanvas for webcam
     const offscreenCanvas = new OffscreenCanvas(180, 180); // Adjusted size for the circular webcam view
     const offscreenContext = offscreenCanvas.getContext("2d");
-
-    // Function to draw frames on the recording canvas
-
-
-    // const drawFrame = () => {
-    //   // Draw the background
-    //   recordingContext.fillStyle = "black";
-    //   recordingContext.fillRect(0, 0, recordingCanvas.width, recordingCanvas.height);
-
-    //   // Define position for the circular webcam display
-    //   const webcamX = 4; // 4 pixels padding from the left
-    //   const webcamY = recordingCanvas.height - offscreenCanvas.height - 8; // Position at the bottom with 8 pixels padding
-
-    //   // Clear the OffscreenCanvas (for the webcam) with transparency
-    //   offscreenContext.clearRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
-
-    //   // Draw the webcam video on the OffscreenCanvas (before clipping)
-    //   offscreenContext.drawImage(webcamVideo, 0, 0, offscreenCanvas.width, offscreenCanvas.height);
-
-    //   // Define the circular area for the webcam view
-    //   const radius = offscreenCanvas.width / 2; // Use half the width/height for the radius
-    //   const centerX = offscreenCanvas.width / 2; // Center horizontally
-    //   const centerY = offscreenCanvas.height / 2; // Center vertically
-
-    //   // Clip to a circular path
-    //   offscreenContext.beginPath();
-    //   offscreenContext.arc(centerX, centerY, radius, 0, Math.PI * 2);
-    //   offscreenContext.clip();
-
-    //   // Clear the OffscreenCanvas again to keep the area outside the circle transparent
-    //   offscreenContext.clearRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
-
-    //   // Draw the webcam image again within the circular area
-    //   offscreenContext.drawImage(webcamVideo, 0, 0, offscreenCanvas.width, offscreenCanvas.height);
-
-    //   // Draw the circular webcam view onto the recording canvas
-    //   recordingContext.drawImage(offscreenCanvas, webcamX, webcamY);
-
-    //   // Calculate the dimensions for the screen video
-    //   const screenAspectRatio = screenVideo.videoWidth / screenVideo.videoHeight;
-    //   const canvasWidth = recordingCanvas.width * 0.85 - 8; // 85% of canvas width with 8 pixels padding
-    //   const canvasHeight = recordingCanvas.height;
-
-    //   let screenWidth = canvasWidth;
-    //   let screenHeight = screenWidth / screenAspectRatio;
-
-    //   // Adjust dimensions to ensure the screen video fits within the canvas
-    //   if (screenHeight > canvasHeight) {
-    //     screenHeight = canvasHeight;
-    //     screenWidth = screenHeight * screenAspectRatio;
-    //   }
-
-    //   // Center the screen video vertically
-    //   const screenX = offscreenCanvas.width + 8; // 8 pixels gap after the webcam
-    //   const screenY = (recordingCanvas.height - screenHeight) / 2;
-
-    //   // Draw the screen video
-    //   recordingContext.drawImage(screenVideo, screenX, screenY, screenWidth, screenHeight);
-    // };
 
     const drawFrame = () => {
       // Fill the background with black
@@ -326,47 +258,6 @@ const OffScreen = () => {
       // Draw the screen video
       recordingContext.drawImage(screenVideo, screenX, screenY, screenWidth, screenHeight);
     };
-
-
-
-    // const drawFrame = () => {
-    //   // Fill the background with black
-    //   recordingContext.fillStyle = "black";
-    //   recordingContext.fillRect(0, 0, recordingCanvas.width, recordingCanvas.height);
-
-    //   // Define the circular area for the webcam display
-    //   const radius = offscreenCanvas.width / 2; // Use half the width/height for the radius
-    //   const centerX = offscreenCanvas.width / 2; // Center horizontally
-    //   const centerY = offscreenCanvas.height / 2; // Center vertically
-
-    //   // Clear the offscreen canvas before drawing
-    //   offscreenContext.clearRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
-
-    //   // Clip the offscreen context to a circular path
-    //   offscreenContext.beginPath();
-    //   offscreenContext.arc(centerX, centerY, radius, 0, Math.PI * 2);
-    //   offscreenContext.closePath();
-    //   offscreenContext.clip();
-
-    //   // Draw the webcam video within the clipped circular area
-    //   offscreenContext.drawImage(webcamVideo, 0, 0, offscreenCanvas.width, offscreenCanvas.height);
-
-    //   // Draw the circular webcam view onto the recording canvas
-    //   const webcamX = 8; // 8 pixels padding from the left
-    //   const webcamY = recordingCanvas.height - offscreenCanvas.height - 8; // Align at the bottom with 8 pixels padding
-    //   recordingContext.drawImage(offscreenCanvas, webcamX, webcamY);
-
-    //   // Draw the screen video on the remaining canvas
-    //   const screenX = offscreenCanvas.width + 16; // Place next to the webcam with padding
-    //   const screenWidth = recordingCanvas.width - screenX - 8; // Remaining width after webcam and padding
-    //   const screenHeight = screenVideo.videoHeight * (screenWidth / screenVideo.videoWidth); // Maintain aspect ratio
-
-    //   // Align the screen video baseline with the webcam baseline
-    //   const screenY = recordingCanvas.height - screenHeight - 8; // Align at the bottom with 8 pixels padding
-
-    //   // Draw the screen video
-    //   recordingContext.drawImage(screenVideo, screenX, screenY, screenWidth, screenHeight);
-    // };
 
     const drawInterval = setInterval(drawFrame, 1000 / 30); // 30 fps
 
@@ -409,7 +300,8 @@ const OffScreen = () => {
           });
           chrome.runtime.sendMessage({
             type: 'OPEN_PREVIEW_TAB',
-            videoUrl: url
+            videoUrl: url,
+            hasAudio: isAudioDeviceSelected
           });
         }
         onComplete()
@@ -575,7 +467,8 @@ const OffScreen = () => {
             });
             chrome.runtime.sendMessage({
               type: 'OPEN_PREVIEW_TAB',
-              videoUrl: url
+              videoUrl: url,
+              hasAudio: !!audioTrack
             });
           }
           onComplete()
@@ -629,7 +522,7 @@ const OffScreen = () => {
         chrome.runtime.sendMessage({
           type: 'OPEN_PREVIEW_TAB',
           videoUrl: url,
-          isAudioOnly: true
+          isAudioOnly: true,
         });
         chrome.runtime.sendMessage({ type: "RECORDING_IN_PROGRESS_END" })
       }
@@ -732,7 +625,8 @@ const OffScreen = () => {
         if (!isCamOnlyRecordingDiscarded) {
           chrome.runtime.sendMessage({
             type: 'OPEN_PREVIEW_TAB',
-            videoUrl: url
+            videoUrl: url,
+            hasAudio: selections?.micRecording.value !== "mic_off"
           });
           chrome.runtime.sendMessage({ type: "CLOSE_CAM_ONLY_WINDOW" })
           chrome.runtime.sendMessage({ type: "RECORDING_IN_PROGRESS_END" })

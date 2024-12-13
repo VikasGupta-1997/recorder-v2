@@ -262,23 +262,6 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
 
 
     const changeMode = () => {
-        const video = document.createElement("video");
-        video.preload = "metadata";
-        video.onloadedmetadata = async () => {
-            setDuration(video.duration)
-            console.log("video.durationvideo.duration", video.duration)
-            setTrimState(prev => ({
-                ...prev,
-                start: 0,
-                end: 1,
-                startTime: 0,
-                endTime: video.duration,
-                dragInteracted: false
-            }));
-          URL.revokeObjectURL(video.src);
-          video.remove();
-        };
-        video.src = URL.createObjectURL(blob);
         setIsEditMode(prev => !prev)
         // sendPostMessage({ type: "SEND_FROM_PREVIEW", blob: blob })
     }

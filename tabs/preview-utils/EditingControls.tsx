@@ -281,9 +281,6 @@ const EditingControls = ({
     };
 
     const disableButtons = (action) => {
-        if(action !== 'delete recording'){
-            return  (trimState.start === 0 && trimState.end === 1) || ffmpegRunning || isPublishing
-        }
         return ffmpegRunning || isPublishing
     }
 

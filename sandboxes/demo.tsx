@@ -14,7 +14,8 @@ const DemoSand = () => {
   const ffmpegInstance = useRef<any>(null);
   const [editMode, setEditMode] = useState(false)
   const triggerLoad = useRef(false)
-
+  const urlParams = new URLSearchParams(window.location.search);
+  const hasAudio = urlParams.get('hasAudio');
   const sendMessage = (message) => {
     iframeRef.current.contentWindow.postMessage(message, "*");
   };
@@ -67,17 +68,16 @@ const DemoSand = () => {
       }
 
       if(message.type === 'fixMetadata'){
-        console.log("fixMetadata", message)
-        const blob = await fixMetadata(
+        const fixedBlob = await fixMetadata(
           ffmpegInstance.current,
-          message.blob
+          message.blob,
+          hasAudio
         );
-        console.log("NOW FIXED AND SENDING DATAAA")
         sendMessage({
           type: "updated-blob",
           // base64: base64,
           addToHistory: false,
-          blob: blob
+          blob: fixedBlob
         });
       }
 
