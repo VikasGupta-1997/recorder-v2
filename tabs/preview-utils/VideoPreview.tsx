@@ -21,7 +21,9 @@ function VideoPreview({
         waveSurferRef,
         duration,
         setVideoSource,
-        videoSource
+        videoSource,
+        setDuration,
+        setTrimState
     } = usePreview();
 
 
@@ -71,6 +73,17 @@ function VideoPreview({
         if (plyrRef.current && plyrRef.current.plyr && isEditMode) {
             plyrRef.current.plyr.on("timeupdate", () => {
                 updateCursorPosition(plyrRef.current.plyr.currentTime)
+            });
+            plyrRef.current.plyr.on("ended", () => {
+                setTrimState(prev => ({ ...prev, duration: plyrRef.current.plyr.currentTime, endTime: plyrRef.current.plyr.currentTime }))
+                // plyrRef.current.plyr.source = {
+                // ...videoSource,
+                // duration: plyrRef.current.plyr.currentTime
+                // };
+                // plyrRef.current.plyr.currentTime =  plyrRef.current.plyr.currentTime;
+                setDuration(plyrRef.current.plyr.currentTime)
+                updateCursorPosition(plyrRef.current.plyr.currentTime)
+                console.log("updt plyrRef.current.plyr.currentTime", plyrRef.current.plyr.currentTime)
             });
         }
     };
@@ -129,4 +142,4 @@ function VideoPreview({
     )
 }
 
-export default  memo(VideoPreview)
+export default memo(VideoPreview)
