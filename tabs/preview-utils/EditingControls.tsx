@@ -281,6 +281,9 @@ const EditingControls = ({
     };
 
     const disableButtons = (action) => {
+        if(["cut", "trim"].includes(action)){
+            return (trimState.start === 0 && trimState.end === 1) || ffmpegRunning || isPublishing
+        }
         return ffmpegRunning || isPublishing
     }
 
