@@ -19,7 +19,7 @@ export const getStyle = () => {
   return style
 }
 
-
+const CountDown = 2
 const CustomButton = () => {
   const [mediaRecorder, setMediaRecorder] = useState(null)
   const [showStartOverlay, setShowStartOverlay] = useState(false);
@@ -29,7 +29,7 @@ const CustomButton = () => {
   const formattedTimeRef = useRef(null)
   const [intervalId, setIntervalId] = useState(null);
   const [isPopupConfirmation, setIsPopupConfirmation] = useState('')
-  const [count, setCount] = useState<any>(5);
+  const [count, setCount] = useState<any>(CountDown);
   const [startRecordingNow, setStartRecordingNow] = useState(false);
   const [injectCam, setInjectCam] = useState(false)
   const videoRef = useRef(null)
@@ -58,7 +58,7 @@ const CustomButton = () => {
     setIsRestarted(false)
     isDraggingRef.current = false
     setCurrentRotate(0)
-    setCount(5)
+    setCount(CountDown)
     setIsRecordingPaused(false)
     if (mediaRecorder && mediaRecorder.state !== 'inactive') {
       mediaRecorder.stop();
@@ -359,7 +359,7 @@ const CustomButton = () => {
 
 
   const startRecordingEffect = async () => {
-    setCount(5)
+    setCount(CountDown)
     setStartRecordingNow(false)
     chrome.storage.local.get(['screenShareSelection'], result => {
       if (result?.screenShareSelection) {
@@ -427,7 +427,7 @@ const CustomButton = () => {
     if (isRestarted) {
       if (!showStartOverlay && count) {
         setShowStartOverlay(true)
-        setCount(5)
+        setCount(CountDown)
       }
       setIsRestarted(false)
     }

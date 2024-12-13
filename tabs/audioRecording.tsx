@@ -21,12 +21,13 @@ let recordedChunks = [];
 let isRecordingStarted = false;
 let isRestartRecording = false
 
+const CountDown = 1
 const Audio = () => {
     const [isRecordingPaused, setIsRecordingPaused] = useStorage("isRecordingPaused", false);
     // const [isRecordingPaused, setIsRecordingPaused] = useState(false);
     const [selections, setSelections] = useState(null);
     const [showStartOverlay, setShowStartOverlay] = useState(false);
-    const [count, setCount] = useState<any>(5);
+    const [count, setCount] = useState<any>(CountDown);
     const [startRecordingNow, setStartRecordingNow] = useState(false);
     const [isRecordingStartedS, setIsRecordingStartedS] = useState(false)
     const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -238,7 +239,7 @@ const Audio = () => {
                     // if (recorder) {
                     //     setIsRecordingStartedS(false)
                     //     recorder.stop();
-                    //     setCount(5)
+                    //     setCount(CountDown)
                     //     setShowStartOverlay(true)
                     //     setStartRecordingNow(false)
                     // }

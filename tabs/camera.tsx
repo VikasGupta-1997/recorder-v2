@@ -20,6 +20,8 @@ let recorder;
 let isRecordingStarted = false;
 let recordedChunksV = []
 let isRestartRecording = false
+const CountDown = 2
+
 const Camera = () => {
     const [mediaRecorder, setMediaRecorder] = useState(null);
     const [stream, setStream] = useState(null);
@@ -28,7 +30,7 @@ const Camera = () => {
     // const [isRecordingPaused, setIsRecordingPaused] = useState(false)
     const [selections, setSelections] = useState(null)
     const [showStartOverlay, setShowStartOverlay] = useState(false);
-    const [count, setCount] = useState<any>(5);
+    const [count, setCount] = useState<any>(CountDown);
     const [startRecordingNow, setStartRecordingNow] = useState(false);
     const [mediaStream, setMediaStream] = useState(null)
     const [isFullScreen, setIsFullScreen] = useState(false)
