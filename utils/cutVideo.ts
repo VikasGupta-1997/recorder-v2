@@ -150,6 +150,39 @@ async function cutVideo(ffmpeg, videoBlob, start, end, cut, duration, encode) {
       reader.onerror = reject;
     });
   };
+
+  export async function fixMetadata(ffmpeg, blob) {
+    const data = new Uint8Array(await blob.arrayBuffer());
+    ffmpeg.FS('writeFile', 'input.mp4', data);
+    await ffmpeg.run('-i', 'input.mp4', '-c', 'copy', '-movflags', 'faststart', 'output.mp4');
+    const output = ffmpeg.FS('readFile', 'output.mp4');
+    return new Blob([output.buffer], { type: 'video/mp4' });
+  }
+
+  export async function reencodeVideo(ffmpeg, blob) {
+    const videoData = new Uint8Array(await blob.arrayBuffer());
+    const outputFileName = "output.mp4";
+    ffmpeg.FS("writeFile", "input.mp4", videoData);
+    await ffmpeg.run(
+      "-i",
+      "input.mp4",
+      "-preset",
+      "superfast",
+      "-threads",
+      "0",
+      "-r",
+      "30",
+      "-tune",
+      "fastdecode",
+      outputFileName
+    );
+  
+    const data = ffmpeg.FS("readFile", outputFileName);
+    const editedVideoBlob = new Blob([data.buffer], {
+      type: "video/mp4",
+    });
+    return editedVideoBlob;
+  }
   
   export default cutVideo;
   

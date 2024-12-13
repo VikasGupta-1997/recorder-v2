@@ -20,6 +20,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     const [originalVideo, setOriginalVideo] = useState({
         blob: new Blob(), url: ''
     })
+    const [isVideoEndcoding, setIsVideoEncoding] = useState(true)
     const originalDuration = useRef(0)
     const plyrRef = useRef(null);
 
@@ -118,10 +119,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                             console.log("All chunks received. Reassembling...");
 
                             const { newBlob, newBlobUrl } = await playPartialRecording(receivedChunks); // Play the complete recording
-                            setOriginalVideo({
-                                blob: newBlob,
-                                url: newBlobUrl
-                            })
+                            sendPostMessage({type: "fixMetadata", blob: newBlob})
                         }
                     }
                         break;
@@ -174,27 +172,29 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         sendPostMessage({ type: "load-ffmpeg" });
-        window.onbeforeunload = function () {
-            return true;
-        };
+        // window.onbeforeunload = function () {
+        //     return true;
+        // };
     }, [])
 
-    useEffect(() => {
-        chrome.storage.local.get(["isAudioOnly", "saving_in_indexdb"], async (result) => {
-            console.log("resultresult", result)
-            sendPostMessage({ type: "IS_CONTENT_TYPE", isAudioOnly: result?.isAudioOnly })
-            if (!result?.saving_in_indexdb) {
-                // setVideoLoading(false)
-            }
-            if (result?.isAudioOnly) {
-                if (audioRef.current) {
-                    console.log("audioRef.current", url.current)
-                    audioRef.current.src = url.current;
-                }
-            } else {
-            }
-        });
-    }, [blobUrl]);
+
+
+    // useEffect(() => {
+    //     chrome.storage.local.get(["isAudioOnly", "saving_in_indexdb"], async (result) => {
+    //         console.log("resultresult", result)
+    //         sendPostMessage({ type: "IS_CONTENT_TYPE", isAudioOnly: result?.isAudioOnly })
+    //         if (!result?.saving_in_indexdb) {
+    //             // setVideoLoading(false)
+    //         }
+    //         if (result?.isAudioOnly) {
+    //             if (audioRef.current) {
+    //                 console.log("audioRef.current", url.current)
+    //                 audioRef.current.src = url.current;
+    //             }
+    //         } else {
+    //         }
+    //     });
+    // }, [blobUrl]);
 
     useLayoutEffect(() => {
         window.addEventListener("message", (event) => {
@@ -203,16 +203,28 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                 console.log("Received updated blob:", message.blob);
                 // Update the blob and blobUrl for the preview
                 const newBlobUrl = URL.createObjectURL(message.blob);
-                addToHistory({
-                    trimState: { ...trimState },
-                    blob: blob,
-                    blobUrl: blobUrl
-                });
+                if(message.addToHistory){
+                    addToHistory({
+                        trimState: { ...trimState },
+                        blob: blob,
+                        blobUrl: blobUrl
+                    });
+                }
+
+                if(!message.addToHistory) {
+                    setIsVideoEncoding(false)
+                    setOriginalVideo({
+                        blob: message.blob,
+                        url: URL.createObjectURL(message.blob)
+                    })
+                }
+
+                // if(message.encode) {
+                //     console.log("ENCONDEEEE", messageencode)
+                // }
+
                 setBlobUrl(newBlobUrl)
                 setBlob(message.blob)
-
-
-
                 setTrimState(prev => ({
                     ...prev,
                     start: 0,
@@ -250,7 +262,23 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
 
 
     const changeMode = () => {
-        console.log("MODE")
+        const video = document.createElement("video");
+        video.preload = "metadata";
+        video.onloadedmetadata = async () => {
+            setDuration(video.duration)
+            console.log("video.durationvideo.duration", video.duration)
+            setTrimState(prev => ({
+                ...prev,
+                start: 0,
+                end: 1,
+                startTime: 0,
+                endTime: video.duration,
+                dragInteracted: false
+            }));
+          URL.revokeObjectURL(video.src);
+          video.remove();
+        };
+        video.src = URL.createObjectURL(blob);
         setIsEditMode(prev => !prev)
         // sendPostMessage({ type: "SEND_FROM_PREVIEW", blob: blob })
     }
@@ -515,7 +543,8 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         getDynamicTimestamp,
         showAuphonicPreview,
         auphonicPlyrRef,
-        auphonicVideoUrlPreview
+        auphonicVideoUrlPreview,
+        isVideoEndcoding
     };
 
     return (

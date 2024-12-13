@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import styleText from "data-text:../tabs/preview.module.css"
-import cutVideo, { toBase64 } from "~utils/cutVideo";
+import cutVideo, { toBase64, reencodeVideo, fixMetadata } from "~utils/cutVideo";
 
 export const getStyle = () => {
   const style = document.createElement("style")
@@ -33,6 +33,7 @@ const DemoSand = () => {
 
       if (message.type === "cut-video") {
         try {
+          console.log("cut-video-message", message)
           const blob = await cutVideo(
             ffmpegInstance.current,
             message.blob,
@@ -51,9 +52,33 @@ const DemoSand = () => {
             addToHistory: true,
             blob: blob
           });
+          console.log("NEW BVLOBBB", blob)
+          const video = document.createElement("video");
+          video.preload = "metadata";
+          video.onloadedmetadata = async () => {
+              console.log("video.durationvideo.duration", video.duration)
+            URL.revokeObjectURL(video.src);
+            video.remove();
+          };
+          video.src = URL.createObjectURL(blob);
         } catch (error) {
           sendMessage({ type: "ffmpeg-error", error: JSON.stringify(error) });
         }
+      }
+
+      if(message.type === 'fixMetadata'){
+        console.log("fixMetadata", message)
+        const blob = await fixMetadata(
+          ffmpegInstance.current,
+          message.blob
+        );
+        console.log("NOW FIXED AND SENDING DATAAA")
+        sendMessage({
+          type: "updated-blob",
+          // base64: base64,
+          addToHistory: false,
+          blob: blob
+        });
       }
 
       if(message.type === "load-ffmpeg") {
@@ -68,6 +93,15 @@ const DemoSand = () => {
       window.removeEventListener("message", handleIframeMessage);
     };
   }, []);
+
+//   async function fixMetadata(blob) {
+//     await ffmpeg.load();
+//     const data = new Uint8Array(await blob.arrayBuffer());
+//     ffmpeg.FS('writeFile', 'input.mp4', data);
+//     await ffmpeg.run('-i', 'input.mp4', '-c', 'copy', '-movflags', 'faststart', 'output.mp4');
+//     const output = ffmpeg.FS('readFile', 'output.mp4');
+//     return new Blob([output.buffer], { type: 'video/mp4' });
+// }
 
 
   const loadFfmpeg = async () => {

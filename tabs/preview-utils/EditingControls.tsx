@@ -174,6 +174,10 @@ const EditingControls = ({
                 barWidth: 2,
             });
 
+            waveSurferRef.current.on('error', (error) => {
+                console.log( waveSurferRef.current,"ERROR", error)
+            })
+
             waveSurferRef.current.on('ready', () => {
                 const videoDuration = waveSurferRef.current.getDuration();
                 setDuration(videoDuration);
@@ -235,7 +239,7 @@ const EditingControls = ({
                 console.error("No blob available for trimming");
                 return;
             }
-
+            console.log("Duration", duration)
             // Send message to cut video
             const message = {
                 type: "cut-video",
@@ -275,6 +279,13 @@ const EditingControls = ({
             getAuphonicData()
         }
     };
+
+    const disableButtons = (action) => {
+        if(action !== 'delete recording'){
+            return  (trimState.start === 0 && trimState.end === 1) || ffmpegRunning || isPublishing
+        }
+        return ffmpegRunning || isPublishing
+    }
 
     return (
         <>
@@ -344,7 +355,7 @@ const EditingControls = ({
                 <div className={styles["editing-actions"]} >
                     {
                         ["cut", "trim", "delete recording", "publish"].map(action => (
-                            <button disabled={ffmpegRunning || isPublishing} onClick={() => handleClick(action)} key={action} className={action === 'publish' ? styles["publish-btn"] : ""} >
+                            <button disabled={disableButtons(action)} onClick={() => handleClick(action)} key={action} className={action === 'publish' ? styles["publish-btn"] : ""} >
                                 {["cut", "trim"].includes(action) && <span  >
                                     {action === 'cut' ? <BsScissors fontSize={14} color="10abd9" /> : <MdOutlineCrop fontSize={14} color="10abd9" />}
                                 </span>}
