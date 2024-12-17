@@ -26,9 +26,11 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
 
     const [loadingVideo, setLoadingVideo] = useState(true)
     const [blob, setBlob] = useState(null)
+    const blobRef = useRef(null)
     const url = useRef('')
     const auphonicPlyrRef = useRef(null)
 
+    const [showAuphonicAdvanceForm, setShowAuphonicAdvanceForm] = useState(false)
     const [history, setHistory] = useState([])
     const [redoHistory, setRedoHistory] = useState([])
     const [isEditMode, setIsEditMode] = useState(false)
@@ -40,7 +42,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     const [isPublishing, setIspublishing] = useState(false)
     const [videoSource, setVideoSource] = useState(null);
     const [auphonicVideoUrlPreview, setAuphonicVideoUrlPreview] = useState('')
-
+    const audioF = useRef(null)
     const [trimState, setTrimState] = useState({
         start: 0,
         end: 1,
@@ -72,6 +74,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                     const newBlobUrl = URL.createObjectURL(newBlob);
                     console.log("newBlobUrl11221", newBlobUrl)
                     setBlobUrl(newBlobUrl)
+                    blobRef.current = newBlob
                     setBlob(newBlob)
                     setLoadingVideo(false)
                     // Revoke old URL to prevent memory leaks
@@ -120,6 +123,10 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
 
                             const { newBlob, newBlobUrl } = await playPartialRecording(receivedChunks); // Play the complete recording
                             sendPostMessage({type: "fixMetadata", blob: newBlob})
+                            // setOriginalVideo({
+                            //     blob: newBlob,
+                            //     url: URL.createObjectURL(newBlob)
+                            // })
                         }
                     }
                         break;
@@ -171,6 +178,8 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
 
 
     useEffect(() => {
+        document.body.style.margin = "0px";
+        document.body.style.padding = "0px";
         sendPostMessage({ type: "load-ffmpeg" });
         // window.onbeforeunload = function () {
         //     return true;
@@ -194,11 +203,49 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     //         } else {
     //         }
     //     });
-    // }, [blobUrl]);
+    // }, [blobUrl]); 18002095454
+
+    useEffect(() => {
+        window.addEventListener("message", async (event) => {
+            const message = event.data;
+            if(message.type === 'extracted-audio-blob'){
+                console.log(audioF.current,"Medsagve", message, blobRef)
+                // const audioTag = document.getElementById('check-audio') as HTMLAudioElement
+                // audioTag.src = URL.createObjectURL(message.blob);
+                // audioTag.play()
+                const audioBl =  new Blob([audioF.current], { type: audioF.current.type });
+                console.log("audioBlaudioBl", audioBl)
+                sendPostMessage({ type: "replace-videos-audio", videoBlob: blobRef.current, audioBlob: audioBl })
+            }
+
+            if(message.type === 'auphonic-merged-video'){
+                console.log("auphonic-merged-video", message.blob)
+            }
+        })
+    }, [])
 
     useLayoutEffect(() => {
-        window.addEventListener("message", (event) => {
+        window.addEventListener("message", async (event) => {
             const message = event.data;
+            // if(message.type === 'extracted-audio-blob'){
+            //     console.log(audioF.current,"Medsagve", message)
+            //     // const audioTag = document.getElementById('check-audio') as HTMLAudioElement
+            //     // audioTag.src = URL.createObjectURL(message.blob);
+            //     // audioTag.play()
+            //     const audioBl =  new Blob([audioF.current], { type: audioF.current.type });
+            //     console.log("audioBlaudioBl", audioBl)
+            //     sendPostMessage({ type: "replace-videos-audio", videoBlob: blob, audioBlob: audioBl })
+            // }
+
+            // if(message.type === 'auphonic-merged-video'){
+            //     console.log("auphonic-merged-video", message.blob)
+            //     const video = document.createElement('video');
+            //     video.width = 400
+            //     video.height = 400
+            //     video.src = URL.createObjectURL(message.blob);
+            //     video.play()
+            // }
+            
             if (message.type === "updated-blob") {
                 console.log("Received updated blob:", message.blob);
                 // Update the blob and blobUrl for the preview
@@ -211,7 +258,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                     });
                 }
 
-                if(!message.addToHistory) {
+                if(message.fixMetadata) {
                     setIsVideoEncoding(false)
                     setOriginalVideo({
                         blob: message.blob,
@@ -225,6 +272,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
 
                 setBlobUrl(newBlobUrl)
                 setBlob(message.blob)
+                blobRef.current = message.blob
                 setTrimState(prev => ({
                     ...prev,
                     start: 0,
@@ -274,6 +322,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         setBlobUrl(newBlobUrl);
         setIsEditMode(false)
         setBlob(originalVideo.blob)
+        blobRef.current = originalVideo.blob
         setTrimState({
             start: 0,
             end: 1,
@@ -314,6 +363,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
             if (lastState.blob) {
                 const newBlobUrl = URL.createObjectURL(lastState.blob);
                 setBlob(lastState.blob);
+                blobRef.current = lastState.blob
                 setBlobUrl(newBlobUrl);
 
                 // Cleanup old blob URL
@@ -347,6 +397,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
             if (redoState.blob) {
                 const newBlobUrl = URL.createObjectURL(redoState.blob);
                 setBlob(redoState.blob);
+                blobRef.current = redoState.blob
                 setBlobUrl(newBlobUrl);
 
                 // Cleanup old blob URL
@@ -527,7 +578,10 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         showAuphonicPreview,
         auphonicPlyrRef,
         auphonicVideoUrlPreview,
-        isVideoEndcoding
+        isVideoEndcoding,
+        audioF,
+        showAuphonicAdvanceForm, 
+        setShowAuphonicAdvanceForm
     };
 
     return (

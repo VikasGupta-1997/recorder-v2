@@ -188,6 +188,32 @@ export async function fixMetadata(ffmpeg, blob, hasAudio) {
 //   return new Blob([output.buffer], { type: 'video/mp4' });
 // }
 
+export async function extractAudio(ffmpeg, videoBlob, outputFormat = "mp3") {
+  // Convert the video Blob into a Uint8Array
+  const videoData = new Uint8Array(await videoBlob.arrayBuffer());
+
+  // Write the video data to the FFmpeg virtual filesystem
+  ffmpeg.FS("writeFile", "input.mp4", videoData);
+
+  // Run the FFmpeg command to extract audio
+  const outputFileName = `output.${outputFormat}`;
+  await ffmpeg.run(
+    "-i", "input.mp4",   // Input file
+    "-q:a", "0",         // High audio quality
+    "-map", "a",         // Extract only the audio stream
+    outputFileName       // Output file
+  );
+
+  // Read the output audio file from the FFmpeg filesystem
+  const audioData = ffmpeg.FS("readFile", outputFileName);
+
+  // Create a Blob from the extracted audio data
+  const audioBlob = new Blob([audioData.buffer], { type: `audio/${outputFormat}` });
+
+  // Return the audio Blob
+  return audioBlob;
+}
+
 export async function reencodeVideo(ffmpeg, blob) {
   const videoData = new Uint8Array(await blob.arrayBuffer());
   const outputFileName = "output.mp4";
@@ -211,6 +237,56 @@ export async function reencodeVideo(ffmpeg, blob) {
     type: "video/mp4",
   });
   return editedVideoBlob;
+}
+
+export async function replaceVideoAudio(ffmpeg, videoBlob, audioBlob) {
+  // Step 1: Validate inputs
+  console.log(videoBlob instanceof Blob, "LETS CHCK FOR CALL!!!", videoBlob)
+  if (!videoBlob) {
+    throw new Error("Invalid videoBlob. It must be a valid Blob object.");
+  }
+
+  if (!audioBlob || !(audioBlob instanceof Blob)) {
+    throw new Error("Invalid audioBlob. It must be a valid Blob object.");
+  }
+
+  console.log(ffmpeg, "replaceVideoAudio Function", videoBlob, audioBlob);
+
+  // Step 2: Convert Blobs into Uint8Array
+  const videoData = new Uint8Array(await videoBlob.arrayBuffer());
+  console.log("videoData", videoData);
+  const audioData = new Uint8Array(await audioBlob.arrayBuffer());
+  console.log("audioData", audioData);
+
+  // Step 3: Write files to FFmpeg's virtual file system
+  ffmpeg.FS("writeFile", "input-video.mp4", videoData);
+  ffmpeg.FS("writeFile", "input-audio.mp3", audioData);
+
+  // Step 4: Replace audio in the video
+  const outputFileName = "output-video-with-new-audio.mp4";
+  try {
+    await ffmpeg.run(
+      "-i", "input-video.mp4",  // Input video file
+      "-i", "input-audio.mp3",  // Input audio file
+      "-c:v", "copy",           // Copy video without re-encoding
+      "-map", "0:v:0",          // Map video stream
+      "-map", "1:a:0",          // Map audio stream
+      "-shortest",              // Trim to shortest input
+      outputFileName            // Output file name
+    );
+  } catch (err) {
+    console.error("FFmpeg run failed:", err);
+    throw new Error("FFmpeg command failed. Ensure no concurrent operations are running.");
+  }
+
+  // Step 5: Retrieve the output video file
+  const outputData = ffmpeg.FS("readFile", outputFileName);
+
+  // Step 6: Convert Uint8Array to Blob
+  const outputBlob = new Blob([outputData.buffer], { type: "video/mp4" });
+
+  console.log("Replacement video created successfully.");
+  return outputBlob;
 }
 
 export default cutVideo;

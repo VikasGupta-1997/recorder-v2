@@ -7,6 +7,7 @@ import EditingControls from "./preview-utils/EditingControls";
 import { AudioOnlyPreviewProvider, useAudioOnlyPreview } from "./audioOnlyPreviewContext";
 import AsyncSelect from 'react-select/async';
 import NewAudioPlayer from "./preview-utils/NewAudioPlayer";
+import AdvanceAuphonicForm from "./preview-utils/AdvanceAuphonicForm";
 
 export const getStyle = () => {
     const style = document.createElement("style")
@@ -65,20 +66,12 @@ function PreviewPage() {
         showAuphonicWrap,
         getAuphonicData,
         audioSource,
-        auphonicAudioSource
+        auphonicAudioSource,
+        setShowAuphonicAdvanceForm,
+        showAuphonicAdvanceForm
     } = useAudioOnlyPreview();
     const [showGhost, setShowGhost] = useState(false);
     const containerRef = useRef(null)
-
-    useEffect(() => {
-        chrome.storage.local.get(["isAudioOnly", "saving_in_indexdb"], async (result) => {
-            console.log("resultresult", result)
-            if (result?.isAudioOnly) {
-            } else {
-                // setIsAudio('video');
-            }
-        });
-    }, [blobUrl]);
 
 
     if (loadingVideo) {
@@ -90,7 +83,7 @@ function PreviewPage() {
     }
     console.log("isAudio1212", showAuphonicWrap)
     return (
-        <div className={style["container"]}>
+        <div id="container" className={style["container"]}>
             <span className={style["span-wrapper"]} style={{
                 pointerEvents: isPublishing ? 'none' : 'initial'
             }} >
@@ -130,6 +123,7 @@ function PreviewPage() {
                     />
                 </div>}
             </span>
+            {showAuphonicAdvanceForm && <AdvanceAuphonicForm onClose={() => setShowAuphonicAdvanceForm(false)} />}
             {(isPublishing || isStreamLoading) && <>
                 <div className={style["full-screen-loader"]} />
                 <div className={style['overlay']} />

@@ -25,6 +25,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
     })
     const originalDuration = useRef(0)
     const [loadingVideo, setLoadingVideo] = useState(true)
+    const [showAuphonicAdvanceForm, setShowAuphonicAdvanceForm] = useState(false)
 
     const plyrRef = useRef(null);
     const wrapAuphonicAudioRef = useRef(null)
@@ -189,6 +190,8 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
 
 
     useEffect(() => {
+        document.body.style.margin = "0px";
+        document.body.style.padding = "0px";
         sendPostMessage({ type: "load-ffmpeg" });
         // window.onbeforeunload = function () {
         //     return true;
@@ -649,7 +652,9 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
         setAudioSource,
         audioPlyrRef,
         auphonicAudioSource,
-        loadingVideo
+        loadingVideo,
+        showAuphonicAdvanceForm, 
+        setShowAuphonicAdvanceForm
     };
 
     return (

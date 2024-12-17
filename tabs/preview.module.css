@@ -5,6 +5,7 @@
     justify-content: center;
     flex-direction: column;
     margin-top: 1.5rem;
+    height: 100vh;
 }
 
 .react-player-wrapper-video {
@@ -329,7 +330,7 @@ video {
 .editing-container {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: start;
     margin-top: 24px;
 }
 
@@ -358,11 +359,15 @@ video {
     opacity: 1;
 }
 
+
 .editing-container .editing-actions {
     display: flex;
-    align-items: center;
     gap: 16px;
+    flex-wrap: wrap;
+    align-items: start;
 }
+
+
 
 .edit-mode-btn {
     display: flex;
@@ -389,6 +394,7 @@ video {
     text-transform: capitalize;
     cursor: pointer;
     height: 30px;
+    white-space: nowrap;
 }
 
 .publish-btn {
@@ -483,7 +489,7 @@ video {
   .cursor {
     height: 100%;
     background-color: #3080F8;
-    z-index: 999999;
+    z-index: 100;
     width: 3px;
     position: absolute;
     border-radius: 30px;
@@ -707,7 +713,7 @@ video {
     position: absolute;
     top: 0px;
     left: 0px;
-    z-index: 999999;
+    z-index: 99;
     width: 100%;
     height: 100%;
     pointer-events: none;
@@ -808,6 +814,11 @@ video {
     z-index: 99;
     font-weight: bold;
     font-size: 16px;
+}
+
+.magic-btn{
+    color: black !important;
+    background: transparent linear-gradient(90deg, #F2ED50 0%, #E97BDB 50%, #FFEF88 100%) 0% 0% no-repeat padding-box !important;
 }
 
 /* HTML:  */

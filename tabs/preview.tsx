@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FaRegEdit } from "react-icons/fa";
 import styleText from "data-text:./preview.module.css"
 import * as style from './preview.module.css'
@@ -9,6 +9,7 @@ import { PreviewProvider, usePreview } from "./previewContext";
 import AsyncSelect from 'react-select/async';
 import Plyr from "plyr-react";
 import "plyr-react/plyr.css";
+import AdvanceAuphonicForm from "./preview-utils/AdvanceAuphonicForm";
 
 export const getStyle = () => {
     const style = document.createElement("style")
@@ -63,22 +64,17 @@ function PreviewPage() {
         auphonicVideoUrlPreview,
         showAuphonicPreview,
         auphonicPlyrRef,
-        isVideoEndcoding
+        isVideoEndcoding,
+        audioF,
+        showAuphonicAdvanceForm,
+        setShowAuphonicAdvanceForm
     } = usePreview();
     const [showGhost, setShowGhost] = useState(false);
     const containerRef = useRef(null)
-
-    useEffect(() => {
-        chrome.storage.local.get(["isAudioOnly", "saving_in_indexdb"], async (result) => {
-            console.log("resultresult", result)
-            if (result?.isAudioOnly) {
-            } else {
-                // setIsAudio('video');
-            }
-        });
-    }, [blobUrl]);
-
-
+    const recordingName = useMemo(() => {
+        return `Rec-${getDynamicTimestamp()}-desktop.mp4`
+    }, [])
+    
     if (loadingVideo) {
         return (
             <div className={style["loading-container"]} >
@@ -86,15 +82,17 @@ function PreviewPage() {
             </div>
         )
     }
+
+  
     // console.log("isAudio1212", isAudio)
     return (
-        <div className={style["container"]}>
+        <div id="container" className={style["container"]}>
             <span className={style["span-wrapper"]} style={{
                 pointerEvents: isPublishing ? 'none' : 'initial'
             }} >
                 <h1 className={style["heading-title"]}>
                     <span className={style["title"]} >
-                        {`Rec-${getDynamicTimestamp()}-desktop.mp4`}
+                        {recordingName}
                         {" "}
                         <span className={style["edit-icon"]} >
                             <FaRegEdit color={'white'} size={10} />
@@ -109,7 +107,10 @@ function PreviewPage() {
                         <div className={`${style["ref-wrapper-video"]} ${auphonicVideoUrlPreview ? style['auphonic-video'] : ''}`}>
                             <VideoPreview blobUrl={blobUrl} />
                         </div>
-                        {(!isEditMode && !auphonicVideoUrlPreview) && <div className={`${style['edit-mode-btn']}`} > <button className={`${style["rounded-btn"]} ${style['publish-btn']}`} disabled={isVideoEndcoding || !isFfmpegLoaded || ffmpegRunning || isPublishing} onClick={changeMode} >Edit Video</button></div>}
+                        {(!isEditMode && !auphonicVideoUrlPreview) && <div className={`${style['edit-mode-btn']}`} > <button className={`${style["rounded-btn"]} ${style['publish-btn']}`} disabled={
+                            // isVideoEndcoding || 
+                            !isFfmpegLoaded || 
+                            ffmpegRunning || isPublishing} onClick={changeMode} >Edit Video</button></div>}
                         {(isPublishing && !auphonicVideoUrlPreview) && <p className={style["publishing-load-text"]} >Publishing content please wait and do not close the window till upload is not complete.</p>}
                         {(!isFfmpegLoaded && !auphonicVideoUrlPreview) && <p>Please wait editing tool is loading...</p>}
                         {(ffmpegLoadError) && <p className={`${style['error']}`}>Cannot edit video, editing tool not supported for your browser !!</p>}
@@ -130,8 +131,8 @@ function PreviewPage() {
                         <AuphonicVideoPreview auphonicVideoUrlPreview={auphonicVideoUrlPreview} auphonicPlyrRef={auphonicPlyrRef} />
                     </div>}
                 </div>
-
             </span>
+            {showAuphonicAdvanceForm && <AdvanceAuphonicForm onClose={() => setShowAuphonicAdvanceForm(false)} />}
             {isPublishing && <>
                 <div className={style["full-screen-loader"]} />
                 <div className={style['overlay']} />

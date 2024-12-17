@@ -16,7 +16,7 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    z-index: 2;
+    z-index: 101;
 }
 
 .modal {
@@ -27,6 +27,11 @@
     z-index: 10;
     border-radius: 8px;
     box-shadow: 0 5px 20px 0 rgba(0, 0, 0, 0.04);
+}
+
+.lg-modal {
+  width: 960px;
+  height: 720px;
 }
 
 .modalHeader {
@@ -60,6 +65,18 @@
     /* margin-bottom: 10px; */
     width: 100%;
     margin-top: 16px;
+  }
+
+  .modal-body{
+    color: #707070;
+    padding: 20px 32px;
+  }
+
+  .row-wrap {
+    background: #F2F3F5;
+    border: 1px solid #637C8E;
+    padding: 16px;
+    margin-bottom: 14px;
   }
 
   .actionsContainer {
@@ -106,4 +123,133 @@
     box-shadow: none;
     transform: none;
     background: whitesmoke;
+  }
+
+  /* Switch ui css */
+
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 36px;
+    height: 19px;
+  }
+  
+  .switch input { 
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    -webkit-transition: .4s;
+    transition: .4s;
+  }
+  
+  .slider:before {
+    position: absolute;
+    content: "✖";
+    color: #ccc; 
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    -webkit-transition: .4s;
+    transition: .4s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .switch input:checked + .slider {
+    background-color: #0AD688;
+  }
+
+  .switch input:focus + .slider {
+    box-shadow: 0 0 1px #0AD688;
+  }
+  
+  .switch input:checked + .slider:before {
+    -webkit-transform: translateX(15px) rotate(10deg);
+    -ms-transform: translateX(15px) rotate(10deg);
+    transform: translateX(15px) rotate(10deg);
+    left: 4px;
+    content: "✓";
+    color: #2196F3;
+  }
+  
+  /* Rounded sliders */
+  .slider.round {
+    border-radius: 34px;
+  }
+  
+  .slider.round:before {
+    border-radius: 50%;
+  }
+
+  /* Ends Here */
+
+  .label-switch-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem
+  }
+
+  .label-switch-wrap p {
+    font-size: 14px;
+    font-weight: bold;
+    color: #21455E;
+  }
+
+  .label-checkbox-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #21455E;
+  }
+
+  .label-select-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .select-container {
+    min-width: 120px;
+    max-width: 220px;
+  }
+
+  .track-cut-row-wrap {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .dymanic-noise-row {
+    margin-top: 1rem;
+    gap: 12px;
+  }
+
+  .main {
+    max-height: 525px;
+    overflow: auto;
+  }
+
+  .enhance-modalActions {
+    padding: 0px 32px;
+    width: 100%;
+  }
+
+  .enhance-modalActions .actionsContainer {
+    justify-content: center;
+    gap: 2rem;
   }

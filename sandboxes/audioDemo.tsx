@@ -107,6 +107,8 @@ const DemoSand = () => {
 
   useEffect(() => {
     //   Load FFmpeg script dynamically
+    document.body.style.margin = "0px";
+    document.body.style.padding = "0px";
     const script = document.createElement("script");
     script.src = "/vendor/ffmpeg.min.js";
     script.async = true;

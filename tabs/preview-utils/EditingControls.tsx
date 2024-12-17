@@ -5,6 +5,8 @@ import styleText from "data-text:../preview.module.css"
 import * as styles from '../preview.module.css'
 import { useEffect, useRef, useState } from "react"
 import WaveSurfer from "wavesurfer.js"
+import { GrMagic } from "react-icons/gr";
+import { GiSplashyStream } from "react-icons/gi";
 // import { usePreview } from "~tabs/previewContext"
 
 export const getStyle = () => {
@@ -13,13 +15,13 @@ export const getStyle = () => {
     return style
 }
 
-const EditingControls = ({ 
+const EditingControls = ({
     setShowGhost,
     showGhost,
     usePreview,
     isAudio,
     getAuphonicData
- }) => {
+}) => {
 
     const {
         blob,
@@ -40,6 +42,7 @@ const EditingControls = ({
         ffmpegRunning,
         isPublishing,
         originalDuration,
+        setShowAuphonicAdvanceForm
     } = usePreview();
 
     const waveContainerRef = useRef<HTMLDivElement>(null);
@@ -145,14 +148,14 @@ const EditingControls = ({
     };
 
     const handleWaveformMouseEnter = () => {
-        if(isPublishing) return;
+        if (isPublishing) return;
         if (!isDragging.current) {
             setShowGhost(true);
         }
     };
 
     const handleWaveformMouseLeave = () => {
-        if(isPublishing) return
+        if (isPublishing) return
         setShowGhost(false);
     };
 
@@ -175,13 +178,13 @@ const EditingControls = ({
             });
 
             waveSurferRef.current.on('error', (error) => {
-                console.log( waveSurferRef.current,"ERROR", error)
+                console.log(waveSurferRef.current, "ERROR", error)
             })
 
             waveSurferRef.current.on('ready', () => {
                 const videoDuration = waveSurferRef.current.getDuration();
                 setDuration(videoDuration);
-                if(!originalDuration.current) {
+                if (!originalDuration.current) {
                     originalDuration.current = videoDuration
                 }
                 setTrimState(prev => ({
@@ -207,20 +210,20 @@ const EditingControls = ({
 
     useEffect(() => {
         if (history.length > 0) {
-          setUndoDisabled(false);
+            setUndoDisabled(false);
         } else {
-          setUndoDisabled(true);
+            setUndoDisabled(true);
         }
-      }, [history]);
+    }, [history]);
 
 
-  useEffect(() => {
-    if (redoHistory.length > 0) {
-      setRedoDisabled(false);
-    } else {
-      setRedoDisabled(true);
-    }
-  }, [redoHistory]);
+    useEffect(() => {
+        if (redoHistory.length > 0) {
+            setRedoDisabled(false);
+        } else {
+            setRedoDisabled(true);
+        }
+    }, [redoHistory]);
 
     const toTimeStamp = (time) => {
         const minutes = Math.floor(time / 60);
@@ -267,13 +270,13 @@ const EditingControls = ({
 
     const handleClick = (action) => {
         console.log("Action clicked:", action);
-        if(action === 'trim'){
+        if (action === 'trim') {
             handleTrim(false);
         }
-        if(action === 'cut'){ 
+        if (action === 'cut') {
             handleTrim(true);
         }
-        if(action === 'publish'){
+        if (action === 'publish') {
             console.log("publish called", blob)
             // processAudioWithAuphonic(blob, isAudio)
             getAuphonicData()
@@ -281,10 +284,21 @@ const EditingControls = ({
     };
 
     const disableButtons = (action) => {
-        if(["cut", "trim"].includes(action)){
+        if (["cut", "trim"].includes(action)) {
             return (trimState.start === 0 && trimState.end === 1) || ffmpegRunning || isPublishing
         }
         return ffmpegRunning || isPublishing
+    }
+
+    const handleMagic = () => {
+        console.log("handleMagic")
+        const message = {
+            type: "extract-audio",
+            blob: blob,
+        };
+        // Send the message to process the trim
+        // sendMessage(message);
+        setShowAuphonicAdvanceForm(true)
     }
 
     return (
@@ -348,11 +362,22 @@ const EditingControls = ({
             </div>
             <div className={styles["editing-container"]}>
                 <div className={styles["redo-undo"]} >
-                    <button disabled={undoDisabled || ffmpegRunning || isPublishing} className="undo" onClick={handleUndo} > <LiaUndoAltSolid  color="10abd9" fontSize={24} /> </button>
-                    <button disabled={redoDisabled || ffmpegRunning || isPublishing} className="redo" onClick={handleRedo} > <LiaRedoAltSolid  color="10abd9" fontSize={24} /> </button>
+                    <button disabled={undoDisabled || ffmpegRunning || isPublishing} className="undo" onClick={handleUndo} > <LiaUndoAltSolid color="10abd9" fontSize={24} /> </button>
+                    <button disabled={redoDisabled || ffmpegRunning || isPublishing} className="redo" onClick={handleRedo} > <LiaRedoAltSolid color="10abd9" fontSize={24} /> </button>
                 </div>
 
                 <div className={styles["editing-actions"]} >
+                    <div>
+                        <button onClick={() => handleMagic()} className={styles["magic-btn"]} >
+                            <span>
+                                <GrMagic fontSize={14} color="black" />
+                            </span>
+                            <p>
+                                {"Magic Audio Cleaner"}
+                            </p>
+                        </button>
+                        <p> <GiSplashyStream /> Advanced Enhancement</p>
+                    </div>
                     {
                         ["cut", "trim", "delete recording", "publish"].map(action => (
                             <button disabled={disableButtons(action)} onClick={() => handleClick(action)} key={action} className={action === 'publish' ? styles["publish-btn"] : ""} >

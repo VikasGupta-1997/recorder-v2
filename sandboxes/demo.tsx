@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import styleText from "data-text:../tabs/preview.module.css"
-import cutVideo, { toBase64, reencodeVideo, fixMetadata } from "~utils/cutVideo";
+import cutVideo, { toBase64, reencodeVideo, replaceVideoAudio,fixMetadata, extractAudio } from "~utils/cutVideo";
 
 export const getStyle = () => {
   const style = document.createElement("style")
@@ -32,6 +32,34 @@ const DemoSand = () => {
         setEditMode(false)
       }
 
+      if(message.type === 'extract-audio'){
+        const blob = await extractAudio(
+          ffmpegInstance.current,
+          message.blob,
+        )
+        console.log("blob", blob)
+        sendMessage({
+          type: "extracted-audio-blob",
+          blob
+        });
+      }
+
+      if(message.type === 'replace-videos-audio'){
+        console.log("REah replace-videos-audio", message)
+        const blob = await replaceVideoAudio(
+          ffmpegInstance.current,
+          message.videoBlob,
+          message.audioBlob
+        )
+        console.log("blob112", blob)
+        sendMessage({
+          type: "auphonic-merged-video",
+          // base64: base64,
+          addToHistory: true,
+          blob: blob
+        });
+      }
+
       if (message.type === "cut-video") {
         try {
           console.log("cut-video-message", message)
@@ -44,16 +72,22 @@ const DemoSand = () => {
             message.duration,
             message.encode
           );
+
+          const fixedBlob = await fixMetadata(
+            ffmpegInstance.current,
+            blob,
+            hasAudio
+          );
           console.log("blob11312", blob)
          
-          const base64 = await toBase64(blob);
+          // const base64 = await toBase64(blob);
           sendMessage({
             type: "updated-blob",
-            base64: base64,
+            // base64: base64,
             addToHistory: true,
-            blob: blob
+            blob: fixedBlob
           });
-          console.log("NEW BVLOBBB", blob)
+          console.log(fixedBlob,"NEW BVLOBBB", blob)
           const video = document.createElement("video");
           video.preload = "metadata";
           video.onloadedmetadata = async () => {
@@ -61,7 +95,7 @@ const DemoSand = () => {
             URL.revokeObjectURL(video.src);
             video.remove();
           };
-          video.src = URL.createObjectURL(blob);
+          video.src = URL.createObjectURL(fixedBlob);
         } catch (error) {
           sendMessage({ type: "ffmpeg-error", error: JSON.stringify(error) });
         }
@@ -77,7 +111,8 @@ const DemoSand = () => {
           type: "updated-blob",
           // base64: base64,
           addToHistory: false,
-          blob: fixedBlob
+          blob: fixedBlob,
+          fixMetadata: true
         });
       }
 
@@ -141,6 +176,8 @@ const DemoSand = () => {
 
   useEffect(() => {
     //   Load FFmpeg script dynamically
+    document.body.style.margin = "0px";
+    document.body.style.padding = "0px";
     const script = document.createElement("script");
     script.src = "/vendor/ffmpeg.min.js";
     script.async = true;
