@@ -10,6 +10,7 @@ import AsyncSelect from 'react-select/async';
 import Plyr from "plyr-react";
 import "plyr-react/plyr.css";
 import AdvanceAuphonicForm from "./preview-utils/AdvanceAuphonicForm";
+import ConfirmationModal from "./preview-utils/AuphonicConfirmation";
 
 export const getStyle = () => {
     const style = document.createElement("style")
@@ -67,14 +68,20 @@ function PreviewPage() {
         isVideoEndcoding,
         audioF,
         showAuphonicAdvanceForm,
-        setShowAuphonicAdvanceForm
+        setShowAuphonicAdvanceForm,
+        confirmSendToAuphonic,
+        setConfirmSendToAuphonic,
+        startAuphonicAudioProcessing,
+        uuidState
     } = usePreview();
     const [showGhost, setShowGhost] = useState(false);
+    const [showConfirmation, setShowConfirmation] = useState(false)
     const containerRef = useRef(null)
     const recordingName = useMemo(() => {
         return `Rec-${getDynamicTimestamp()}-desktop.mp4`
     }, [])
-    
+
+
     if (loadingVideo) {
         return (
             <div className={style["loading-container"]} >
@@ -83,8 +90,8 @@ function PreviewPage() {
         )
     }
 
-  
-    // console.log("isAudio1212", isAudio)
+
+    console.log("isAudio1212", confirmSendToAuphonic)
     return (
         <div id="container" className={style["container"]}>
             <span className={style["span-wrapper"]} style={{
@@ -109,7 +116,7 @@ function PreviewPage() {
                         </div>
                         {(!isEditMode && !auphonicVideoUrlPreview) && <div className={`${style['edit-mode-btn']}`} > <button className={`${style["rounded-btn"]} ${style['publish-btn']}`} disabled={
                             // isVideoEndcoding || 
-                            !isFfmpegLoaded || 
+                            !isFfmpegLoaded ||
                             ffmpegRunning || isPublishing} onClick={changeMode} >Edit Video</button></div>}
                         {(isPublishing && !auphonicVideoUrlPreview) && <p className={style["publishing-load-text"]} >Publishing content please wait and do not close the window till upload is not complete.</p>}
                         {(!isFfmpegLoaded && !auphonicVideoUrlPreview) && <p>Please wait editing tool is loading...</p>}
@@ -132,11 +139,20 @@ function PreviewPage() {
                     </div>}
                 </div>
             </span>
-            {showAuphonicAdvanceForm && <AdvanceAuphonicForm onClose={() => setShowAuphonicAdvanceForm(false)} />}
-            {isPublishing && <>
+            {/* <video width={400} height={400} controls id="check-video" /> */}
+            {confirmSendToAuphonic && <ConfirmationModal
+                body={<div>
+                    <p>Enhancing the audio of this recording wil consume 15 minutes from you AI credits.</p>
+                    <p>Do you want to continue ?</p>
+                </div>}
+                onSubmit={startAuphonicAudioProcessing}
+                title="Audio Enhancement"
+                onClose={() => setConfirmSendToAuphonic(false)} />}
+            {showAuphonicAdvanceForm && <AdvanceAuphonicForm uuidState={uuidState} setConfirmSendToAuphonic={setConfirmSendToAuphonic} onClose={() => setShowAuphonicAdvanceForm(false)} />}
+            {/* {isPublishing && <>
                 <div className={style["full-screen-loader"]} />
                 <div className={style['overlay']} />
-            </>}
+            </>} */}
             {/* <AsyncPresetsDropDown getPresets={getPresets} /> */}
         </div>
     );

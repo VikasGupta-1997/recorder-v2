@@ -31,7 +31,7 @@
 
 .lg-modal {
   width: 960px;
-  height: 720px;
+  height: 710px;
 }
 
 .modalHeader {
@@ -240,7 +240,7 @@
   }
 
   .main {
-    max-height: 525px;
+    max-height: 500px;
     overflow: auto;
   }
 
@@ -253,3 +253,21 @@
     justify-content: center;
     gap: 2rem;
   }
+
+/* Confirmation modal */
+.sm-modal {
+  height: 252px;
+}
+
+.sm-modalaction {
+  padding: 0 32px;
+  margin-bottom: 12px;
+}
+
+.sm-modalaction button {
+  margin-top: 0;
+}
+
+.sm-actions {
+  margin-bottom: 12px;
+}

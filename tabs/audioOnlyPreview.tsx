@@ -8,6 +8,7 @@ import { AudioOnlyPreviewProvider, useAudioOnlyPreview } from "./audioOnlyPrevie
 import AsyncSelect from 'react-select/async';
 import NewAudioPlayer from "./preview-utils/NewAudioPlayer";
 import AdvanceAuphonicForm from "./preview-utils/AdvanceAuphonicForm";
+import ConfirmationModal from "./preview-utils/AuphonicConfirmation";
 
 export const getStyle = () => {
     const style = document.createElement("style")
@@ -15,7 +16,7 @@ export const getStyle = () => {
     return style
 }
 
-const AsyncPresetsDropDown = ({getPresets}) => {
+const AsyncPresetsDropDown = ({ getPresets }) => {
     const loadOptions = async () => {
         try {
             const presets = await getPresets();
@@ -68,7 +69,10 @@ function PreviewPage() {
         audioSource,
         auphonicAudioSource,
         setShowAuphonicAdvanceForm,
-        showAuphonicAdvanceForm
+        showAuphonicAdvanceForm,
+        confirmSendToAuphonic,
+        setConfirmSendToAuphonic,
+        startAuphonicAudioProcessing
     } = useAudioOnlyPreview();
     const [showGhost, setShowGhost] = useState(false);
     const containerRef = useRef(null)
@@ -87,7 +91,7 @@ function PreviewPage() {
             <span className={style["span-wrapper"]} style={{
                 pointerEvents: isPublishing ? 'none' : 'initial'
             }} >
-                <h1 style={{width: '50%'}} className={style["heading-title"]}>
+                <h1 style={{ width: '50%' }} className={style["heading-title"]}>
                     <span className={style["title"]} >
                         {`Rec-${getDynamicTimestamp()}-desktop.mp3`}
                         {" "}
@@ -123,7 +127,15 @@ function PreviewPage() {
                     />
                 </div>}
             </span>
-            {showAuphonicAdvanceForm && <AdvanceAuphonicForm onClose={() => setShowAuphonicAdvanceForm(false)} />}
+            {confirmSendToAuphonic && <ConfirmationModal
+             onSubmit={startAuphonicAudioProcessing}
+                body={<div>
+                    <p>Enhancing the audio of this recording wil consume 15 minutes from you AI credits.</p>
+                    <p>Do you want to continue ?</p>
+                </div>}
+                title="Audio Enhancement"
+                onClose={() => setConfirmSendToAuphonic(false)} />}
+            {showAuphonicAdvanceForm && <AdvanceAuphonicForm uuidState={null} setConfirmSendToAuphonic={setConfirmSendToAuphonic} onClose={() => setShowAuphonicAdvanceForm(false)} />}
             {(isPublishing || isStreamLoading) && <>
                 <div className={style["full-screen-loader"]} />
                 <div className={style['overlay']} />

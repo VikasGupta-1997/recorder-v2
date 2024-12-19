@@ -242,6 +242,7 @@ export async function reencodeVideo(ffmpeg, blob) {
 export async function replaceVideoAudio(ffmpeg, videoBlob, audioBlob) {
   // Step 1: Validate inputs
   console.log(videoBlob instanceof Blob, "LETS CHCK FOR CALL!!!", videoBlob)
+  console.log(audioBlob instanceof Blob, "LETS CHCK FOR Audio CALL!!!", audioBlob)
   if (!videoBlob) {
     throw new Error("Invalid videoBlob. It must be a valid Blob object.");
   }

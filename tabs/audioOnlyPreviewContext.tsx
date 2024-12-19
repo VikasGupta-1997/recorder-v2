@@ -26,6 +26,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
     const originalDuration = useRef(0)
     const [loadingVideo, setLoadingVideo] = useState(true)
     const [showAuphonicAdvanceForm, setShowAuphonicAdvanceForm] = useState(false)
+    const [confirmSendToAuphonic, setConfirmSendToAuphonic] = useState(false)
 
     const plyrRef = useRef(null);
     const wrapAuphonicAudioRef = useRef(null)
@@ -604,6 +605,12 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
         });
     };
 
+    const onSubmitAdvanceAuphonic = async data => {
+        console.log("Data", data)
+        setShowAuphonicAdvanceForm(false)
+        setConfirmSendToAuphonic(true)
+    }
+
     const value = {
         playPartialRecording,
         blobUrl,
@@ -654,7 +661,10 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
         auphonicAudioSource,
         loadingVideo,
         showAuphonicAdvanceForm, 
-        setShowAuphonicAdvanceForm
+        setShowAuphonicAdvanceForm,
+        confirmSendToAuphonic, 
+        setConfirmSendToAuphonic,
+        onSubmitAdvanceAuphonic
     };
 
     return (

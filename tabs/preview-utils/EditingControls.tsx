@@ -7,6 +7,8 @@ import { useEffect, useRef, useState } from "react"
 import WaveSurfer from "wavesurfer.js"
 import { GrMagic } from "react-icons/gr";
 import { GiSplashyStream } from "react-icons/gi";
+import { MdOutlineCameraswitch } from "react-icons/md";
+import { TbSwitch2 } from "react-icons/tb";
 // import { usePreview } from "~tabs/previewContext"
 
 export const getStyle = () => {
@@ -37,12 +39,15 @@ const EditingControls = ({
         customCursorRef,
         setDuration,
         duration,
-        processAudioWithAuphonic,
         setIsFfmpegRunning,
         ffmpegRunning,
         isPublishing,
         originalDuration,
-        setShowAuphonicAdvanceForm
+        setShowAuphonicAdvanceForm,
+        setConfirmSendToAuphonic,
+        uuidState,
+        handleSwitch,
+        isAuphonicUiMode
     } = usePreview();
 
     const waveContainerRef = useRef<HTMLDivElement>(null);
@@ -170,7 +175,7 @@ const EditingControls = ({
         if (waveContainerRef.current && !waveSurferRef.current) {
             waveSurferRef.current = WaveSurfer.create({
                 container: waveContainerRef.current,
-                waveColor: '#A3BAC6',
+                waveColor: isAuphonicUiMode ? '#50bb50' : '#A3BAC6',
                 progressColor: '#555',
                 cursorColor: 'transparent',
                 height: 100,
@@ -206,7 +211,7 @@ const EditingControls = ({
             waveSurferRef.current?.destroy();
             waveSurferRef.current = null;
         };
-    }, [blobUrl]);
+    }, [blobUrl, isAuphonicUiMode]);
 
     useEffect(() => {
         if (history.length > 0) {
@@ -278,7 +283,6 @@ const EditingControls = ({
         }
         if (action === 'publish') {
             console.log("publish called", blob)
-            // processAudioWithAuphonic(blob, isAudio)
             getAuphonicData()
         }
     };
@@ -298,7 +302,7 @@ const EditingControls = ({
         };
         // Send the message to process the trim
         // sendMessage(message);
-        setShowAuphonicAdvanceForm(true)
+        setConfirmSendToAuphonic(true)
     }
 
     return (
@@ -307,21 +311,30 @@ const EditingControls = ({
                 <div className={styles.timeWrap}>
                     <span>{toTimeStamp(trimState.startTime) + " - " + toTimeStamp(trimState.endTime)}</span>
                 </div>
+                {true && <div className={styles['switch-ui']} >
+                    <span onClick={handleSwitch} className={styles["click-wrapper"]} >
+                        <div className={styles['reverse-container']} >
+                            <TbSwitch2 fontSize={12} />
+                        </div>
+                        <p>Switch original audio</p>
+                    </span>
+                </div>}
                 <div className={styles.trimmerContainer} ref={trimmerRef}>
                     <div className={styles.trimWrap}>
                         <div
                             className={styles.leftOverlay}
-                            style={{ width: `${trimState.start * 100}%` }}
+                            style={{ background: '#F292F2', opacity: '0.5', width: `${trimState.start * 100}%` }}
                         />
                         <div
                             className={styles.rightOverlay}
-                            style={{ width: `${(1 - trimState.end) * 100}%` }}
+                            style={{ background: '#F292F2', opacity: '0.5', width: `${(1 - trimState.end) * 100}%` }}
                         />
                         <div
                             className={styles.trimSection}
                             style={{
                                 width: `${(trimState.end - trimState.start) * 100}%`,
-                                left: `${trimState.start * 100}%`
+                                left: `${trimState.start * 100}%`,
+                                borderColor: isAuphonicUiMode ? '#50bb50' : '#10abd9'
                             }}
                         />
                         <div className={styles.trimmer}>
@@ -329,13 +342,13 @@ const EditingControls = ({
                                 className={`${styles.handle} ${styles.startHandle}`}
                                 onMouseDown={(e) => handleMouseDown(e, "start")}
                                 ref={startHandleRef}
-                                style={{ left: `${trimState.start * 100}%` }}
+                                style={{ background: isAuphonicUiMode ? '#50bb50' : '#10abd9', left: `${trimState.start * 100}%` }}
                             />
                             <div
                                 className={`${styles.handle} ${styles.endHandle}`}
                                 onMouseDown={(e) => handleMouseDown(e, "end")}
                                 ref={endHandleRef}
-                                style={{ left: `${trimState.end * 100}%` }}
+                                style={{ background: isAuphonicUiMode ? '#50bb50' : '#10abd9', left: `${trimState.end * 100}%` }}
                             />
                         </div>
                     </div>
@@ -350,12 +363,12 @@ const EditingControls = ({
                         <div
                             className={styles.cursor}
                             ref={customCursorRef}
-                            style={{ left: `${cursorPosition * 100}%` }}
+                            style={{ background: isAuphonicUiMode ? '#50bb50' : '#10abd9', left: `${cursorPosition * 100}%` }}
                         />
                         <div
                             className={styles.ghostCursor}
                             ref={ghostCursorRef}
-                            style={{ opacity: showGhost ? 1 : 0 }}
+                            style={{ background: isAuphonicUiMode ? '#0AD68896' : 'rgba(16, 171, 217, 0.5)', opacity: showGhost ? 1 : 0 }}
                         />
                     </div>
                 </div>
@@ -368,15 +381,21 @@ const EditingControls = ({
 
                 <div className={styles["editing-actions"]} >
                     <div>
-                        <button onClick={() => handleMagic()} className={styles["magic-btn"]} >
-                            <span>
-                                <GrMagic fontSize={14} color="black" />
-                            </span>
+                        <button disabled={isPublishing} onClick={() => handleMagic()} className={`${styles["magic-btn"]} ${isPublishing ? styles["shining"] : ""}`} >
+                            {isPublishing ? <span className={styles["little-spinner-loader"]}></span>
+                                : <span>
+                                    <GrMagic fontSize={14} color="black" />
+                                </span>}
                             <p>
-                                {"Magic Audio Cleaner"}
+                                {isPublishing ? "Audio Enhacement in Progress" : uuidState ? "Reprocess This Audio" : "Magic Audio Cleaner"}
                             </p>
                         </button>
-                        <p> <GiSplashyStream /> Advanced Enhancement</p>
+                        <p
+                            style={{ fontSize: '10px', textAlign: 'center', cursor: 'pointer' }}
+                            onClick={() => setShowAuphonicAdvanceForm(true)} >
+                            <GiSplashyStream />
+                            {isPublishing ? "Uploading to the AI machine..." : "Advanced Enhancement"}
+                        </p>
                     </div>
                     {
                         ["cut", "trim", "delete recording", "publish"].map(action => (

@@ -53,11 +53,18 @@ const DemoSand = () => {
         )
         console.log("blob112", blob)
         sendMessage({
-          type: "auphonic-merged-video",
+          type: "updated-blob",
           // base64: base64,
-          addToHistory: true,
-          blob: blob
+          addToHistory: false,
+          blob: blob,
+          isMergedTrack: true
         });
+        // sendMessage({
+        //   type: "auphonic-merged-video",
+        //   // base64: base64,
+        //   addToHistory: true,
+        //   blob: blob
+        // });
       }
 
       if (message.type === "cut-video") {
@@ -128,16 +135,6 @@ const DemoSand = () => {
       window.removeEventListener("message", handleIframeMessage);
     };
   }, []);
-
-//   async function fixMetadata(blob) {
-//     await ffmpeg.load();
-//     const data = new Uint8Array(await blob.arrayBuffer());
-//     ffmpeg.FS('writeFile', 'input.mp4', data);
-//     await ffmpeg.run('-i', 'input.mp4', '-c', 'copy', '-movflags', 'faststart', 'output.mp4');
-//     const output = ffmpeg.FS('readFile', 'output.mp4');
-//     return new Blob([output.buffer], { type: 'video/mp4' });
-// }
-
 
   const loadFfmpeg = async () => {
     if (!scriptLoaded.current) return;
