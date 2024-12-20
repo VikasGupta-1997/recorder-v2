@@ -72,11 +72,12 @@ function PreviewPage() {
         confirmSendToAuphonic,
         setConfirmSendToAuphonic,
         startAuphonicAudioProcessing,
-        uuidState
+        uuidState,
+        history,
+        redoHistory
     } = usePreview();
     const [showGhost, setShowGhost] = useState(false);
-    const [showConfirmation, setShowConfirmation] = useState(false)
-    const containerRef = useRef(null)
+
     const recordingName = useMemo(() => {
         return `Rec-${getDynamicTimestamp()}-desktop.mp4`
     }, [])
@@ -91,7 +92,8 @@ function PreviewPage() {
     }
 
 
-    console.log("isAudio1212", confirmSendToAuphonic)
+    console.log("history", history)
+    console.log("Redo History", redoHistory)
     return (
         <div id="container" className={style["container"]}>
             <span className={style["span-wrapper"]} style={{

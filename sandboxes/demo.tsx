@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import styleText from "data-text:../tabs/preview.module.css"
-import cutVideo, { toBase64, reencodeVideo, replaceVideoAudio,fixMetadata, extractAudio } from "~utils/cutVideo";
+import cutVideo, { toBase64, reencodeVideo, replaceVideoAudio, fixMetadata, extractAudio } from "~utils/cutVideo";
 
 export const getStyle = () => {
   const style = document.createElement("style")
@@ -32,7 +32,7 @@ const DemoSand = () => {
         setEditMode(false)
       }
 
-      if(message.type === 'extract-audio'){
+      if (message.type === 'extract-audio') {
         const blob = await extractAudio(
           ffmpegInstance.current,
           message.blob,
@@ -44,7 +44,7 @@ const DemoSand = () => {
         });
       }
 
-      if(message.type === 'replace-videos-audio'){
+      if (message.type === 'replace-videos-audio') {
         console.log("REah replace-videos-audio", message)
         const blob = await replaceVideoAudio(
           ffmpegInstance.current,
@@ -52,19 +52,111 @@ const DemoSand = () => {
           message.audioBlob
         )
         console.log("blob112", blob)
-        sendMessage({
-          type: "updated-blob",
-          // base64: base64,
-          addToHistory: true,
-          blob: blob,
-          isMergedTrack: true
-        });
+        const sendMessageData = {
+            type: "updated-blob",
+            // base64: base64,
+            addToHistory: message?.isFromSwitch ? false : true,
+            blob: blob,
+            isMergedTrack: true,
+            auphonicMode: message?.auphonicMode,
+        }
+        if(message.auphonicBlob){
+          sendMessageData['auphonicBlob'] = message.auphonicBlob
+          sendMessageData['originalAudioBlob'] = message.originalAudioBlob
+        }
+        sendMessage(sendMessageData);
         // sendMessage({
         //   type: "auphonic-merged-video",
         //   // base64: base64,
         //   addToHistory: true,
         //   blob: blob
         // });
+      }
+
+      if (message.type === "cut-original-audio") {
+        try {
+          console.log("cut-original-audio", message)
+          const blob = await cutVideo(
+            ffmpegInstance.current,
+            message.blob,
+            message.startTime,
+            message.endTime,
+            message.cut,
+            message.duration,
+            message.encode
+          );
+
+          const fixedBlob = await fixMetadata(
+            ffmpegInstance.current,
+            blob,
+            hasAudio
+          );
+          console.log("blob11312 original", blob)
+
+          // const base64 = await toBase64(blob);
+          sendMessage({
+            type: "updated-original-blob",
+            // base64: base64,
+            addToHistory: true,
+            blob: fixedBlob,
+            cut: message.cut
+          });
+          // console.log(fixedBlob, "original NEW BVLOBBB", blob)
+          // const video = document.createElement("audio");
+          // video.preload = "metadata";
+          // video.onloadedmetadata = async () => {
+          //   console.log("original video.durationvideo.duration", video.duration)
+          //   URL.revokeObjectURL(video.src);
+          //   video.remove();
+          // };
+          // video.src = URL.createObjectURL(fixedBlob);
+        } catch (error) {
+          console.log("Error In original", error)
+          sendMessage({ type: "ffmpeg-error", error: JSON.stringify(error) });
+        }
+      }
+
+      if (message.type === "cut-auphonic-audio") {
+        try {
+          console.log("cut-auphonic-audio", message)
+          const blob = await cutVideo(
+            ffmpegInstance.current,
+            message.blob,
+            message.startTime,
+            message.endTime,
+            message.cut,
+            message.duration,
+            message.encode
+          );
+
+          const fixedBlob = await fixMetadata(
+            ffmpegInstance.current,
+            blob,
+            hasAudio
+          );
+          console.log("blob11312 auphonic", blob)
+
+          // const base64 = await toBase64(blob);
+          sendMessage({
+            type: "updated-auphonic-blob",
+            // base64: base64,
+            addToHistory: true,
+            blob: fixedBlob,
+            cut: message.cut
+          });
+          console.log(fixedBlob, "NEW auphonic BVLOBBB", blob)
+          // const video = document.createElement("audio");
+          // video.preload = "metadata";
+          // video.onloadedmetadata = async () => {
+          //   console.log("auphonic video.durationvideo.duration", video.duration)
+          //   URL.revokeObjectURL(video.src);
+          //   video.remove();
+          // };
+          // video.src = URL.createObjectURL(fixedBlob);
+        } catch (error) {
+          console.log("Error In auphonic", error)
+          sendMessage({ type: "ffmpeg-error", error: JSON.stringify(error) });
+        }
       }
 
       if (message.type === "cut-video") {
@@ -86,34 +178,38 @@ const DemoSand = () => {
             hasAudio
           );
           console.log("blob11312", blob)
-         
+
           // const base64 = await toBase64(blob);
           sendMessage({
             type: "updated-blob",
             // base64: base64,
             addToHistory: true,
-            blob: fixedBlob
+            blob: fixedBlob,
+            cut: message.cut,
+            isEdit: true
           });
-          console.log(fixedBlob,"NEW BVLOBBB", blob)
-          const video = document.createElement("video");
-          video.preload = "metadata";
-          video.onloadedmetadata = async () => {
-              console.log("video.durationvideo.duration", video.duration)
-            URL.revokeObjectURL(video.src);
-            video.remove();
-          };
-          video.src = URL.createObjectURL(fixedBlob);
+          // console.log(fixedBlob, "NEW BVLOBBB", blob)
+          // const video = document.createElement("video");
+          // video.preload = "metadata";
+          // video.onloadedmetadata = async () => {
+          //   console.log("video.durationvideo.duration", video.duration)
+          //   URL.revokeObjectURL(video.src);
+          //   video.remove();
+          // };
+          // video.src = URL.createObjectURL(fixedBlob);
         } catch (error) {
           sendMessage({ type: "ffmpeg-error", error: JSON.stringify(error) });
         }
       }
 
-      if(message.type === 'fixMetadata'){
+      if (message.type === 'fixMetadata') {
+        console.log(hasAudio, message, " ffmpegInstance.current",   ffmpegInstance.current)
         const fixedBlob = await fixMetadata(
           ffmpegInstance.current,
           message.blob,
           hasAudio
         );
+        console.log("fixedBlob121", fixedBlob)
         sendMessage({
           type: "updated-blob",
           // base64: base64,
@@ -123,7 +219,7 @@ const DemoSand = () => {
         });
       }
 
-      if(message.type === "load-ffmpeg") {
+      if (message.type === "load-ffmpeg") {
         triggerLoad.current = true;
         loadFfmpeg()
       }
@@ -182,7 +278,7 @@ const DemoSand = () => {
     script.onload = () => {
       scriptLoaded.current = true;
       loadFfmpeg();
-    } 
+    }
 
     document.body.appendChild(script);
   }, []);

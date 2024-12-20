@@ -50,6 +50,15 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     const [auphonicVideoUrlPreview, setAuphonicVideoUrlPreview] = useState('')
     const [isAuphonicUiMode, setIsAuphonicUiMode] = useState(false)
     const audioF = useRef(null)
+    const switchModeAudios = useRef({
+        auphonicAudio: null,
+        originalAudio: null,
+        trimState: {
+            startTime: 0,
+            endTime: 0,
+            duration: 0,
+        }
+    })
     const [trimState, setTrimState] = useState({
         start: 0,
         end: 1,
@@ -60,6 +69,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     });
     const uuidRef = useRef(null)
     const [uuidState, setUuid] = useState(null)
+    const [showRevertButton, setShowRevertButtons] = useState(false)
     const fileNameRef = useRef('')
     const playPartialRecording = async (receivedChunks) => {
         try {
@@ -156,10 +166,15 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
 
     const addToHistory = (newState) => {
         // Add the current state to history before applying new changes
+        console.log("newStatenewStatenewState", newState)
         const newHistory = [...history, {
             trimState: { ...trimState },
             blob: blob,
-            blobUrl: blobUrl
+            blobUrl: blobUrl,
+            isAuphonicMode: isAuphonicUiMode,
+            auphonicBlob: newState.auphonicBlob,
+            originalAudioBlob: newState?.originalAudioBlob,
+            showRevertButton: showRevertButton
         }];
         setHistory(newHistory);
 
@@ -198,6 +213,49 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         window.addEventListener("message", async (event) => {
             const message = event.data;
+            if (message.type === "updated-blob") {
+                if (message?.isEdit) {
+                    setShowRevertButtons(false)
+                    console.log("switchModeAudios.current", switchModeAudios.current)
+                    if (switchModeAudios.current.originalAudio) {
+                        console.log("originalAudio send", message)
+                        const messageTobeSent = {
+                            type: "cut-original-audio",
+                            blob: switchModeAudios.current.originalAudio,
+                            startTime: switchModeAudios.current.trimState.startTime,
+                            endTime: switchModeAudios.current.trimState.endTime,
+                            cut: message.cut,
+                            duration: switchModeAudios.current.trimState.duration,
+                            encode: false,
+                        };
+                        sendPostMessage(messageTobeSent);
+                    }
+                    setIsAuphonicUiMode(false)
+                }
+            }
+
+            if (message.type === 'updated-original-blob') {
+                console.log("updated-original-blob called!!", switchModeAudios.current)
+                switchModeAudios.current.originalAudio = message.blob
+                if (switchModeAudios.current.auphonicAudio) {
+                    console.log("auphonicAudio send")
+                    const messageTobeSent = {
+                        type: "cut-auphonic-audio",
+                        blob: switchModeAudios.current.auphonicAudio,
+                        startTime: switchModeAudios.current.trimState.startTime,
+                        endTime: switchModeAudios.current.trimState.endTime,
+                        cut: message.cut,
+                        duration: switchModeAudios.current.trimState.duration,
+                        encode: false,
+                    };
+                    sendPostMessage(messageTobeSent);
+                }
+            }
+
+            if (message.type === 'updated-auphonic-blob') {
+                console.log("Edited Auphonic Blob", message)
+            }
+
             if (message.type === 'extracted-audio-blob') {
                 setConfirmSendToAuphonic(false)
                 chrome.storage.local.get(['advanceAuphonicSettings'], async result => {
@@ -208,9 +266,11 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                         sendData = defaultAdvanceAuphonicState
                     }
                     try {
+                        switchModeAudios.current.originalAudio = message.blob;
                         const file = await onSubmitAdvanceAuphonic(sendData, message.blob, setIspublishing, uuidRef, setUuid, fileNameRef)
-                        console.log(blobRef.current,":RecoievedFile", file)
-                        sendPostMessage({ type: "replace-videos-audio", videoBlob: blobRef.current, audioBlob: file })
+                        switchModeAudios.current.auphonicAudio = file
+                        console.log(blobRef.current, ":RecoievedFile", file)
+                        sendPostMessage({ type: "replace-videos-audio", videoBlob: blobRef.current, audioBlob: file, auphonicMode: true, auphonicBlob: file, originalAudioBlob: message.blob })
                     } catch (error) {
                         console.log("Error Occured:", error)
                     }
@@ -229,22 +289,47 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     useLayoutEffect(() => {
         window.addEventListener("message", async (event) => {
             const message = event.data;
+            if (message.type === "updated-original-blob") {
+                switchModeAudios.current.originalAudio = message.blob
+            }
+            if (message.type === "updated-auphonic-blob") {
+                switchModeAudios.current.auphonicAudio = message.blob
+            }
             if (message.type === "updated-blob") {
                 console.log("Received updated blob:", message.blob);
                 // Update the blob and blobUrl for the preview
                 const newBlobUrl = URL.createObjectURL(message.blob);
+
                 if (message.addToHistory) {
-                    addToHistory({
-                        trimState: { ...trimState },
-                        blob: blob,
-                        blobUrl: blobUrl
-                    });
+                    if (message.auphonicMode) {
+                        console.log("YES IT COMES HERE!!!!", message)
+                        setIsAuphonicUiMode(true)
+                        addToHistory({
+                            trimState: { ...trimState },
+                            blob: blob,
+                            blobUrl: blobUrl,
+                            isAuphonicMode: isAuphonicUiMode,
+                            auphonicBlob: message.auphonicBlob,
+                            originalAudioBlob: message.originalAudioBlob
+                        });
+                    } else {
+                        addToHistory({
+                            trimState: { ...trimState },
+                            blob: blob,
+                            blobUrl: blobUrl,
+                            isAuphonicMode: isAuphonicUiMode
+                        });
+                    }
+                   
                 }
 
-                if(message.isMergedTrack){
+                if (message.isMergedTrack) {
                     console.log("Is Merged Tracked!!")
-                    setIsAuphonicUiMode(true)
+                    setShowRevertButtons(true)
+                    // setIsAuphonicUiMode(true)
                 }
+
+               
 
                 if (message.fixMetadata) {
                     setIsVideoEncoding(false)
@@ -338,14 +423,22 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         if (history.length > 0) {
             // Get the last state from history
             const lastState = history[history.length - 1];
-
+            console.log("lastStatelastState", lastState)
             // Save current state to redo history
             const currentState = {
                 trimState: { ...trimState },
                 blob: blob,
-                blobUrl: blobUrl
+                blobUrl: blobUrl,
+                isAuphonicMode: isAuphonicUiMode,
+                showRevertButton: showRevertButton,
+                auphonicBlob: lastState?.auphonicBlob,
+                originalAudioBlob: lastState?.originalAudioBlob
             };
             setRedoHistory([...redoHistory, currentState]);
+
+            // if(lastState?.auphonicBlob) {
+            //     setShowRevertButtons(true)
+            // }
 
             // Restore the previous state
             if (lastState.blob) {
@@ -362,6 +455,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
             }
 
             setTrimState(lastState.trimState);
+            setIsAuphonicUiMode(lastState.isAuphonicMode);
 
             // Remove the last state from history
             setHistory(history.slice(0, -1));
@@ -372,15 +466,22 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         if (redoHistory.length > 0) {
             // Get the last state from redo history
             const redoState = redoHistory[redoHistory.length - 1];
-
+            console.log("redoState", redoState)
             // Save current state to history
             const currentState = {
                 trimState: { ...trimState },
                 blob: blob,
-                blobUrl: blobUrl
+                blobUrl: blobUrl,
+                isAuphonicMode: isAuphonicUiMode,
+                showRevertButton: showRevertButton,
+                auphonicBlob: redoState?.auphonicBlob,
+                originalAudioBlob: redoState?.originalAudioBlob
             };
             setHistory([...history, currentState]);
 
+            // if(redoState?.auphonicBlob) {
+            //     setShowRevertButtons(true)
+            // }
             // Restore the redo state
             if (redoState.blob) {
                 const newBlobUrl = URL.createObjectURL(redoState.blob);
@@ -396,6 +497,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
             }
 
             setTrimState(redoState.trimState);
+            setIsAuphonicUiMode(redoState.isAuphonicMode);
 
             // Remove the used redo state
             setRedoHistory(redoHistory.slice(0, -1));
@@ -425,12 +527,24 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     }
 
     const handleSwitch = () => {
-        addToHistory({
-            trimState: { ...trimState },
-            blob: blob,
-            blobUrl: blobUrl
-        })
+        // addToHistory({
+        //     trimState: { ...trimState },
+        //     blob: blob,
+        //     blobUrl: blobUrl,
+        //     isAuphonicMode: isAuphonicUiMode
+        // })
+        // if()
+        // sendPostMessage({ type: "replace-videos-audio", videoBlob: blob, audioBlob: file, auphonicMode: true })
+        console.log("LastHistory", history[history.length - 1])
+        const lastHistoryAudioBlobData = history[history.length - 1]
+        // return;
+        if (isAuphonicUiMode) {
+            sendPostMessage({ type: "replace-videos-audio", videoBlob: blob, audioBlob: lastHistoryAudioBlobData?.originalAudioBlob, auphonicMode: false, isFromSwitch: true })
+        } else {
+            sendPostMessage({ type: "replace-videos-audio", videoBlob: blob, audioBlob: lastHistoryAudioBlobData?.auphonicBlob, auphonicMode: false, isFromSwitch: true })
+        }
         setIsAuphonicUiMode(prev => !prev)
+
     }
 
     const value = {
@@ -485,7 +599,9 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         startAuphonicAudioProcessing,
         uuidState,
         handleSwitch,
-        isAuphonicUiMode
+        isAuphonicUiMode,
+        switchModeAudios,
+        showRevertButton
     };
 
     return (

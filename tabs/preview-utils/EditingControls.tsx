@@ -47,7 +47,9 @@ const EditingControls = ({
         setConfirmSendToAuphonic,
         uuidState,
         handleSwitch,
-        isAuphonicUiMode
+        isAuphonicUiMode,
+        switchModeAudios,
+        showRevertButton
     } = usePreview();
 
     const waveContainerRef = useRef<HTMLDivElement>(null);
@@ -259,6 +261,13 @@ const EditingControls = ({
                 encode: false,
             };
 
+            switchModeAudios.current.trimState = {
+                startTime: trimState.startTime,
+                endTime: trimState.endTime,
+                duration: trimState.duration,
+            }
+            
+
             console.log("Sending trim message:", {
                 startTime: trimState.startTime,
                 endTime: trimState.endTime,
@@ -267,7 +276,10 @@ const EditingControls = ({
 
             // Send the message to process the trim
             sendMessage(message);
+            
             setIsFfmpegRunning(true)
+
+
         } catch (error) {
             console.error("Error in handleTrim:", error);
         }
@@ -305,18 +317,21 @@ const EditingControls = ({
         setConfirmSendToAuphonic(true)
     }
 
+    const lastHistoryData = history[history.length - 1];
+    console.log("lastHistoryDatalastHistoryData", lastHistoryData)
+
     return (
         <>
             <div>
                 <div className={styles.timeWrap}>
                     <span>{toTimeStamp(trimState.startTime) + " - " + toTimeStamp(trimState.endTime)}</span>
                 </div>
-                {uuidState && <div className={styles['switch-ui']} >
+                {((uuidState && !!lastHistoryData?.auphonicBlob) || showRevertButton) && <div className={styles['switch-ui']} >
                     <span onClick={handleSwitch} className={styles["click-wrapper"]} >
                         <div className={styles['reverse-container']} >
                             <TbSwitch2 fontSize={12} />
                         </div>
-                        <p>Switch original audio</p>
+                        <p>{isAuphonicUiMode ? "Switch original audio" : "Switch auphonic audio"}</p>
                     </span>
                 </div>}
                 <div className={styles.trimmerContainer} ref={trimmerRef}>
