@@ -307,6 +307,10 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         setIsEditMode(false)
         setBlob(originalVideo.blob)
         blobRef.current = originalVideo.blob
+        setIsAuphonicUiMode(false)
+        setUuid(null)
+        uuidRef.current = null
+        fileNameRef.current = ''
         setTrimState({
             start: 0,
             end: 1,
@@ -421,6 +425,11 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     }
 
     const handleSwitch = () => {
+        addToHistory({
+            trimState: { ...trimState },
+            blob: blob,
+            blobUrl: blobUrl
+        })
         setIsAuphonicUiMode(prev => !prev)
     }
 

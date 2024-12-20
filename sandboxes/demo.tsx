@@ -55,7 +55,7 @@ const DemoSand = () => {
         sendMessage({
           type: "updated-blob",
           // base64: base64,
-          addToHistory: false,
+          addToHistory: true,
           blob: blob,
           isMergedTrack: true
         });

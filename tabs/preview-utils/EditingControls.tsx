@@ -311,7 +311,7 @@ const EditingControls = ({
                 <div className={styles.timeWrap}>
                     <span>{toTimeStamp(trimState.startTime) + " - " + toTimeStamp(trimState.endTime)}</span>
                 </div>
-                {true && <div className={styles['switch-ui']} >
+                {uuidState && <div className={styles['switch-ui']} >
                     <span onClick={handleSwitch} className={styles["click-wrapper"]} >
                         <div className={styles['reverse-container']} >
                             <TbSwitch2 fontSize={12} />
