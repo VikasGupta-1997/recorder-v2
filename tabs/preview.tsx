@@ -74,7 +74,8 @@ function PreviewPage() {
         startAuphonicAudioProcessing,
         uuidState,
         history,
-        redoHistory
+        redoHistory,
+        showConfirmation
     } = usePreview();
     const [showGhost, setShowGhost] = useState(false);
 
@@ -92,7 +93,7 @@ function PreviewPage() {
     }
 
 
-    console.log("history", history)
+    console.log(showConfirmation.current, "history", history)
     console.log("Redo History", redoHistory)
     return (
         <div id="container" className={style["container"]}>
@@ -125,10 +126,7 @@ function PreviewPage() {
                         {(ffmpegLoadError) && <p className={`${style['error']}`}>Cannot edit video, editing tool not supported for your browser !!</p>}
                         {(isEditMode && !auphonicVideoUrlPreview) && <div className={style["editing-control-wrapper"]} >
                             <EditingControls
-                                getAuphonicData={() => {
-                                    console.log("Calle!!!")
-                                    showAuphonicPreview('http://localhost:8080/stream?url=https://auphonic.com/api/download/audio-result/yVt4jbLGFkHMYQu8NgNtGQ/ForBiggerBlazes.mp4')
-                                }}
+                                getAuphonicData={() => {}}
                                 isAudio={false}
                                 usePreview={usePreview}
                                 setShowGhost={setShowGhost}
@@ -141,8 +139,7 @@ function PreviewPage() {
                     </div>}
                 </div>
             </span>
-            {/* <video width={400} height={400} controls id="check-video" /> */}
-            {confirmSendToAuphonic && <ConfirmationModal
+            {(confirmSendToAuphonic && showConfirmation.current) && <ConfirmationModal
                 body={<div>
                     <p>Enhancing the audio of this recording wil consume 15 minutes from you AI credits.</p>
                     <p>Do you want to continue ?</p>
@@ -150,12 +147,11 @@ function PreviewPage() {
                 onSubmit={startAuphonicAudioProcessing}
                 title="Audio Enhancement"
                 onClose={() => setConfirmSendToAuphonic(false)} />}
-            {showAuphonicAdvanceForm && <AdvanceAuphonicForm uuidState={uuidState} setConfirmSendToAuphonic={setConfirmSendToAuphonic} onClose={() => setShowAuphonicAdvanceForm(false)} />}
-            {/* {isPublishing && <>
+            {showAuphonicAdvanceForm && <AdvanceAuphonicForm startAuphonicAudioProcessing={startAuphonicAudioProcessing} uuidState={uuidState} setConfirmSendToAuphonic={setConfirmSendToAuphonic} onClose={() => setShowAuphonicAdvanceForm(false)} />}
+            {isPublishing && <>
                 <div className={style["full-screen-loader"]} />
                 <div className={style['overlay']} />
-            </>} */}
-            {/* <AsyncPresetsDropDown getPresets={getPresets} /> */}
+            </>}
         </div>
     );
 }
@@ -189,23 +185,6 @@ const AuphonicVideoPreview = ({ auphonicPlyrRef, auphonicVideoUrlPreview }) => {
                     },
                 }}
             />
-            {/* <video
-                style={{ 
-                    height: "200px",
-                    width: '500px'
-                 }}
-                controls
-                crossOrigin="anonymous"
-                src="http://localhost:8080/video?url=https://auphonic.com/api/download/audio-result/NUYfWXQdYdZoAAnVxzhsGf/video_1733317538274_zkkh0nln.mp4"
-            /> */}
-            {/* <button onClick={async () => {
-                console.log("Called")
-                const response = await fetch('http://localhost:8080/test?url="https://adilo.com"')
-                const jsonResponse = await response.json();
-                console.log("jsonResponse", jsonResponse)
-            }} >
-                CLick
-            </button> */}
             <style>
                 {`
                     .plyr {

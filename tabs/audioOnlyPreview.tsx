@@ -71,6 +71,7 @@ function PreviewPage() {
         setShowAuphonicAdvanceForm,
         showAuphonicAdvanceForm,
         confirmSendToAuphonic,
+        isVideoEndcoding,
         setConfirmSendToAuphonic,
         startAuphonicAudioProcessing
     } = useAudioOnlyPreview();
@@ -113,7 +114,7 @@ function PreviewPage() {
                         <AudioPreview blobUrl={"http://localhost:8080/stream?url=https://auphonic.com/api/download/audio-result/beS6vmTQNGqr6M4Yo5neaV/audio_1733314734721_5kzbwl0u.mp3"} blob={blob} audioRef={auphonicAudioRef} containerRef={containerRef} />
                     </div>}
                 </div>
-                {(!isEditMode && !showAuphonicWrap) && <div className={`${style['edit-mode-btn-audio']}`} > <button className={`${style["rounded-btn"]} ${style['publish-btn']}`} disabled={!isFfmpegLoaded || ffmpegRunning || isPublishing} onClick={changeMode} >Edit Video</button></div>}
+                {(!isEditMode && !showAuphonicWrap) && <div className={`${style['edit-mode-btn-audio']}`} > <button className={`${style["rounded-btn"]} ${style['publish-btn']}`} disabled={!isFfmpegLoaded || ffmpegRunning || isPublishing || isVideoEndcoding} onClick={changeMode} >Edit Video</button></div>}
                 {(isPublishing && !showAuphonicWrap) && <p className={style["publishing-load-text"]} >Publishing content please wait and do not close the window till upload is not complete.</p>}
                 {!isFfmpegLoaded && <p>Please wait editing tool is loading...</p>}
                 {ffmpegLoadError && <p className={`${style['error']}`}>Cannot edit video, editing tool not supported for your browser !!</p>}
@@ -135,7 +136,7 @@ function PreviewPage() {
                 </div>}
                 title="Audio Enhancement"
                 onClose={() => setConfirmSendToAuphonic(false)} />}
-            {showAuphonicAdvanceForm && <AdvanceAuphonicForm uuidState={null} setConfirmSendToAuphonic={setConfirmSendToAuphonic} onClose={() => setShowAuphonicAdvanceForm(false)} />}
+            {showAuphonicAdvanceForm && <AdvanceAuphonicForm startAuphonicAudioProcessing={startAuphonicAudioProcessing} uuidState={null} setConfirmSendToAuphonic={setConfirmSendToAuphonic} onClose={() => setShowAuphonicAdvanceForm(false)} />}
             {(isPublishing || isStreamLoading) && <>
                 <div className={style["full-screen-loader"]} />
                 <div className={style['overlay']} />

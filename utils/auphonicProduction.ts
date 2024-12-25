@@ -18,15 +18,21 @@ export const fetchMp3File = async (url) => {
     }
 };
 
-export default async function onSubmitAdvanceAuphonic(data, blob, setIspublishing, uuidRef, setUuid, fileNameRef) {
-    // console.log(uuidRef,blob, "Data=======>", data, fileNameRef)
+export default async function onSubmitAdvanceAuphonic(data, blob, setIspublishing, uuidRef, setUuid, fileNameRef, isAuphonicSubmitted, switchModeAudios) {
+    console.log("Data=======>", switchModeAudios)
     const generatedData = getAuphonicProcessedData(data)
-    const sendData = { algorithms: { ...generatedData } }
-    console.log("generatedData", sendData)
+    let sendData = { algorithms: { ...generatedData } }
+    // const sendData = {  }
+    // console.log("generatedData", sendData)
     let downloadUrl;
     let uuidResp;
     let fileName;
     setIspublishing(true)
+    // const fileUrl = 'http://localhost:8080/fetch-file?url=https://auphonic.com/api/download/audio-result/5ke2GXdaYRtzQCbmapjohb/audio_1734949984540_koeul8ln.mp3'
+    // const file = await fetchMp3File(fileUrl)
+    // setIspublishing(false)
+    // setUuid('uuidState-90-jk-09-oklo')
+    // return file
     try {
         if (!uuidRef.current) {
             console.log("processAudioWithAuphonic called with Blob:", blob);
@@ -63,23 +69,39 @@ export default async function onSubmitAdvanceAuphonic(data, blob, setIspublishin
         }
         //Extra step to add configs
         const uuid = uuidResp || uuidRef.current
-        const sendConfigRespose = await fetch(`${process.env.PLASMO_PUBLIC_AUPHONICURL}/production/${uuid}.json`, {
-            method: 'POST',
-            headers: {
-                ...AUTH_HEADER,
-                'Content-Type': "application/json"
-            },
-            body: JSON.stringify(sendData)
-        });
-        console.log("sendConfigRespose1212", sendConfigRespose)
+        console.log("isAuphonicSubmitted==>", isAuphonicSubmitted.current)
+        if (isAuphonicSubmitted.current) {
+                sendData['reset_data'] = true
+                sendData["output_files"] = [
+                    { "format": "mp3" }
+                ]
+                // sendData["cut_start"] = parseFloat(switchModeAudios.trimState.startTime.toFixed(2))
+                // sendData["cut_end"] = parseFloat(switchModeAudios.trimState.endTime.toFixed(2))
+                // sendData['output_basename'] = fileNameRef.current,
+                sendData["algorithms"] = {
+                    ...sendData['algorithms'],
+                }
+            console.log("sendDatasendData", sendData)
 
-        if (!sendConfigRespose.ok) {
-            const errorText = await sendConfigRespose.text();
-            console.error("Failed to set Auphonic configuration:", errorText);
-            throw new Error(`Auphonic Config setting failed: ${sendConfigRespose.statusText}`);
+            const sendConfigRespose = await fetch(`${process.env.PLASMO_PUBLIC_AUPHONICURL}/production/${uuid}.json`, {
+                method: 'POST',
+                headers: {
+                    ...AUTH_HEADER,
+                    'Content-Type': "application/json"
+                },
+                body: JSON.stringify(sendData)
+            });
+            console.log("sendConfigRespose1212", sendConfigRespose)
+
+            if (!sendConfigRespose.ok) {
+                const errorText = await sendConfigRespose.text();
+                console.error("Failed to set Auphonic configuration:", errorText);
+                throw new Error(`Auphonic Config setting failed: ${sendConfigRespose.statusText}`);
+            }
+            const sendConfigResposeData = await sendConfigRespose.json();
+            console.log("sendConfigResposeDatasendConfigResposeData", sendConfigResposeData)
         }
-        const sendConfigResposeData = await sendConfigRespose.json();
-        console.log("sendConfigResposeDatasendConfigResposeData", sendConfigResposeData)
+        // if (!isAuphonicSubmitted.current) {
         // Step 2: Start the production
         const startResponse = await fetch(`${process.env.PLASMO_PUBLIC_AUPHONICURL}/production/${uuid}/start.json`, {
             method: 'POST',
@@ -92,6 +114,7 @@ export default async function onSubmitAdvanceAuphonic(data, blob, setIspublishin
             throw new Error(`Production start failed: ${startResponse.statusText}`);
         }
         console.log("Production started successfully.");
+        // }
 
         // Step 3: Poll for completion
         const checkStatus = async () => {
@@ -121,7 +144,7 @@ export default async function onSubmitAdvanceAuphonic(data, blob, setIspublishin
             await new Promise(resolve => setTimeout(resolve, 2000)); // Poll every 2 seconds
             status = await checkStatus();
         } while ([1, 4, 5].includes(status)); // when checking for status 
-        // } while ( ["Audio Encoding",  "Audio Processing", "Waiting"].includes(status)); // when checking for status_string
+        // } while ( ["Audio Encoding",  "Audio Processing", "Waiting", "Incomplete"].includes(status)); // when checking for status_string
 
         console.log("Final production status:", status);
 
@@ -135,6 +158,7 @@ export default async function onSubmitAdvanceAuphonic(data, blob, setIspublishin
             const file = await fetchMp3File(downloadUrl)
             setIspublishing(false)
             setUuid(uuid)
+            isAuphonicSubmitted.current = true
             console.log("Production completed. Downloading the processed file...");
             return file
         } else {

@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import onSubmitAdvanceAuphonic from '~utils/auphonicProduction';
+import { defaultAdvanceAuphonicState } from '~utils/constants';
 
 const PreviewContext = createContext<any>(undefined);
 
@@ -24,6 +26,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
         blob: new Blob(), url: ''
     })
     const originalDuration = useRef(0)
+    const [isVideoEndcoding, setIsVideoEncoding] = useState(true)
     const [loadingVideo, setLoadingVideo] = useState(true)
     const [showAuphonicAdvanceForm, setShowAuphonicAdvanceForm] = useState(false)
     const [confirmSendToAuphonic, setConfirmSendToAuphonic] = useState(false)
@@ -33,6 +36,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
     const normalAudioWrap = useRef(null)
 
     const [blob, setBlob] = useState(null)
+    const blobRef = useRef(null)
     const url = useRef('')
     const [history, setHistory] = useState([])
     const [redoHistory, setRedoHistory] = useState([])
@@ -43,7 +47,17 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
     const [ffmpegLoadError, setFfmpegLoadError] = useState(false)
     const [ffmpegRunning, setIsFfmpegRunning] = useState(false)
     const [isPublishing, setIspublishing] = useState(false)
+    const [isAuphonicUiMode, setIsAuphonicUiMode] = useState(false)
     const [videoSource, setVideoSource] = useState(null);
+    const switchModeAudios = useRef({
+        auphonicAudio: null,
+        originalAudio: null,
+        trimState: {
+            startTime: 0,
+            endTime: 0,
+            duration: 0,
+        }
+    })
     const [trimState, setTrimState] = useState({
         start: 0,
         end: 1,
@@ -52,6 +66,11 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
         endTime: 0,
         duration: 0
     });
+    const uuidRef = useRef(null)
+    const isAuphonicSubmitted = useRef(false)
+    const [uuidState, setUuid] = useState(null)
+    const [showRevertButton, setShowRevertButtons] = useState(false)
+    const fileNameRef = useRef('')
     const [showAuphonicWrap, setShowAuphonicWrap] = useState(false)
 
     const setSource = (url) => {
@@ -136,10 +155,11 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
                             console.log("All chunks received. Reassembling...");
 
                             const { newBlob, newBlobUrl } = await playPartialRecording(receivedChunks); // Play the complete recording
-                            setOriginalVideo({
-                                blob: newBlob,
-                                url: newBlobUrl
-                            })
+                            sendPostMessage({ type: "fixMetadata", blob: newBlob })
+                            // setOriginalVideo({
+                            //     blob: newBlob,
+                            //     url: newBlobUrl
+                            // })
                         }
                     }
                         break;
@@ -163,7 +183,11 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
         const newHistory = [...history, {
             trimState: { ...trimState },
             blob: blob,
-            blobUrl: blobUrl
+            blobUrl: blobUrl,
+            isAuphonicMode: isAuphonicUiMode,
+            auphonicBlob: newState.auphonicBlob,
+            originalAudioBlob: newState?.originalAudioBlob,
+            showRevertButton: showRevertButton
         }];
         setHistory(newHistory);
 
@@ -194,27 +218,48 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
         document.body.style.margin = "0px";
         document.body.style.padding = "0px";
         sendPostMessage({ type: "load-ffmpeg" });
-        // window.onbeforeunload = function () {
-        //     return true;
-        // };
+        window.onbeforeunload = function () {
+            return true;
+        };
     }, [])
 
     useEffect(() => {
-        chrome.storage.local.get(["isAudioOnly", "saving_in_indexdb"], async (result) => {
-            console.log("resultresult", result)
-            sendPostMessage({ type: "IS_CONTENT_TYPE", isAudioOnly: result?.isAudioOnly })
-            if (!result?.saving_in_indexdb) {
-                // setVideoLoading(false)
-            }
-            if (result?.isAudioOnly) {
-                if (audioRef.current) {
-                    console.log("audioRef.current", url.current)
-                    audioRef.current.src = url.current;
+        if(blob){
+            console.log(audioRef.current,"New Blob Set!!", blob)
+            const setUrl =  URL.createObjectURL(blob);
+            audioRef.current.src = setUrl;
+        }
+    }, [blob])
+
+    // useEffect(() => {
+    //     chrome.storage.local.get(["isAudioOnly", "saving_in_indexdb"], async (result) => {
+    //         console.log("resultresult", result)
+    //         sendPostMessage({ type: "IS_CONTENT_TYPE", isAudioOnly: result?.isAudioOnly })
+    //         if (!result?.saving_in_indexdb) {
+    //             // setVideoLoading(false)
+    //         }
+    //         if (result?.isAudioOnly) {
+    //             if (audioRef.current) {
+    //                 console.log("audioRef.current", url.current)
+    //                 audioRef.current.src = url.current;
+    //             }
+    //         } else {
+    //         }
+    //     });
+    // }, [blobUrl]);
+
+    useEffect(() => {
+        window.addEventListener("message", async (event) => {
+            const message = event.data;
+            if (message.type === "updated-blob") {
+                if (message?.isEdit) {
+                    setShowRevertButtons(false)
+                    console.log("switchModeAudios.current", switchModeAudios.current)
+                    setIsAuphonicUiMode(false)
                 }
-            } else {
             }
-        });
-    }, [blobUrl]);
+        })
+    }, [])
 
     useLayoutEffect(() => {
         window.addEventListener("message", (event) => {
@@ -223,16 +268,37 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
                 console.log("Received updated blob:", message.blob);
                 // Update the blob and blobUrl for the preview
                 const newBlobUrl = URL.createObjectURL(message.blob);
-                addToHistory({
-                    trimState: { ...trimState },
-                    blob: blob,
-                    blobUrl: blobUrl
-                });
+                if (message.addToHistory) {
+                    if (message.auphonicMode) {
+                        console.log("YES IT COMES HERE!!!!", message)
+                        setIsAuphonicUiMode(true)
+                        addToHistory({
+                            trimState: { ...trimState },
+                            blob: blob,
+                            blobUrl: blobUrl,
+                            isAuphonicMode: isAuphonicUiMode,
+                            auphonicBlob: message.auphonicBlob,
+                            originalAudioBlob: message.originalAudioBlob
+                        });
+                    } else {
+                        addToHistory({
+                            trimState: { ...trimState },
+                            blob: blob,
+                            blobUrl: blobUrl,
+                            isAuphonicMode: isAuphonicUiMode
+                        });
+                    }
+                   
+                }
                 setBlobUrl(newBlobUrl)
                 setSource(newBlobUrl)
                 setBlob(message.blob)
 
-
+                if (message.isMergedTrack) {
+                    console.log("Is Merged Tracked!!")
+                    setShowRevertButtons(true)
+                    // setIsAuphonicUiMode(true)
+                }
 
                 setTrimState(prev => ({
                     ...prev,
@@ -255,6 +321,15 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
                 }
                 url.current = newBlobUrl;
             }
+
+            if (message.fixMetadata) {
+                setIsVideoEncoding(false)
+                setOriginalVideo({
+                    blob: message.blob,
+                    url: URL.createObjectURL(message.blob)
+                })
+            }
+
             if (message.type === "ffmpeg-loaded") {
                 setIsFfmpegLoaded(true)
                 console.log("ffmpeg-loaded Call from Demo!!")
@@ -268,6 +343,29 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
 
         onMountListeners()
     }, [history, trimState])
+
+    const handleSwitch = () => {
+        // addToHistory({
+        //     trimState: { ...trimState },
+        //     blob: blob,
+        //     blobUrl: blobUrl,
+        //     isAuphonicMode: isAuphonicUiMode
+        // })
+        // if()
+        // sendPostMessage({ type: "replace-videos-audio", videoBlob: blob, audioBlob: file, auphonicMode: true })
+        console.log("LastHistory", history[history.length - 1])
+        const lastHistoryAudioBlobData = history[history.length - 1]
+        // return;
+        if (isAuphonicUiMode) {
+            // sendPostMessage({ type: "replace-videos-audio", videoBlob: blobRef.current, audioBlob: file, auphonicMode: true, auphonicBlob: file, originalAudioBlob: blob })
+
+            sendPostMessage({ type: "replace-videos-audio", audioBlob: lastHistoryAudioBlobData?.originalAudioBlob, auphonicMode: false, isFromSwitch: true })
+        } else {
+            sendPostMessage({ type: "replace-videos-audio", audioBlob: lastHistoryAudioBlobData?.auphonicBlob, auphonicMode: false, isFromSwitch: true })
+        }
+        setIsAuphonicUiMode(prev => !prev)
+
+    }
 
 
     const changeMode = () => {
@@ -285,6 +383,11 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
         setSource(newBlobUrl)
         setIsEditMode(false)
         setBlob(originalVideo.blob)
+        blobRef.current = originalVideo.blob
+        setIsAuphonicUiMode(false)
+        setUuid(null)
+        uuidRef.current = null
+        fileNameRef.current = ''
         setTrimState({
             start: 0,
             end: 1,
@@ -294,6 +397,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
             duration: 0
         })
         setHistory([])
+        setShowRevertButtons(false)
         setRedoHistory([])
         if (url.current) {
             URL.revokeObjectURL(url.current);
@@ -315,7 +419,11 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
             const currentState = {
                 trimState: { ...trimState },
                 blob: blob,
-                blobUrl: blobUrl
+                blobUrl: blobUrl,
+                isAuphonicMode: isAuphonicUiMode,
+                showRevertButton: showRevertButton,
+                auphonicBlob: lastState?.auphonicBlob,
+                originalAudioBlob: lastState?.originalAudioBlob
             };
             setRedoHistory([...redoHistory, currentState]);
 
@@ -324,6 +432,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
                 const newBlobUrl = URL.createObjectURL(lastState.blob);
                 setBlob(lastState.blob);
                 setBlobUrl(newBlobUrl);
+                blobRef.current = lastState.blob
                 setSource(newBlobUrl)
                 // Cleanup old blob URL
                 if (url.current) {
@@ -333,7 +442,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
             }
 
             setTrimState(lastState.trimState);
-
+            setIsAuphonicUiMode(lastState.isAuphonicMode);
             // Remove the last state from history
             setHistory(history.slice(0, -1));
         }
@@ -348,7 +457,11 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
             const currentState = {
                 trimState: { ...trimState },
                 blob: blob,
-                blobUrl: blobUrl
+                blobUrl: blobUrl,
+                isAuphonicMode: isAuphonicUiMode,
+                showRevertButton: showRevertButton,
+                auphonicBlob: redoState?.auphonicBlob,
+                originalAudioBlob: redoState?.originalAudioBlob
             };
             setHistory([...history, currentState]);
 
@@ -357,6 +470,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
                 const newBlobUrl = URL.createObjectURL(redoState.blob);
                 setBlob(redoState.blob);
                 setBlobUrl(newBlobUrl);
+                blobRef.current = redoState.blob
                 setSource(newBlobUrl)
                 // Cleanup old blob URL
                 if (url.current) {
@@ -366,111 +480,9 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
             }
 
             setTrimState(redoState.trimState);
-
+            setIsAuphonicUiMode(redoState.isAuphonicMode);
             // Remove the used redo state
             setRedoHistory(redoHistory.slice(0, -1));
-        }
-    };
-
-    const processAudioWithAuphonic = async (audioBlob, isAudio, presetUuid) => {
-        const audio = isAudio === 'audio'
-        console.log("isAudioisAudio", audio, audioBlob.type, presetUuid)
-        setIspublishing(true)
-        try {
-            console.log("processAudioWithAuphonic called with Blob:", audioBlob);
-
-            // Step 1: Create a new production
-            const formData = new FormData();
-            const timestamp = Date.now(); // Get current timestamp in milliseconds
-            const randomString = Math.random().toString(36).substring(2, 10);
-            // Step 1: Create a new production
-            const fileName = audio ? `audio_${timestamp}_${randomString}` : `video_${timestamp}_${randomString}`
-            formData.append('input_file', audioBlob, (fileName + (audio ? '.mp3' : '.mp4')));
-            // formData.append('input_file', new File([audioBlob], fileName + (audio? '.mp3' : '.mp4') , { type: audioBlob.type }));
-            formData.append('preset', presetUuid);
-            const productionResponse = await fetch(`${auphonicUrl}/simple/productions.json`, {
-                method: 'POST',
-                headers: AUTH_HEADER,
-                body: formData
-            });
-
-            if (!productionResponse.ok) {
-                const errorText = await productionResponse.text();
-                console.error("Failed to create Auphonic production:", errorText);
-                throw new Error(`Production creation failed: ${productionResponse.statusText}`);
-            }
-
-            const productionData = await productionResponse.json();
-            const uuid = productionData?.data?.uuid;
-
-            if (!uuid) {
-                console.error("UUID not found in production response:", productionData);
-                throw new Error("Failed to retrieve production UUID");
-            }
-            console.log("Production created with UUID:", uuid);
-
-            // Step 2: Start the production
-            const startResponse = await fetch(`${auphonicUrl}/production/${uuid}/start.json`, {
-                method: 'POST',
-                headers: AUTH_HEADER
-            });
-
-            if (!startResponse.ok) {
-                const errorText = await startResponse.text();
-                console.error("Failed to start Auphonic production:", errorText);
-                throw new Error(`Production start failed: ${startResponse.statusText}`);
-            }
-            console.log("Production started successfully.");
-
-            // Step 3: Poll for completion
-            const checkStatus = async () => {
-                try {
-                    const statusResponse = await fetch(`${auphonicUrl}/production/${uuid}/status.json`, {
-                        headers: AUTH_HEADER
-                    });
-
-                    if (!statusResponse.ok) {
-                        const errorText = await statusResponse.text();
-                        console.error("Error fetching production status:", errorText);
-                        throw new Error(`Failed to fetch production status: ${statusResponse.statusText}`);
-                    }
-
-                    const statusData = await statusResponse.json();
-                    console.log("Current production status:", statusData.data.status_string);
-                    // return statusData?.data?.status_string; // when checking for status_string
-                    return statusData?.data?.status; // when checking for status 
-                } catch (error) {
-                    console.error("Error during status check:", error);
-                    throw error;
-                }
-            };
-
-            let status;
-            do {
-                await new Promise(resolve => setTimeout(resolve, 2000)); // Poll every 2 seconds
-                status = await checkStatus();
-            } while ([1, 4, 5].includes(status)); // when checking for status 
-            // } while ( ["Audio Encoding",  "Audio Processing", "Waiting"].includes(status)); // when checking for status_string
-
-            console.log("Final production status:", status);
-
-            // Step 4: Handle completion
-            // if (status === 'Done') { // when checking for status_string
-            if (status === 3) { // when checking for status 
-                console.log("STAUOS ")
-                const urlTobeSent = `${auphonicUrl}/download/audio-result/${uuid}/${fileName}.${audio ? 'mp3' : 'mp4'}`
-                console.log("urlTobeSent", urlTobeSent)
-                setIspublishing(false)
-                console.log("Production completed. Downloading the processed file...");
-            } else {
-                setIspublishing(false)
-                console.error("Production did not complete successfully:", status);
-                throw new Error(`Processing failed with status: ${status}`);
-            }
-        } catch (error) {
-            setIspublishing(false)
-            console.error("Error processing audio with Auphonic:", error);
-            throw error; // Re-throw the error for further handling if needed
         }
     };
 
@@ -487,12 +499,12 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
         return `${day}${month}${year}${hours}${minutes}${seconds}`;
     }
 
-    useEffect(() => {
-        if(showAuphonicWrap){
-            console.log("auphonicAudioRef1212",auphonicAudioRef.current )
-            auphonicAudioRef.current.src = "http://localhost:8080/stream?url=https://auphonic.com/api/download/audio-result/beS6vmTQNGqr6M4Yo5neaV/audio_1733314734721_5kzbwl0u.mp3"
-        }
-    }, [showAuphonicWrap])
+    // useEffect(() => {
+    //     if(showAuphonicWrap){
+    //         console.log("auphonicAudioRef1212",auphonicAudioRef.current )
+    //         auphonicAudioRef.current.src = "http://localhost:8080/stream?url=https://auphonic.com/api/download/audio-result/beS6vmTQNGqr6M4Yo5neaV/audio_1733314734721_5kzbwl0u.mp3"
+    //     }
+    // }, [showAuphonicWrap])
 
     const getAuphonicData = () => {
         setShowAuphonicWrap(true);
@@ -505,111 +517,38 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
                 },
             ],
         })
-        // wrapAuphonicAudioRef.current.style.display = 'block';
-        // normalAudioWrap.current.style.width = "45%";
-        return;
-        const mediaSource = new MediaSource();
-        const sourceBuffer = { buffer: [] };
-        let isBuffering = true;
-        // const BUFFER_THRESHOLD = 1024 * 512; // 512KB buffer threshold
-        const BUFFER_THRESHOLD = 10; // 512KB buffer threshold
-
-        auphonicAudioRef.current.src = URL.createObjectURL(mediaSource);
-
-        // Add buffering event listeners
-        auphonicAudioRef.current.addEventListener('waiting', () => {
-            console.log('Audio buffering... Playback paused');
-        });
-
-        auphonicAudioRef.current.addEventListener('playing', () => {
-            console.log('Audio resumed playing after buffering');
-        });
-
-        mediaSource.addEventListener("sourceopen", async () => {
-            const sb = mediaSource.addSourceBuffer('audio/mpeg');
-            sourceBuffer.buffer = [];
-            
-            try {
-                const response = await fetch("http://localhost:8080/api/stream-audio?url=https://auphonic.com/api/download/audio-result/beS6vmTQNGqr6M4Yo5neaV/audio_1733314734721_5kzbwl0u.mp3", {
-                    method: "GET",
-                    
-                    // body: JSON.stringify({
-                    //     // url: "https://auphonic.com/api/download/audio-result/iKdKsxnDujxf8fhbMMnC2S/video_1733318424532_bz8wmgpd.mp4"
-                    //     url: "https://auphonic.com/api/download/audio-result/eZSp3KANoa5kpU6EQnQLtX/new_audio_file.mp3",
-                    // }),
-                });
-
-                if (!response.body) throw new Error("ReadableStream not supported!");
-                const reader = response.body.getReader();
-                let totalBytesReceived = 0;
-
-                const appendChunk = async (chunk) => {
-                    return new Promise((resolve) => {
-                        if (!sb.updating) {
-                            sb.appendBuffer(chunk);
-                            sb.addEventListener('updateend', resolve, { once: true });
-                        } else {
-                            sb.addEventListener('updateend', () => {
-                                sb.appendBuffer(chunk);
-                                sb.addEventListener('updateend', resolve, { once: true });
-                            }, { once: true });
-                        }
-                    });
-                };
-
-                const processStream = async () => {
-                    while (true) {
-                        const { done, value } = await reader.read();
-
-                        if (done) {
-                            console.log("Stream complete! Total bytes received:", totalBytesReceived);
-                            mediaSource.endOfStream();
-                            break;
-                        }
-
-                        totalBytesReceived += value.length;
-                        await appendChunk(value);
-
-                        // Start playback when we have enough data buffered
-                        if (isBuffering && totalBytesReceived >= BUFFER_THRESHOLD) {
-                            isBuffering = false;
-                            console.log("Buffer threshold reached, starting playback...");
-                            try {
-                                setTimeout(async() => {
-                                    await auphonicAudioRef.current.play();
-                                },  1000)
-                            } catch (error) {
-                                console.error("Error starting playback:", error);
-                            }
-                        }
-                    }
-                };
-
-                processStream().catch(error => {
-                    console.error("Error processing stream:", error);
-                    mediaSource.endOfStream("network");
-                    setShowAuphonicWrap(false);
-                });
-
-            } catch (err) {
-                console.error("Error during streaming:", err);
-                mediaSource.endOfStream("network");
-                setShowAuphonicWrap(false);
-            }
-        });
-
-        // Add error handling for MediaSource
-        mediaSource.addEventListener("error", (e) => {
-            console.error("MediaSource error:", e);
-            setShowAuphonicWrap(false);
-        });
     };
 
-    const onSubmitAdvanceAuphonic = async data => {
-        console.log("Data", data)
-        setShowAuphonicAdvanceForm(false)
-        setConfirmSendToAuphonic(true)
+    const startAuphonicAudioProcessing = async() => {
+        console.log("Blob===>", blob)
+
+        setConfirmSendToAuphonic(false)
+        chrome.storage.local.get(['advanceAuphonicSettings'], async result => {
+            let sendData;
+            if (result?.advanceAuphonicSettings && result?.advanceAuphonicSettings?.trackCutting) {
+                sendData = result?.advanceAuphonicSettings
+            } else {
+                sendData = defaultAdvanceAuphonicState
+            }
+            try {
+                switchModeAudios.current.originalAudio = blob;
+                const file = await onSubmitAdvanceAuphonic(sendData, blob, setIspublishing, uuidRef, setUuid, fileNameRef, isAuphonicSubmitted, switchModeAudios.current)
+                switchModeAudios.current.auphonicAudio = file
+                console.log(blobRef.current, ":RecoievedFile", file)
+                sendPostMessage({ type: "replace-videos-audio", audioBlob: file, auphonicMode: true, auphonicBlob: file, originalAudioBlob: blob })
+            } catch (error) {
+                console.log("Error Occured:", error)
+            }
+        })
+
+        // sendPostMessage({ type: 'extract-audio', blob: blob })
     }
+
+    // const onSubmitAdvanceAuphonic = async data => {
+    //     console.log("Data", data)
+    //     setShowAuphonicAdvanceForm(false)
+    //     setConfirmSendToAuphonic(true)
+    // }
 
     const value = {
         playPartialRecording,
@@ -639,7 +578,6 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
         duration,
         setDuration,
         updateCursorPosition,
-        processAudioWithAuphonic,
         isFfmpegLoaded,
         ffmpegLoadError,
         setIsFfmpegRunning,
@@ -664,7 +602,13 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
         setShowAuphonicAdvanceForm,
         confirmSendToAuphonic, 
         setConfirmSendToAuphonic,
-        onSubmitAdvanceAuphonic
+        switchModeAudios,
+        startAuphonicAudioProcessing,
+        isVideoEndcoding,
+        handleSwitch,
+        showRevertButton,
+        uuidState,
+        isAuphonicUiMode
     };
 
     return (

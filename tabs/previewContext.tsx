@@ -49,6 +49,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     const [videoSource, setVideoSource] = useState(null);
     const [auphonicVideoUrlPreview, setAuphonicVideoUrlPreview] = useState('')
     const [isAuphonicUiMode, setIsAuphonicUiMode] = useState(false)
+    const showConfirmation = useRef(true)
     const audioF = useRef(null)
     const switchModeAudios = useRef({
         auphonicAudio: null,
@@ -59,6 +60,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
             duration: 0,
         }
     })
+    const isAuphonicSubmitted = useRef(false)
     const [trimState, setTrimState] = useState({
         start: 0,
         end: 1,
@@ -154,14 +156,28 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         )
     }
 
+    // const updateCursorPosition = (currentTime) => {
+    //     if (!customCursorRef.current) return;
+    //     // Get the parent container's width (where the waveform is rendered)
+    //     const containerRect = customCursorRef.current.parentElement.getBoundingClientRect();
+    //     const containerWidth = containerRect.width;
+
+    //     const position = (currentTime / duration) * containerWidth;
+    //     customCursorRef.current.style.left = `${position}px`;
+    // };
+
     const updateCursorPosition = (currentTime) => {
-        if (!customCursorRef.current) return;
-        // Get the parent container's width (where the waveform is rendered)
+        if (!customCursorRef.current || !duration) return;
         const containerRect = customCursorRef.current.parentElement.getBoundingClientRect();
         const containerWidth = containerRect.width;
-
-        const position = (currentTime / duration) * containerWidth;
-        customCursorRef.current.style.left = `${position}px`;
+        
+        // Ensure currentTime doesn't exceed duration
+        const normalizedTime = Math.min(currentTime, duration);
+        const position = (normalizedTime / duration) * containerWidth;
+        
+        // Ensure position stays within container bounds
+        const boundedPosition = Math.max(0, Math.min(position, containerWidth));
+        customCursorRef.current.style.left = `${boundedPosition}px`;
     };
 
     const addToHistory = (newState) => {
@@ -205,6 +221,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         document.body.style.margin = "0px";
         document.body.style.padding = "0px";
         sendPostMessage({ type: "load-ffmpeg" });
+        
         // window.onbeforeunload = function () {
         //     return true;
         // };
@@ -267,7 +284,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                     }
                     try {
                         switchModeAudios.current.originalAudio = message.blob;
-                        const file = await onSubmitAdvanceAuphonic(sendData, message.blob, setIspublishing, uuidRef, setUuid, fileNameRef)
+                        const file = await onSubmitAdvanceAuphonic(sendData, message.blob, setIspublishing, uuidRef, setUuid, fileNameRef, isAuphonicSubmitted, switchModeAudios.current)
                         switchModeAudios.current.auphonicAudio = file
                         console.log(blobRef.current, ":RecoievedFile", file)
                         sendPostMessage({ type: "replace-videos-audio", videoBlob: blobRef.current, audioBlob: file, auphonicMode: true, auphonicBlob: file, originalAudioBlob: message.blob })
@@ -406,7 +423,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         })
         setHistory([])
         setAuphonicVideoUrlPreview('')
-
+        setShowRevertButtons(false)
         setRedoHistory([])
         if (url.current) {
             URL.revokeObjectURL(url.current);
@@ -601,7 +618,8 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         handleSwitch,
         isAuphonicUiMode,
         switchModeAudios,
-        showRevertButton
+        showRevertButton,
+        showConfirmation
     };
 
     return (

@@ -82,7 +82,7 @@ const LabelSelect = ({ label, options, id, defaultValue, onChange, isDisable = f
 }
 
 
-const AdvanceAuphonicForm = ({ onClose, setConfirmSendToAuphonic, uuidState }) => {
+const AdvanceAuphonicForm = ({ onClose, setConfirmSendToAuphonic, uuidState, startAuphonicAudioProcessing }) => {
     const [defaultSettings, setAsDefaultSettings] = useState(false)
     const [state, setState] = useState(defaultAdvanceAuphonicState)
     const setStateFromLocalStorage = async () => {
@@ -114,7 +114,14 @@ const AdvanceAuphonicForm = ({ onClose, setConfirmSendToAuphonic, uuidState }) =
         if (defaultSettings) {
             await chrome.storage.local.set({ "advanceAuphonicSettings": JSON.parse(JSON.stringify(state)) })
         }
-        setConfirmSendToAuphonic(true)
+        chrome.storage.local.get(['doNotShowConfiramtion'], async result => {
+            if (result?.doNotShowConfiramtion) { 
+                startAuphonicAudioProcessing()
+            } else {
+                setConfirmSendToAuphonic(true)
+            }
+        })
+       
         onClose()
     }
 

@@ -28,13 +28,36 @@ function VideoPreview({
 
 
     const bl = async (url) => {
-        let blob = await fetch(url).then(r => r.blob());
-        console.log("blobblob Preivew", blob)
+        // let blob = await fetch(url).then(r => r.blob());
+        // console.log("blobblob Preivew", blob)
+        const video = document.createElement('video');
+        video.src = blobUrl;
+
+        video.onloadedmetadata = () => {
+            const newDuration = video.duration;
+            setDuration(newDuration);
+
+            // Update player source with new duration
+            plyrRef.current.plyr.source = {
+                type: "video",
+                sources: [{
+                    src: blobUrl,
+                    type: "video/mp4",
+                }],
+                duration: newDuration
+            };
+
+            // Cleanup
+            video.remove();
+        };
     }
 
     useEffect(() => {
         if (blobUrl) {
             bl(blobUrl)
+
+
+
             setVideoSource({
                 type: "video",
                 sources: [
@@ -71,19 +94,14 @@ function VideoPreview({
 
     const handleClick = () => {
         if (plyrRef.current && plyrRef.current.plyr && isEditMode) {
+
             plyrRef.current.plyr.on("timeupdate", () => {
                 updateCursorPosition(plyrRef.current.plyr.currentTime)
             });
             plyrRef.current.plyr.on("ended", () => {
                 setTrimState(prev => ({ ...prev, duration: plyrRef.current.plyr.currentTime, endTime: plyrRef.current.plyr.currentTime }))
-                // plyrRef.current.plyr.source = {
-                // ...videoSource,
-                // duration: plyrRef.current.plyr.currentTime
-                // };
-                // plyrRef.current.plyr.currentTime =  plyrRef.current.plyr.currentTime;
                 setDuration(plyrRef.current.plyr.currentTime)
                 updateCursorPosition(plyrRef.current.plyr.currentTime)
-                console.log("updt plyrRef.current.plyr.currentTime", plyrRef.current.plyr.currentTime)
             });
         }
     };

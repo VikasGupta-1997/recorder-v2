@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import styleText from "data-text:../tabs/preview.module.css"
-import cutVideo, { toBase64 } from "~utils/cutVideo";
+import cutVideo, { extractAudio, fixMetadata, replaceVideoAudio, toBase64 } from "~utils/cutVideo";
 
 export const getStyle = () => {
   const style = document.createElement("style")
@@ -31,6 +31,59 @@ const DemoSand = () => {
         setEditMode(false)
       }
 
+      if (message.type === 'fixMetadata') {
+        console.log(message, " ffmpegInstance.current",   ffmpegInstance.current)
+        const fixedBlob = await fixMetadata(
+          ffmpegInstance.current,
+          message.blob,
+          true
+        );
+        console.log("fixedBlob121", fixedBlob)
+        sendMessage({
+          type: "updated-blob",
+          // base64: base64,
+          addToHistory: false,
+          blob: fixedBlob,
+          fixMetadata: true
+        });
+      }
+
+      if (message.type === 'replace-videos-audio') {
+        console.log("REah replace-videos-audio", message)
+        console.log("blob112", message.blob)
+        const sendMessageData = {
+            type: "updated-blob",
+            // base64: base64,
+            addToHistory: message?.isFromSwitch ? false : true,
+            blob: message?.isFromSwitch ? message.audioBlob : message.auphonicBlob,
+            isMergedTrack: true,
+            auphonicMode: message?.auphonicMode,
+        }
+        if(message.auphonicBlob){
+          sendMessageData['auphonicBlob'] = message.auphonicBlob
+          sendMessageData['originalAudioBlob'] = message.originalAudioBlob
+        }
+        sendMessage(sendMessageData);
+        // sendMessage({
+        //   type: "auphonic-merged-video",
+        //   // base64: base64,
+        //   addToHistory: true,
+        //   blob: blob
+        // });
+      }
+
+      if (message.type === 'extract-audio') {
+        // const blob = await extractAudio(
+        //   ffmpegInstance.current,
+        //   message.blob,
+        // )
+        console.log("blob", message.blob)
+        sendMessage({
+          type: "extracted-audio-blob",
+          blob: message.blob
+        });
+      }
+
       if (message.type === "cut-video") {
         try {
           const blob = await cutVideo(
@@ -49,7 +102,8 @@ const DemoSand = () => {
             type: "updated-blob",
             base64: base64,
             addToHistory: true,
-            blob: blob
+            blob: blob,
+            isEdit: true
           });
         } catch (error) {
           sendMessage({ type: "ffmpeg-error", error: JSON.stringify(error) });

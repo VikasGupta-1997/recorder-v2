@@ -49,7 +49,8 @@ const EditingControls = ({
         handleSwitch,
         isAuphonicUiMode,
         switchModeAudios,
-        showRevertButton
+        showRevertButton,
+        startAuphonicAudioProcessing
     } = usePreview();
 
     const waveContainerRef = useRef<HTMLDivElement>(null);
@@ -266,7 +267,7 @@ const EditingControls = ({
                 endTime: trimState.endTime,
                 duration: trimState.duration,
             }
-            
+
 
             console.log("Sending trim message:", {
                 startTime: trimState.startTime,
@@ -276,7 +277,7 @@ const EditingControls = ({
 
             // Send the message to process the trim
             sendMessage(message);
-            
+
             setIsFfmpegRunning(true)
 
 
@@ -314,11 +315,19 @@ const EditingControls = ({
         };
         // Send the message to process the trim
         // sendMessage(message);
-        setConfirmSendToAuphonic(true)
+        chrome.storage.local.get(['doNotShowConfiramtion'], async result => {
+            console.log("doNotShowConfiramtiondoNotShowConfiramtion", result)
+            if (result?.doNotShowConfiramtion) {
+                setConfirmSendToAuphonic(false)
+                startAuphonicAudioProcessing()
+            } else {
+                setConfirmSendToAuphonic(true)
+            }
+        })
     }
 
     const lastHistoryData = history[history.length - 1];
-    console.log("lastHistoryDatalastHistoryData", lastHistoryData)
+    console.log(showRevertButton,uuidState,"lastHistoryDatalastHistoryData", lastHistoryData)
 
     return (
         <>
@@ -326,7 +335,7 @@ const EditingControls = ({
                 <div className={styles.timeWrap}>
                     <span>{toTimeStamp(trimState.startTime) + " - " + toTimeStamp(trimState.endTime)}</span>
                 </div>
-                {((uuidState && !!lastHistoryData?.auphonicBlob) || showRevertButton) && <div className={styles['switch-ui']} >
+                {((uuidState && !!lastHistoryData?.auphonicBlob)) && <div className={styles['switch-ui']} >
                     <span onClick={handleSwitch} className={styles["click-wrapper"]} >
                         <div className={styles['reverse-container']} >
                             <TbSwitch2 fontSize={12} />
