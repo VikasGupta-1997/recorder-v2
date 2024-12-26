@@ -4,7 +4,7 @@
 
 @layer components {
   .header {
-    @apply flex justify-between border-b-2 p-5 pt-4 pb-2;
+    @apply flex  border-b-2 p-5 pt-4 pb-2;
   }
   .logo {
     @apply w-12 h-12 rounded-xl flex items-center justify-center border border-[#E2E5ED];

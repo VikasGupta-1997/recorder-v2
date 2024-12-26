@@ -3,6 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import Header from '~components/Header'
 import RecordingSection from '~components/RecordingSection'
 import Footer from '~components/Footer'
+import LoginForm from '~components/Login'
 
 import './styles.css'
 import { defaultRecordingOptions, callBackConstants, storageKeys, screenRecordingOptions } from '~utils/constants'
@@ -12,6 +13,7 @@ let tabId;
 function IndexPopup() {
   const formattedTimeRef = useRef(null)
 
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [recordingOptions, setRecordingOptions] = useState<recordingOptions>({
     screenOptions: screenRecordingOptions,
     micOptions: [defaultRecordingOptions.micOptions],
@@ -37,8 +39,8 @@ function IndexPopup() {
     } else {
       micRecording = micOptions?.find(mic => mic?.label?.startsWith("Default"))
       chrome.storage.local.get(["firstMicSet"], async result => {
-        if(!result.firstMicSet){
-           await chrome.storage.local.set({"firstMicSet": micRecording})
+        if (!result.firstMicSet) {
+          await chrome.storage.local.set({ "firstMicSet": micRecording })
         }
       })
     }
@@ -83,19 +85,19 @@ function IndexPopup() {
       setRecordingOptions({
         ...recordingOptions,
         micOptions: [defaultRecordingOptions.micOptions, ...micOptions].map(mic => {
-          if(isMicOffAndAudioOnlyRecording && mic.value === 'mic_off'){
+          if (isMicOffAndAudioOnlyRecording && mic.value === 'mic_off') {
             return {
               ...mic,
               isDisabled: true
             }
           } else {
-            return {...mic}
+            return { ...mic }
           }
         }),
         cameraOptions: [
           {
             ...defaultRecordingOptions.cameraOptions,
-            ...((result?.selectedScreenRecordings?.value === "camera_only" || isCamOffAndCamOnlyRecording)? { isDisabled: true } : { isDisabled: false })
+            ...((result?.selectedScreenRecordings?.value === "camera_only" || isCamOffAndCamOnlyRecording) ? { isDisabled: true } : { isDisabled: false })
           },
           ...cameraOptions]
       });
@@ -119,7 +121,7 @@ function IndexPopup() {
             console.log("DRTT", message)
           }
             break;
-          
+
           case "updateTimer": {
             formatTime(message.time, formattedTimeRef)
           }
@@ -128,18 +130,30 @@ function IndexPopup() {
       })
   }
 
+
+  const checkForLoggin = () => {
+    setIsLoggedIn(false)
+  }
+
   useEffect(() => {
+    checkForLoggin()
     onMountListners()
     getDeviceLists()
-    return () => {
-    };
+    return () => { };
   }, [])
 
   return (
     <main className="main">
-      <Header />
-      <RecordingSection isRecordingInProgress={isRecordingInProgress} setRecordingOptions={setRecordingOptions} recordingOptions={recordingOptions} selections={selections} setSelections={setSelections} />
-      <Footer formattedTimeRef={formattedTimeRef} isRecordingInProgress={isRecordingInProgress} selections={selections} />
+      <Header isLoggedIn={isLoggedIn} />
+      {
+        isLoggedIn ? <>
+          <RecordingSection isRecordingInProgress={isRecordingInProgress} setRecordingOptions={setRecordingOptions} recordingOptions={recordingOptions} selections={selections} setSelections={setSelections} />
+          <Footer formattedTimeRef={formattedTimeRef} isRecordingInProgress={isRecordingInProgress} selections={selections} />
+        </> : <>
+          <LoginForm />
+        </>
+      }
+
     </main>
   )
 }
