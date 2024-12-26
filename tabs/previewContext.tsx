@@ -49,6 +49,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     const [videoSource, setVideoSource] = useState(null);
     const [auphonicVideoUrlPreview, setAuphonicVideoUrlPreview] = useState('')
     const [isAuphonicUiMode, setIsAuphonicUiMode] = useState(false)
+    const [auphonicProcessingError, setAuphonicProcessingError] = useState(null)
     const showConfirmation = useRef(true)
     const audioF = useRef(null)
     const switchModeAudios = useRef({
@@ -290,6 +291,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                         sendPostMessage({ type: "replace-videos-audio", videoBlob: blobRef.current, audioBlob: file, auphonicMode: true, auphonicBlob: file, originalAudioBlob: message.blob })
                     } catch (error) {
                         console.log("Error Occured:", error)
+                        setAuphonicProcessingError(error)
                     }
                 })
             }
@@ -619,7 +621,9 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         isAuphonicUiMode,
         switchModeAudios,
         showRevertButton,
-        showConfirmation
+        showConfirmation,
+        auphonicProcessingError,
+        setAuphonicProcessingError
     };
 
     return (

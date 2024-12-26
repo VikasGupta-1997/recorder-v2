@@ -75,7 +75,9 @@ function PreviewPage() {
         uuidState,
         history,
         redoHistory,
-        showConfirmation
+        showConfirmation,
+        auphonicProcessingError,
+        setAuphonicProcessingError
     } = usePreview();
     const [showGhost, setShowGhost] = useState(false);
 
@@ -139,6 +141,16 @@ function PreviewPage() {
                     </div>}
                 </div>
             </span>
+            {auphonicProcessingError &&  <ConfirmationModal
+                body={<div>
+                    <p>
+                        Audio Enhancement Failed , Please contact support!!
+                    </p>
+                </div>}
+                showActions={false}
+                onSubmit={() => {}}
+                title="Audio Enhancement Failed."
+                onClose={() => setAuphonicProcessingError(null)} />}
             {(confirmSendToAuphonic && showConfirmation.current) && <ConfirmationModal
                 body={<div>
                     <p>Enhancing the audio of this recording wil consume 15 minutes from you AI credits.</p>

@@ -73,7 +73,9 @@ function PreviewPage() {
         confirmSendToAuphonic,
         isVideoEndcoding,
         setConfirmSendToAuphonic,
-        startAuphonicAudioProcessing
+        startAuphonicAudioProcessing,
+        auphonicProcessingError,
+        setAuphonicProcessingError
     } = useAudioOnlyPreview();
     const [showGhost, setShowGhost] = useState(false);
     const containerRef = useRef(null)
@@ -128,6 +130,16 @@ function PreviewPage() {
                     />
                 </div>}
             </span>
+            {auphonicProcessingError &&  <ConfirmationModal
+                body={<div>
+                    <p>
+                        Audio Enhancement Failed , Please contact support!!
+                    </p>
+                </div>}
+                showActions={false}
+                onSubmit={() => {}}
+                title="Audio Enhancement Failed."
+                onClose={() => setAuphonicProcessingError(null)} />}
             {confirmSendToAuphonic && <ConfirmationModal
              onSubmit={startAuphonicAudioProcessing}
                 body={<div>

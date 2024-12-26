@@ -48,6 +48,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
     const [ffmpegRunning, setIsFfmpegRunning] = useState(false)
     const [isPublishing, setIspublishing] = useState(false)
     const [isAuphonicUiMode, setIsAuphonicUiMode] = useState(false)
+    const [auphonicProcessingError, setAuphonicProcessingError] = useState(null)
     const [videoSource, setVideoSource] = useState(null);
     const switchModeAudios = useRef({
         auphonicAudio: null,
@@ -538,6 +539,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
                 sendPostMessage({ type: "replace-videos-audio", audioBlob: file, auphonicMode: true, auphonicBlob: file, originalAudioBlob: blob })
             } catch (error) {
                 console.log("Error Occured:", error)
+                setAuphonicProcessingError(error)
             }
         })
 

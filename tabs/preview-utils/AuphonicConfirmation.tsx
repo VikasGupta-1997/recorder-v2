@@ -11,7 +11,7 @@ export const getStyle = () => {
 }
 
 
-const ConfirmationModal = ({ onClose, title, body, onSubmit }) => {
+const ConfirmationModal = ({ onClose, title, body, onSubmit, showActions=true }) => {
     const [checked, setChecked] = useState(false)
     return (
         <>
@@ -27,7 +27,7 @@ const ConfirmationModal = ({ onClose, title, body, onSubmit }) => {
                             {body}
                         </div>
                     </div>
-                    <div className={style["sm-modalaction"]}>
+                    {showActions && <div className={style["sm-modalaction"]}>
                         <div className={`${style["actionsContainer"]} ${style['sm-actions']}`}>
                             <button className={style["deleteBtn"]} onClick={onSubmit}>
                                 Yes, Continue
@@ -45,7 +45,7 @@ const ConfirmationModal = ({ onClose, title, body, onSubmit }) => {
                                 await chrome.storage.local.set({ "doNotShowConfiramtion": e.target.checked })
                             }} label={"Don't ask me again"} id="confirm-enhance-dont-ask-again" />
                         </div>
-                    </div>
+                    </div>}
                 </div>
             </div>
         </>
