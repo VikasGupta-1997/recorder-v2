@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { saveRecordingToIndexedDB } from "~utils/saveRecordingToIndexedDB";
 
 let isRecordingStarted = false;
@@ -274,7 +274,9 @@ const OffScreen = () => {
       }
     };
 
-    mediaRecorder.start();
+    setTimeout(() => {
+      mediaRecorder.start();
+    }, 250)
 
     mediaRecorder.onstop = async () => {
       setRecorderState('ideal');
@@ -481,12 +483,14 @@ const OffScreen = () => {
       mediaRecorder.onended = () => {
         mediaRecorder.onstop()
       }
+      setTimeout(() => {
+        mediaRecorder.start();
+      }, 300)
       mediaRecorder.onstart = () => {
         chrome.runtime.sendMessage({ type: "RECORDING_IN_PROGRESS" })
         recordingChunks = []
         isRecordingStarted = true
       }
-      mediaRecorder.start();
       recorder = mediaRecorder
       setMediaRecorder(mediaRecorder)
     } else {
@@ -606,22 +610,7 @@ const OffScreen = () => {
       function onComplete() {
         console.log("Recording saved to IndexedDB", isCamOnlyRecordingDiscarded)
         const url = (URL as any).createObjectURL(blob);
-        // Create a download link
-        //  const url = URL.createObjectURL(blob);
-        //  const downloadLink = document.createElement("a");
-        //  downloadLink.href = url;
-        //  downloadLink.download = "recording.webm"; // Set the filename for download
-        //  downloadLink.style.display = "none";
-
-        //  // Append link to the body and click to start download
-        //  document.body.appendChild(downloadLink);
-        //  downloadLink.click();
-
-        //  // Clean up after download
-        //  document.body.removeChild(downloadLink);
-        //  URL.revokeObjectURL(url); // Release the URL object
-
-        // console.log("BLOB URL", url, chrome?.storage)
+       
         if (!isCamOnlyRecordingDiscarded) {
           chrome.runtime.sendMessage({
             type: 'OPEN_PREVIEW_TAB',

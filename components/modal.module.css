@@ -256,12 +256,14 @@
 
 /* Confirmation modal */
 .sm-modal {
-  height: 252px;
+  max-height: 252px;
+  height: fit-content;
 }
 
 .sm-modalaction {
   padding: 0 32px;
   margin-bottom: 12px;
+  padding-bottom: 16px;
 }
 
 .sm-modalaction button {

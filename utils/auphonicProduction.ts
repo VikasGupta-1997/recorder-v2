@@ -14,12 +14,12 @@ export const fetchMp3File = async (url) => {
         return blob;
     } catch (error) {
         console.error("Error fetching MP3 file:", error);
-        return null;
+        throw new Error(error)
     }
 };
 
-export default async function onSubmitAdvanceAuphonic(data, blob, setIspublishing, uuidRef, setUuid, fileNameRef, isAuphonicSubmitted, switchModeAudios) {
-    console.log("Data=======>", switchModeAudios)
+export default async function onSubmitAdvanceAuphonic(data, blob, setIspublishing, uuidRef, setUuid, fileNameRef, isAuphonicSubmitted, switchModeAudios, latestAuphonicDataRef) {
+    console.log("Data=======>", latestAuphonicDataRef)
     const generatedData = getAuphonicProcessedData(data)
     let sendData = { algorithms: { ...generatedData } }
     // const sendData = {  }
@@ -28,13 +28,14 @@ export default async function onSubmitAdvanceAuphonic(data, blob, setIspublishin
     let uuidResp;
     let fileName;
     setIspublishing(true)
-    // const fileUrl = 'http://localhost:8080/fetch-file?url=https://auphonic.com/api/download/audio-result/5ke2GXdaYRtzQCbmapjohb/audio_1734949984540_koeul8ln.mp3'
-    // const file = await fetchMp3File(fileUrl)
-    // setIspublishing(false)
-    // setUuid('uuidState-90-jk-09-oklo')
-    // return file
+    const fileUrl = 'http://localhost:8080/fetch-file?url=https://auphonic.com/api/download/audio-result/v9XA9hxzEqZF9aCGpEzj4Y/audio_1735298398132_5sohsyg9.mp3'
+    const file = await fetchMp3File(fileUrl)
+    setIspublishing(false)
+    const randomUuid = latestAuphonicDataRef?.uuid || (String.fromCharCode(65 + Math.floor(Math.random() * 26)) +  Date.now())
+    setUuid(randomUuid)
+    return {file, uuid: randomUuid, fileName: latestAuphonicDataRef?.fileName  ?  latestAuphonicDataRef?.fileName : (String.fromCharCode(65 + Math.floor(Math.random() * 26)) +  Date.now()) + '_name' + `_${Math.random() * 1000}`}
     try {
-        if (!uuidRef.current) {
+        if (!!!latestAuphonicDataRef?.uuid) {
             console.log("processAudioWithAuphonic called with Blob:", blob);
             // Step 1: Create a new production
             const formData = new FormData();
@@ -68,7 +69,7 @@ export default async function onSubmitAdvanceAuphonic(data, blob, setIspublishin
             console.log("Production created with UUID:", uuidResp);
         }
         //Extra step to add configs
-        const uuid = uuidResp || uuidRef.current
+        const uuid = uuidResp || latestAuphonicDataRef.uuid
         console.log("isAuphonicSubmitted==>", isAuphonicSubmitted.current)
         if (isAuphonicSubmitted.current) {
                 sendData['reset_data'] = true
@@ -152,7 +153,7 @@ export default async function onSubmitAdvanceAuphonic(data, blob, setIspublishin
         // if (status === 'Done') { // when checking for status_string
         if (status === 3) { // when checking for status 
             console.log("STAUOS ")
-            const urlTobeSent = `${process.env.PLASMO_PUBLIC_PROXY_SERVER}/fetch-file?url=${process.env.PLASMO_PUBLIC_AUPHONICURL}/download/audio-result/${uuid}/${fileName || fileNameRef.current}.mp3`
+            const urlTobeSent = `${process.env.PLASMO_PUBLIC_PROXY_SERVER}/fetch-file?url=${process.env.PLASMO_PUBLIC_AUPHONICURL}/download/audio-result/${uuid}/${fileName || latestAuphonicDataRef?.fileName}.mp3`
             console.log("urlTobeSent", urlTobeSent)
             downloadUrl = urlTobeSent
             const file = await fetchMp3File(downloadUrl)
@@ -160,7 +161,7 @@ export default async function onSubmitAdvanceAuphonic(data, blob, setIspublishin
             setUuid(uuid)
             isAuphonicSubmitted.current = true
             console.log("Production completed. Downloading the processed file...");
-            return file
+            return { file, uuid: uuid, fileName: fileName || latestAuphonicDataRef?.fileName }
         } else {
             setIspublishing(false)
             console.error("Production did not complete successfully:", status);

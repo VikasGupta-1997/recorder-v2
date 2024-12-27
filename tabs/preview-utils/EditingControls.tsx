@@ -50,7 +50,8 @@ const EditingControls = ({
         isAuphonicUiMode,
         switchModeAudios,
         showRevertButton,
-        startAuphonicAudioProcessing
+        startAuphonicAudioProcessing,
+        cutDataState
     } = usePreview();
 
     const waveContainerRef = useRef<HTMLDivElement>(null);
@@ -317,18 +318,29 @@ const EditingControls = ({
         // sendMessage(message);
         chrome.storage.local.get(['doNotShowConfiramtion'], async result => {
             console.log("doNotShowConfiramtiondoNotShowConfiramtion", result)
+            const isReprocess = !!reprocessState?.auphonicBlob
             if (result?.doNotShowConfiramtion) {
                 setConfirmSendToAuphonic(false)
-                startAuphonicAudioProcessing()
+                if (isReprocess) {
+                    setShowAuphonicAdvanceForm(true)
+                } else {
+                    startAuphonicAudioProcessing()
+                }
             } else {
-                setConfirmSendToAuphonic(true)
+                if (isReprocess) {
+                    setShowAuphonicAdvanceForm(true)
+                } else {
+                    setConfirmSendToAuphonic(true)
+                }
             }
         })
     }
 
     const lastHistoryData = history[history.length - 1];
-    console.log(showRevertButton,uuidState,"lastHistoryDatalastHistoryData", lastHistoryData)
-
+    console.log("Check Historyyyy", history)
+    console.log(cutDataState, "lastHistoryDatalastHistoryData", lastHistoryData)
+    const reprocessState = cutDataState?.find(cut => cut.id === lastHistoryData?.uniqid)
+    console.log("reprocessStatereprocessState", reprocessState)
     return (
         <>
             <div>
@@ -411,15 +423,15 @@ const EditingControls = ({
                                     <GrMagic fontSize={14} color="black" />
                                 </span>}
                             <p>
-                                {isPublishing ? "Audio Enhacement in Progress" : uuidState ? "Reprocess This Audio" : "Magic Audio Cleaner"}
+                                {isPublishing ? "Audio Enhacement in Progress" : !!reprocessState?.auphonicBlob ? "Reprocess This Audio" : "Magic Audio Cleaner"}
                             </p>
                         </button>
-                        <p
+                        {!!!reprocessState?.auphonicBlob && <p
                             style={{ fontSize: '10px', textAlign: 'center', cursor: 'pointer' }}
                             onClick={() => setShowAuphonicAdvanceForm(true)} >
                             <GiSplashyStream />
                             {isPublishing ? "Uploading to the AI machine..." : "Advanced Enhancement"}
-                        </p>
+                        </p>}
                     </div>
                     {
                         ["cut", "trim", "delete recording", "publish"].map(action => (

@@ -20,6 +20,9 @@ const DemoSand = () => {
     iframeRef.current.contentWindow.postMessage(message, "*");
   };
 
+  const returnRandomUniqId = () =>  (String.fromCharCode(65 + Math.floor(Math.random() * 26)) +  Date.now());
+    // const uniqid = randomStr + Date.now();
+
   useEffect(() => {
     const handleIframeMessage = async (event) => {
       const message = event.data;
@@ -52,6 +55,7 @@ const DemoSand = () => {
           message.audioBlob
         )
         console.log("blob112", blob)
+        console.log("updated-blob-check", message)
         const sendMessageData = {
             type: "updated-blob",
             // base64: base64,
@@ -59,6 +63,9 @@ const DemoSand = () => {
             blob: blob,
             isMergedTrack: true,
             auphonicMode: message?.auphonicMode,
+            uniqid: message?.uniqid || returnRandomUniqId(),
+            fileName: message?.fileName,
+            uuid: message?.uuid
         }
         if(message.auphonicBlob){
           sendMessageData['auphonicBlob'] = message.auphonicBlob
@@ -178,7 +185,7 @@ const DemoSand = () => {
             hasAudio
           );
           console.log("blob11312", blob)
-
+  
           // const base64 = await toBase64(blob);
           sendMessage({
             type: "updated-blob",
@@ -186,7 +193,8 @@ const DemoSand = () => {
             addToHistory: true,
             blob: fixedBlob,
             cut: message.cut,
-            isEdit: true
+            isEdit: true,
+            uniqid: returnRandomUniqId()
           });
           // console.log(fixedBlob, "NEW BVLOBBB", blob)
           // const video = document.createElement("video");

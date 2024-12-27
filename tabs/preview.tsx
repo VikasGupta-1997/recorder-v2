@@ -77,7 +77,8 @@ function PreviewPage() {
         redoHistory,
         showConfirmation,
         auphonicProcessingError,
-        setAuphonicProcessingError
+        setAuphonicProcessingError,
+        cutDataState
     } = usePreview();
     const [showGhost, setShowGhost] = useState(false);
 
@@ -94,6 +95,11 @@ function PreviewPage() {
         )
     }
 
+    const lastHistoryData = history[history.length - 1];
+    console.log("Check Historyyyy", history)
+    console.log(cutDataState,"lastHistoryDatalastHistoryData", lastHistoryData)
+    const reprocessState = cutDataState?.find(cut => cut.id === lastHistoryData?.uniqid)
+    console.log("reprocessStatereprocessState", reprocessState)
 
     console.log(showConfirmation.current, "history", history)
     console.log("Redo History", redoHistory)

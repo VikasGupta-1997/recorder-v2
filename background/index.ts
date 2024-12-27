@@ -147,7 +147,9 @@ function openIndexedDB() {
 }
 
 function saveElapsedTime(elapsedTime: number) {
+  console.log("saveElapsedTime", elapsedTime)
   openIndexedDB().then((db) => {
+    console.log("OPMNED!!! DB")
     const transaction = db.transaction("timerStore", "readwrite");
     const store = transaction.objectStore("timerStore");
     store.put({ id: 1, elapsedTime });
@@ -199,6 +201,7 @@ function startTimer(tabType?: string | undefined) {
       });
     });
   }
+  console.log(elapsedTime, saveCounter,"Broadcast!!", isRunning, isPaused)
   if (!isRunning && !isPaused) {
     isRunning = true;
 
@@ -212,11 +215,11 @@ function startTimer(tabType?: string | undefined) {
         saveElapsedTime(elapsedTime); // Save to IndexedDB less frequently
         saveCounter = 0; // Reset the save counter
       }
-
       if (isRecordingFromSystemTab) {
         if (tabType === 'browser') {
           broadCastUpdateTimer()
         } else {
+          broadCastUpdateTimer()
           chrome.runtime.sendMessage({ type: "updateTimer", time: elapsedTime })
         }
       } else {
@@ -303,7 +306,7 @@ function resetTimer() {
 function startBadgeCountdown() {
   let countdown = 5;
   chrome.storage.local.get(["screenShareSelection"], result => {
-    const intervalId = setInterval(() => {
+    const intervalId = setInterval(async() => {
       if (countdown > 0) {
         chrome.action.setBadgeText({ text: countdown.toString() })
         chrome.action.setBadgeBackgroundColor({ color: '#FF0000' });
@@ -312,8 +315,12 @@ function startBadgeCountdown() {
         isRecordingFromSystemTab = true
         chrome.action.setBadgeText({ text: '' });
         clearInterval(intervalId);
-        startTimer(result?.screenShareSelection)
+        console.log("resultresult", result)
+        // startTimer(result?.screenShareSelection)
+        console.log("STARTED RECORDING!!!!")
+        await chrome.storage.local.set({"showToolBar": true})
         chrome.runtime.sendMessage({ type: "NEW_RECORDING_STARTED_OFFSCREEN" }, () => {
+          startTimer();
         });
       }
     }, 1000)

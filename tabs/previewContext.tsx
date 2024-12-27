@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import onSubmitAdvanceAuphonic, { fetchMp3File } from '~utils/auphonicProduction';
 import { defaultAdvanceAuphonicState } from '~utils/constants';
 import getAuphonicProcessedData from '~utils/getAuphonicProcessedData';
@@ -49,8 +49,11 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     const [videoSource, setVideoSource] = useState(null);
     const [auphonicVideoUrlPreview, setAuphonicVideoUrlPreview] = useState('')
     const [isAuphonicUiMode, setIsAuphonicUiMode] = useState(false)
+    const [cutDataState, setCutDataState] = useState([])
     const [auphonicProcessingError, setAuphonicProcessingError] = useState(null)
+    const latestAuphonicDataRef = useRef<any>(null)
     const showConfirmation = useRef(true)
+    const currentUniqid = useRef(null)
     const audioF = useRef(null)
     const switchModeAudios = useRef({
         auphonicAudio: null,
@@ -171,11 +174,11 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         if (!customCursorRef.current || !duration) return;
         const containerRect = customCursorRef.current.parentElement.getBoundingClientRect();
         const containerWidth = containerRect.width;
-        
+
         // Ensure currentTime doesn't exceed duration
         const normalizedTime = Math.min(currentTime, duration);
         const position = (normalizedTime / duration) * containerWidth;
-        
+
         // Ensure position stays within container bounds
         const boundedPosition = Math.max(0, Math.min(position, containerWidth));
         customCursorRef.current.style.left = `${boundedPosition}px`;
@@ -183,7 +186,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
 
     const addToHistory = (newState) => {
         // Add the current state to history before applying new changes
-        console.log("newStatenewStatenewState", newState)
+        console.log(currentUniqid.current,"newStatenewStatenewState", newState)
         const newHistory = [...history, {
             trimState: { ...trimState },
             blob: blob,
@@ -191,7 +194,8 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
             isAuphonicMode: isAuphonicUiMode,
             auphonicBlob: newState.auphonicBlob,
             originalAudioBlob: newState?.originalAudioBlob,
-            showRevertButton: showRevertButton
+            showRevertButton: showRevertButton,
+            uniqid: newState?.uniqid || currentUniqid.current
         }];
         setHistory(newHistory);
 
@@ -222,18 +226,56 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         document.body.style.margin = "0px";
         document.body.style.padding = "0px";
         sendPostMessage({ type: "load-ffmpeg" });
-        
+
         // window.onbeforeunload = function () {
         //     return true;
         // };
     }, [])
 
+    const latestAuphonicData = useMemo(() => {
+        if (!!cutDataState?.length) {
+            const lastHistoryData = history[history.length - 1];
+            console.log(cutDataState, "lastHistoryDatalastHistoryData", lastHistoryData)
+            const reprocessState = cutDataState?.find(cut => cut.id === lastHistoryData?.uniqid)
+            latestAuphonicDataRef.current = reprocessState
+            return reprocessState
+        }
+        return null
+    }, [history, cutDataState])
+
+    console.log("lReffff", latestAuphonicData)
+
     useEffect(() => {
         window.addEventListener("message", async (event) => {
             const message = event.data;
             if (message.type === "updated-blob") {
+
+                if (message.isMergedTrack) {
+                    if(message?.uuid){
+                        if(!!!latestAuphonicDataRef?.current?.auphonicBlob){
+                            setCutDataState(prev => [...prev, {
+                                id: message.uniqid,
+                                auphonicBlob: message.auphonicBlob,
+                                originalAudioBlob: message.originalAudioBlob,
+                                uuid: message.uuid,
+                                fileName: message.fileName
+                            }])
+                        }
+                    }
+                    // setIsAuphonicUiMode(true)
+                }
+
                 if (message?.isEdit) {
                     setShowRevertButtons(false)
+                    // if(!!!latestAuphonicDataRef?.current?.auphonicBlob){
+                        setCutDataState(prev => [...prev, {
+                            id: message.uniqid,
+                            auphonicBlob: null,
+                            originalAudioBlob: null,
+                            uuid: null,
+                            fileName: null
+                        }])
+                    // }
                     console.log("switchModeAudios.current", switchModeAudios.current)
                     if (switchModeAudios.current.originalAudio) {
                         console.log("originalAudio send", message)
@@ -285,13 +327,16 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                     }
                     try {
                         switchModeAudios.current.originalAudio = message.blob;
-                        const file = await onSubmitAdvanceAuphonic(sendData, message.blob, setIspublishing, uuidRef, setUuid, fileNameRef, isAuphonicSubmitted, switchModeAudios.current)
+                        console.log(latestAuphonicDataRef.current,"latestAuphonicDatalatestAuphonicData 318", latestAuphonicData)
+                        const {file, uuid, fileName} = await onSubmitAdvanceAuphonic(sendData, message.blob, setIspublishing, uuidRef, setUuid, fileNameRef, isAuphonicSubmitted, switchModeAudios.current, latestAuphonicDataRef.current)
                         switchModeAudios.current.auphonicAudio = file
                         console.log(blobRef.current, ":RecoievedFile", file)
-                        sendPostMessage({ type: "replace-videos-audio", videoBlob: blobRef.current, audioBlob: file, auphonicMode: true, auphonicBlob: file, originalAudioBlob: message.blob })
+                        const sendUniqId = latestAuphonicDataRef.current?.uuid ? latestAuphonicDataRef.current?.id : null 
+                        sendPostMessage({ type: "replace-videos-audio", fileName: fileName, uniqid: sendUniqId,  uuid: uuid , videoBlob: blobRef.current, audioBlob: file, auphonicMode: true, auphonicBlob: file, originalAudioBlob: message.blob })
                     } catch (error) {
                         console.log("Error Occured:", error)
                         setAuphonicProcessingError(error)
+                        setIspublishing(false)
                     }
                 })
             }
@@ -319,36 +364,42 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                 // Update the blob and blobUrl for the preview
                 const newBlobUrl = URL.createObjectURL(message.blob);
 
+
                 if (message.addToHistory) {
+                    const historyData = {
+                        trimState: { ...trimState },
+                        blob: blob,
+                        blobUrl: blobUrl,
+                        isAuphonicMode: isAuphonicUiMode,
+                    }
+
+                    if (message.isEdit) {
+                        currentUniqid.current = message.uniqid
+                        historyData["uniqid"] = message.uniqid
+                    }
+
+                    if (message.isMergedTrack) {
+                        setShowRevertButtons(true)
+                        // if(!!!latestAuphonicDataRef?.current?.auphonicBlob){
+                            console.log("HERE I COMEE!!")
+                            currentUniqid.current = message.uniqid
+                            historyData["uniqid"] = message.uniqid
+                        // }
+                        // setIsAuphonicUiMode(true)
+                    }
+
                     if (message.auphonicMode) {
                         console.log("YES IT COMES HERE!!!!", message)
                         setIsAuphonicUiMode(true)
                         addToHistory({
-                            trimState: { ...trimState },
-                            blob: blob,
-                            blobUrl: blobUrl,
-                            isAuphonicMode: isAuphonicUiMode,
+                            ...historyData,
                             auphonicBlob: message.auphonicBlob,
                             originalAudioBlob: message.originalAudioBlob
                         });
                     } else {
-                        addToHistory({
-                            trimState: { ...trimState },
-                            blob: blob,
-                            blobUrl: blobUrl,
-                            isAuphonicMode: isAuphonicUiMode
-                        });
+                        addToHistory(historyData);
                     }
-                   
                 }
-
-                if (message.isMergedTrack) {
-                    console.log("Is Merged Tracked!!")
-                    setShowRevertButtons(true)
-                    // setIsAuphonicUiMode(true)
-                }
-
-               
 
                 if (message.fixMetadata) {
                     setIsVideoEncoding(false)
@@ -410,10 +461,13 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         setBlobUrl(newBlobUrl);
         setIsEditMode(false)
         setBlob(originalVideo.blob)
+        latestAuphonicDataRef.current = null
         blobRef.current = originalVideo.blob
         setIsAuphonicUiMode(false)
         setUuid(null)
         uuidRef.current = null
+        currentUniqid.current = null;
+        setCutDataState([])
         fileNameRef.current = ''
         setTrimState({
             start: 0,
@@ -451,7 +505,8 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                 isAuphonicMode: isAuphonicUiMode,
                 showRevertButton: showRevertButton,
                 auphonicBlob: lastState?.auphonicBlob,
-                originalAudioBlob: lastState?.originalAudioBlob
+                originalAudioBlob: lastState?.originalAudioBlob,
+                uniqid: lastState?.uniqid || currentUniqid.current
             };
             setRedoHistory([...redoHistory, currentState]);
 
@@ -494,7 +549,8 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                 isAuphonicMode: isAuphonicUiMode,
                 showRevertButton: showRevertButton,
                 auphonicBlob: redoState?.auphonicBlob,
-                originalAudioBlob: redoState?.originalAudioBlob
+                originalAudioBlob: redoState?.originalAudioBlob,
+                uniqid: redoState?.uniqid || currentUniqid.current
             };
             setHistory([...history, currentState]);
 
@@ -553,14 +609,13 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         //     isAuphonicMode: isAuphonicUiMode
         // })
         // if()
-        // sendPostMessage({ type: "replace-videos-audio", videoBlob: blob, audioBlob: file, auphonicMode: true })
         console.log("LastHistory", history[history.length - 1])
         const lastHistoryAudioBlobData = history[history.length - 1]
         // return;
         if (isAuphonicUiMode) {
-            sendPostMessage({ type: "replace-videos-audio", videoBlob: blob, audioBlob: lastHistoryAudioBlobData?.originalAudioBlob, auphonicMode: false, isFromSwitch: true })
+            sendPostMessage({ type: "replace-videos-audio", uniqid: latestAuphonicDataRef.current?.id, videoBlob: blob, audioBlob: lastHistoryAudioBlobData?.originalAudioBlob, auphonicMode: false, isFromSwitch: true })
         } else {
-            sendPostMessage({ type: "replace-videos-audio", videoBlob: blob, audioBlob: lastHistoryAudioBlobData?.auphonicBlob, auphonicMode: false, isFromSwitch: true })
+            sendPostMessage({ type: "replace-videos-audio", uniqid: latestAuphonicDataRef.current?.id, videoBlob: blob, audioBlob: lastHistoryAudioBlobData?.auphonicBlob, auphonicMode: false, isFromSwitch: true })
         }
         setIsAuphonicUiMode(prev => !prev)
 
@@ -623,7 +678,8 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         showRevertButton,
         showConfirmation,
         auphonicProcessingError,
-        setAuphonicProcessingError
+        setAuphonicProcessingError,
+        cutDataState
     };
 
     return (
