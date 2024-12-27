@@ -51,7 +51,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     const [isAuphonicUiMode, setIsAuphonicUiMode] = useState(false)
     const [cutDataState, setCutDataState] = useState([])
     const [auphonicProcessingError, setAuphonicProcessingError] = useState(null)
-    const latestAuphonicDataRef = useRef<any>(null)
+    const latestAuphonicDataRef = useRef(null)
     const showConfirmation = useRef(true)
     const currentUniqid = useRef(null)
     const audioF = useRef(null)

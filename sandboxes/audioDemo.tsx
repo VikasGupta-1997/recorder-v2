@@ -19,6 +19,8 @@ const DemoSand = () => {
     iframeRef.current.contentWindow.postMessage(message, "*");
   };
 
+  const returnRandomUniqId = () =>  (String.fromCharCode(65 + Math.floor(Math.random() * 26)) +  Date.now());
+
   useEffect(() => {
     const handleIframeMessage = async (event) => {
       const message = event.data;
@@ -58,6 +60,9 @@ const DemoSand = () => {
             blob: message?.isFromSwitch ? message.audioBlob : message.auphonicBlob,
             isMergedTrack: true,
             auphonicMode: message?.auphonicMode,
+            uniqid: message?.uniqid || returnRandomUniqId(),
+            fileName: message?.fileName,
+            uuid: message?.uuid
         }
         if(message.auphonicBlob){
           sendMessageData['auphonicBlob'] = message.auphonicBlob
@@ -103,7 +108,8 @@ const DemoSand = () => {
             base64: base64,
             addToHistory: true,
             blob: blob,
-            isEdit: true
+            isEdit: true,
+            uniqid: returnRandomUniqId()
           });
         } catch (error) {
           sendMessage({ type: "ffmpeg-error", error: JSON.stringify(error) });

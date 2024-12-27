@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import onSubmitAdvanceAuphonic from '~utils/auphonicProduction';
 import { defaultAdvanceAuphonicState } from '~utils/constants';
 
@@ -48,7 +48,10 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
     const [ffmpegRunning, setIsFfmpegRunning] = useState(false)
     const [isPublishing, setIspublishing] = useState(false)
     const [isAuphonicUiMode, setIsAuphonicUiMode] = useState(false)
+    const latestAuphonicDataRef = useRef(null)
     const [auphonicProcessingError, setAuphonicProcessingError] = useState(null)
+    const [cutDataState, setCutDataState] = useState([])
+
     const [videoSource, setVideoSource] = useState(null);
     const switchModeAudios = useRef({
         auphonicAudio: null,
@@ -73,6 +76,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
     const [showRevertButton, setShowRevertButtons] = useState(false)
     const fileNameRef = useRef('')
     const [showAuphonicWrap, setShowAuphonicWrap] = useState(false)
+    const currentUniqid = useRef(null)
 
     const setSource = (url) => {
         setAudioSource({
@@ -188,7 +192,8 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
             isAuphonicMode: isAuphonicUiMode,
             auphonicBlob: newState.auphonicBlob,
             originalAudioBlob: newState?.originalAudioBlob,
-            showRevertButton: showRevertButton
+            showRevertButton: showRevertButton,
+            uniqid: newState?.uniqid || currentUniqid.current
         }];
         setHistory(newHistory);
 
@@ -219,9 +224,9 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
         document.body.style.margin = "0px";
         document.body.style.padding = "0px";
         sendPostMessage({ type: "load-ffmpeg" });
-        window.onbeforeunload = function () {
-            return true;
-        };
+        // window.onbeforeunload = function () {
+        //     return true;
+        // };
     }, [])
 
     useEffect(() => {
@@ -249,12 +254,44 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
     //     });
     // }, [blobUrl]);
 
+    const latestAuphonicData = useMemo(() => {
+        if (!!cutDataState?.length) {
+            const lastHistoryData = history[history.length - 1];
+            console.log(cutDataState, "lastHistoryDatalastHistoryData", lastHistoryData)
+            const reprocessState = cutDataState?.find(cut => cut.id === lastHistoryData?.uniqid)
+            latestAuphonicDataRef.current = reprocessState
+            return reprocessState
+        }
+        return null
+    }, [history, cutDataState])
+
     useEffect(() => {
         window.addEventListener("message", async (event) => {
             const message = event.data;
             if (message.type === "updated-blob") {
+                if (message.isMergedTrack) {
+                    if(message?.uuid){
+                        if(!!!latestAuphonicDataRef?.current?.auphonicBlob){
+                            setCutDataState(prev => [...prev, {
+                                id: message.uniqid,
+                                auphonicBlob: message.auphonicBlob,
+                                originalAudioBlob: message.originalAudioBlob,
+                                uuid: message.uuid,
+                                fileName: message.fileName
+                            }])
+                        }
+                    }
+                    // setIsAuphonicUiMode(true)
+                }
                 if (message?.isEdit) {
                     setShowRevertButtons(false)
+                    setCutDataState(prev => [...prev, {
+                        id: message.uniqid,
+                        auphonicBlob: null,
+                        originalAudioBlob: null,
+                        uuid: null,
+                        fileName: null
+                    }])
                     console.log("switchModeAudios.current", switchModeAudios.current)
                     setIsAuphonicUiMode(false)
                 }
@@ -270,24 +307,36 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
                 // Update the blob and blobUrl for the preview
                 const newBlobUrl = URL.createObjectURL(message.blob);
                 if (message.addToHistory) {
+                    const historyData = {
+                        trimState: { ...trimState },
+                        blob: blob,
+                        blobUrl: blobUrl,
+                        isAuphonicMode: isAuphonicUiMode,
+                    }
+
+                    if (message.isEdit) {
+                        currentUniqid.current = message.uniqid
+                        historyData["uniqid"] = message.uniqid
+                    }
+
+                    if (message.isMergedTrack) {
+                        console.log("Is Merged Tracked!!")
+                        setShowRevertButtons(true)
+                        currentUniqid.current = message.uniqid
+                        historyData["uniqid"] = message.uniqid
+                        // setIsAuphonicUiMode(true)
+                    }
+
                     if (message.auphonicMode) {
                         console.log("YES IT COMES HERE!!!!", message)
                         setIsAuphonicUiMode(true)
                         addToHistory({
-                            trimState: { ...trimState },
-                            blob: blob,
-                            blobUrl: blobUrl,
-                            isAuphonicMode: isAuphonicUiMode,
+                            ...historyData,
                             auphonicBlob: message.auphonicBlob,
                             originalAudioBlob: message.originalAudioBlob
                         });
                     } else {
-                        addToHistory({
-                            trimState: { ...trimState },
-                            blob: blob,
-                            blobUrl: blobUrl,
-                            isAuphonicMode: isAuphonicUiMode
-                        });
+                        addToHistory(historyData);
                     }
                    
                 }
@@ -295,11 +344,13 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
                 setSource(newBlobUrl)
                 setBlob(message.blob)
 
-                if (message.isMergedTrack) {
-                    console.log("Is Merged Tracked!!")
-                    setShowRevertButtons(true)
-                    // setIsAuphonicUiMode(true)
-                }
+                // if (message.isMergedTrack) {
+                //     console.log("Is Merged Tracked!!")
+                //     setShowRevertButtons(true)
+                //     currentUniqid.current = message.uniqid
+                //     historyData["uniqid"] = message.uniqid
+                //     // setIsAuphonicUiMode(true)
+                // }
 
                 setTrimState(prev => ({
                     ...prev,
@@ -353,16 +404,13 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
         //     isAuphonicMode: isAuphonicUiMode
         // })
         // if()
-        // sendPostMessage({ type: "replace-videos-audio", videoBlob: blob, audioBlob: file, auphonicMode: true })
         console.log("LastHistory", history[history.length - 1])
         const lastHistoryAudioBlobData = history[history.length - 1]
         // return;
         if (isAuphonicUiMode) {
-            // sendPostMessage({ type: "replace-videos-audio", videoBlob: blobRef.current, audioBlob: file, auphonicMode: true, auphonicBlob: file, originalAudioBlob: blob })
-
-            sendPostMessage({ type: "replace-videos-audio", audioBlob: lastHistoryAudioBlobData?.originalAudioBlob, auphonicMode: false, isFromSwitch: true })
+            sendPostMessage({ type: "replace-videos-audio", uniqid: latestAuphonicDataRef.current?.id, audioBlob: lastHistoryAudioBlobData?.originalAudioBlob, auphonicMode: false, isFromSwitch: true })
         } else {
-            sendPostMessage({ type: "replace-videos-audio", audioBlob: lastHistoryAudioBlobData?.auphonicBlob, auphonicMode: false, isFromSwitch: true })
+            sendPostMessage({ type: "replace-videos-audio",  uniqid: latestAuphonicDataRef.current?.id, audioBlob: lastHistoryAudioBlobData?.auphonicBlob, auphonicMode: false, isFromSwitch: true })
         }
         setIsAuphonicUiMode(prev => !prev)
 
@@ -384,6 +432,8 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
         setSource(newBlobUrl)
         setIsEditMode(false)
         setBlob(originalVideo.blob)
+        setCutDataState([])
+        latestAuphonicDataRef.current = null
         blobRef.current = originalVideo.blob
         setIsAuphonicUiMode(false)
         setUuid(null)
@@ -424,7 +474,8 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
                 isAuphonicMode: isAuphonicUiMode,
                 showRevertButton: showRevertButton,
                 auphonicBlob: lastState?.auphonicBlob,
-                originalAudioBlob: lastState?.originalAudioBlob
+                originalAudioBlob: lastState?.originalAudioBlob,
+                uniqid: lastState?.uniqid || currentUniqid.current
             };
             setRedoHistory([...redoHistory, currentState]);
 
@@ -462,7 +513,8 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
                 isAuphonicMode: isAuphonicUiMode,
                 showRevertButton: showRevertButton,
                 auphonicBlob: redoState?.auphonicBlob,
-                originalAudioBlob: redoState?.originalAudioBlob
+                originalAudioBlob: redoState?.originalAudioBlob,
+                uniqid: redoState?.uniqid || currentUniqid.current
             };
             setHistory([...history, currentState]);
 
@@ -533,10 +585,11 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
             }
             try {
                 switchModeAudios.current.originalAudio = blob;
-                const file = await onSubmitAdvanceAuphonic(sendData, blob, setIspublishing, uuidRef, setUuid, fileNameRef, isAuphonicSubmitted, switchModeAudios.current)
+                const {file, uuid, fileName} = await onSubmitAdvanceAuphonic(sendData, blob, setIspublishing, uuidRef, setUuid, fileNameRef, isAuphonicSubmitted, switchModeAudios.current, latestAuphonicDataRef.current)
                 switchModeAudios.current.auphonicAudio = file
                 console.log(blobRef.current, ":RecoievedFile", file)
-                sendPostMessage({ type: "replace-videos-audio", audioBlob: file, auphonicMode: true, auphonicBlob: file, originalAudioBlob: blob })
+                const sendUniqId = latestAuphonicDataRef.current?.uuid ? latestAuphonicDataRef.current?.id : null 
+                sendPostMessage({ type: "replace-videos-audio", fileName: fileName, uniqid: sendUniqId,  uuid: uuid , audioBlob: file, auphonicMode: true, auphonicBlob: file, originalAudioBlob: blob })
             } catch (error) {
                 console.log("Error Occured:", error)
                 setAuphonicProcessingError(error)
@@ -610,7 +663,10 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
         handleSwitch,
         showRevertButton,
         uuidState,
-        isAuphonicUiMode
+        isAuphonicUiMode,
+        cutDataState,
+        auphonicProcessingError,
+        setAuphonicProcessingError
     };
 
     return (
