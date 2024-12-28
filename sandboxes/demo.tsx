@@ -21,7 +21,6 @@ const DemoSand = () => {
   };
 
   const returnRandomUniqId = () =>  (String.fromCharCode(65 + Math.floor(Math.random() * 26)) +  Date.now());
-    // const uniqid = randomStr + Date.now();
 
   useEffect(() => {
     const handleIframeMessage = async (event) => {
@@ -59,7 +58,7 @@ const DemoSand = () => {
         const sendMessageData = {
             type: "updated-blob",
             // base64: base64,
-            addToHistory: message?.isFromSwitch ? false : true,
+            addToHistory: message.isFromSwitch,
             blob: blob,
             isMergedTrack: true,
             auphonicMode: message?.auphonicMode,

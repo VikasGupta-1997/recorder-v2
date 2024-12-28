@@ -335,19 +335,20 @@ const EditingControls = ({
             }
         })
     }
-
+    
     const lastHistoryData = history[history.length - 1];
     console.log("Check Historyyyy", history)
     console.log(cutDataState, "lastHistoryDatalastHistoryData", lastHistoryData)
     const reprocessState = cutDataState?.find(cut => cut.id === lastHistoryData?.uniqid)
-    console.log("reprocessStatereprocessState", reprocessState)
+    console.log(uuidState, "reprocessStatereprocessState", reprocessState)
     return (
         <>
             <div>
                 <div className={styles.timeWrap}>
                     <span>{toTimeStamp(trimState.startTime) + " - " + toTimeStamp(trimState.endTime)}</span>
                 </div>
-                {((uuidState && !!lastHistoryData?.auphonicBlob)) && <div className={styles['switch-ui']} >
+                {/* {((uuidState && !!lastHistoryData?.auphonicBlob)) && <div className={styles['switch-ui']} > */}
+                {!!reprocessState?.auphonicBlob  && <div className={styles['switch-ui']} >
                     <span onClick={handleSwitch} className={styles["click-wrapper"]} >
                         <div className={styles['reverse-container']} >
                             <TbSwitch2 fontSize={12} />
