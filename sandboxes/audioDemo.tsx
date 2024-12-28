@@ -56,8 +56,10 @@ const DemoSand = () => {
         const sendMessageData = {
             type: "updated-blob",
             // base64: base64,
-            addToHistory: message?.isFromSwitch ? false : true,
-            blob: message?.isFromSwitch ? message.audioBlob : message.auphonicBlob,
+            // addToHistory: message?.isFromSwitch ? false : true,
+            addToHistory: message.isFromSwitch,
+            // blob: message?.isFromSwitch ? message.audioBlob : message.auphonicBlob,
+            blob: message.audioBlob,
             isMergedTrack: true,
             auphonicMode: message?.auphonicMode,
             uniqid: message?.uniqid || returnRandomUniqId(),
