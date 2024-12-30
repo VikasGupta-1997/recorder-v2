@@ -27,6 +27,7 @@ const OffScreen = () => {
   const [startToRecord, setStartToRecord] = useState(false)
   const [recorderState, setRecorderState] = useState('ideal')
   const [camOnlyStream, setCamOnlyStream] = useState(null)
+  const [uploadChunksCall, setUploadChunksCall] = useState(false)
   const [isDiscardRecording, setIsDiscardRecording] = useState(false)
   const [isWindowOnlyRecording, setIsWindowOnlyRecording] = useState(false)
   const videoRef = useRef(null)
@@ -78,14 +79,17 @@ const OffScreen = () => {
   useEffect(() => {
     if (isPreviewOpened) {
       if (base64Data) {
-        console.log("base64Data1121", base64Data)
-        setTimeout(() => {
+        // console.log("base64Data1121", base64Data)
+        // setTimeout(() => {
+        // }, 500)
+        if(uploadChunksCall){
+          uploadChunks()
+          setUploadChunksCall(false)
           setIsPreviewOpened(false)
-        }, 500)
-        uploadChunks()
+        }
       }
     }
-  }, [isPreviewOpened, base64Data])
+  }, [isPreviewOpened, base64Data, uploadChunksCall])
 
   const resetAll = async (showVideo?: any) => {
     if (showVideo !== "restart_camonly") {
@@ -729,6 +733,11 @@ const OffScreen = () => {
             sendResponse("close")
           }
             break;
+          case "START_UPLOAD_CHUNKS": {
+            console.log("START_UPLOAD_CHUNKS Called")
+            setUploadChunksCall(true)
+          }
+          break;
           case "PLAY_CAMONLY_TIMER": {
             camOnlyRecorder?.resume()
             chrome.runtime.sendMessage({ type: 'resumeTimer' })

@@ -1,8 +1,7 @@
 import styleText from "data-text:../preview.module.css"
 import * as style from '../preview.module.css'
-import { useRef, useState, useEffect, memo, useLayoutEffect } from "react"
-import Plyr from "plyr-react";
-import "plyr-react/plyr.css";
+import { useRef, useState, useEffect, memo } from "react"
+import ReactPlayer from 'react-player'
 import { usePreview } from "../previewContext";
 
 export const getStyle = () => {
@@ -26,28 +25,15 @@ function VideoPreview({
         setTrimState
     } = usePreview();
 
+    const playerRef = useRef(null);
 
     const bl = async (url) => {
-        // let blob = await fetch(url).then(r => r.blob());
-        // console.log("blobblob Preivew", blob)
         const video = document.createElement('video');
         video.src = blobUrl;
 
         video.onloadedmetadata = () => {
             const newDuration = video.duration;
             setDuration(newDuration);
-
-            // Update player source with new duration
-            plyrRef.current.plyr.source = {
-                type: "video",
-                sources: [{
-                    src: blobUrl,
-                    type: "video/mp4",
-                }],
-                duration: newDuration
-            };
-
-            // Cleanup
             video.remove();
         };
     }
@@ -55,9 +41,6 @@ function VideoPreview({
     useEffect(() => {
         if (blobUrl) {
             bl(blobUrl)
-
-
-
             setVideoSource({
                 type: "video",
                 sources: [
@@ -74,85 +57,70 @@ function VideoPreview({
         if (waveSurferRef.current) {
             waveSurferRef.current.on('seeking', () => {
                 const currentTime = waveSurferRef.current.getCurrentTime();
-                plyrRef.current.plyr.currentTime = currentTime;
+                if (playerRef.current) {
+                    playerRef.current.seekTo(currentTime);
+                }
                 updateCursorPosition(currentTime);
             })
         }
     }, [waveSurferRef.current]);
 
-    useEffect(() => {
-        if (duration && plyrRef.current?.plyr) {
-            // Force a reload of the player with new duration
-            const currentTime = plyrRef.current.plyr.currentTime;
-            plyrRef.current.plyr.source = {
-                ...videoSource,
-                duration: duration
-            };
-            plyrRef.current.plyr.currentTime = currentTime;
-        }
-    }, [duration, videoSource]);
-
-    const handleClick = () => {
-        if (plyrRef.current && plyrRef.current.plyr && isEditMode) {
-
-            plyrRef.current.plyr.on("timeupdate", () => {
-                updateCursorPosition(plyrRef.current.plyr.currentTime)
-            });
-            plyrRef.current.plyr.on("ended", () => {
-                setTrimState(prev => ({ ...prev, duration: plyrRef.current.plyr.currentTime, endTime: plyrRef.current.plyr.currentTime }))
-                setDuration(plyrRef.current.plyr.currentTime)
-                updateCursorPosition(plyrRef.current.plyr.currentTime)
-            });
+    const handleProgress = (state) => {
+        if (isEditMode) {
+            updateCursorPosition(state.playedSeconds);
         }
     };
 
-    const options = {
-        controls: [
-            "play",
-            "mute",
-            "progress",
-            "current-time",
-            "duration",
-        ],
-        urls: {
-            blankVideo: chrome?.runtime ? chrome.runtime.getURL('/blank.mp4') : "/blank.mp4",
-        },
-        ratio: "16:9",
-        keyboard: {
-            global: true,
-        },
-        crossorigin: 'anonymous',
-        duration: duration || undefined
-    }
+    const handleEnded = () => {
+        if (isEditMode && playerRef.current) {
+            const currentTime = playerRef.current.getCurrentTime();
+            setTrimState(prev => ({ ...prev, duration: currentTime, endTime: currentTime }));
+            setDuration(currentTime);
+            updateCursorPosition(currentTime);
+        }
+    };
 
-    if (!videoSource) {
+    const handleDuration = (duration) => {
+        setDuration(duration);
+    };
+
+    if (!videoSource?.sources?.[0]?.src) {
         return <div>Loading video...</div>;
     }
 
     return (
-        <div onClick={handleClick} className={style["react-player-wrapper-video"]}>
-            <Plyr
-                ref={plyrRef}
-                source={videoSource}
-                options={options}
+        <div className={style["react-player-wrapper-video"]}>
+            <ReactPlayer
+                ref={playerRef}
+                url={videoSource.sources[0].src}
+                width="100%"
+                height="100%"
+                controls={true}
+                playing={false}
+                onProgress={handleProgress}
+                onEnded={handleEnded}
+                onDuration={handleDuration}
+                progressInterval={100}
+                config={{
+                    file: {
+                        attributes: {
+                            crossOrigin: 'anonymous'
+                        }
+                    }
+                }}
             />
             <style>
                 {`
-                    .plyr {
-                    left: 0px !important;
-                    right: 0px !important;
-                    margin: 0px !important;
-                    top: 0px !important;
-                    bottom: 0px !important;
-                    position: relative !important;
-                    border-radius: 6px !important;
+                    .react-player-wrapper-video {
+                        position: relative;
+                        border-radius: 6px;
+                        overflow: hidden;
                     }
-                    .plyr__progress--played {
-                    background-color: #ff5733 !important;
+                    .react-player-wrapper-video video {
+                        border-radius: 6px;
                     }
-                    .plyr__controls {
-                        background-color: rgba(35, 153, 219, 0.8) !important;
-                        padding: 16px 10px! important;
+                    .react-player-wrapper-video > div {
+                        position: relative !important;
                     }
                 `}
             </style>
