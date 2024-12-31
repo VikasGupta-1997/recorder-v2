@@ -152,27 +152,29 @@ export function toBase64(blob) {
 };
 
 export async function fixMetadata(ffmpeg, blob, hasAudio) {
+  const isWindow10 = navigator.userAgent.match(/Windows NT 10.0/) ? true : false
+  const extention = isWindow10 ? 'webm' : 'mp4'
   const data = new Uint8Array(await blob.arrayBuffer());
-  ffmpeg.FS('writeFile', 'input.mp4', data);
+  ffmpeg.FS('writeFile', `input.${extention}`, data);
 
   if (hasAudio === 'false') {
       console.log('Adding silent audio track to the video...');
       await ffmpeg.run(
           '-f', 'lavfi',
           '-i', 'anullsrc=channel_layout=stereo:sample_rate=44100',
-          '-i', 'input.mp4',
+          '-i', `input.${extention}`,
           '-shortest',
           '-c:v', 'copy',
           '-c:a', 'aac',
-          'output.mp4'
+          `output.${extention}`
       );
   } else {
       console.log('Video already has audio. Fixing metadata...');
-      await ffmpeg.run('-i', 'input.mp4', '-c', 'copy', '-movflags', 'faststart', 'output.mp4');
+      await ffmpeg.run('-i', `input.${extention}`, '-c', 'copy', '-movflags', 'faststart', `output.${extention}`);
   }
 
-  const output = ffmpeg.FS('readFile', 'output.mp4');
-  const fixedBlob = new Blob([output.buffer], { type: 'video/mp4' });
+  const output = ffmpeg.FS('readFile', `output.${extention}`);
+  const fixedBlob = new Blob([output.buffer], { type: `video/${extention}` });
 
   // Return the processed blob
   return fixedBlob;

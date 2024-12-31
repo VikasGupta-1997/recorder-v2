@@ -23,7 +23,8 @@ function VideoPreview({
         setVideoSource,
         videoSource,
         setDuration,
-        setTrimState
+        setTrimState,
+        isWindow10
     } = usePreview();
 
 
@@ -42,7 +43,7 @@ function VideoPreview({
                 type: "video",
                 sources: [{
                     src: blobUrl,
-                    type: "video/mp4",
+                    type: isWindow10 ? "video/webm" : "video/mp4",
                 }],
                 duration: newDuration
             };
@@ -54,16 +55,13 @@ function VideoPreview({
 
     useEffect(() => {
         if (blobUrl) {
-            bl(blobUrl)
-
-
-
+            // bl(blobUrl)
             setVideoSource({
                 type: "video",
                 sources: [
                     {
                         src: blobUrl,
-                        type: "video/mp4",
+                        type: isWindow10 ? "video/webm" : "video/mp4",
                     },
                 ],
             });

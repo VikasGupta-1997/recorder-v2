@@ -77,6 +77,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     const [uuidState, setUuid] = useState(null)
     const [showRevertButton, setShowRevertButtons] = useState(false)
     const fileNameRef = useRef('')
+    const isWindow10 = useRef(false);
     const playPartialRecording = async (receivedChunks) => {
         try {
             // Convert available chunks to a Blob
@@ -238,7 +239,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         document.body.style.margin = "0px";
         document.body.style.padding = "0px";
         sendPostMessage({ type: "load-ffmpeg" });
-
+        isWindow10.current = navigator.userAgent.match(/Windows NT 10.0/) ? true : false
         // window.onbeforeunload = function () {
         //     return true;
         // };
@@ -698,7 +699,8 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         showConfirmation,
         auphonicProcessingError,
         setAuphonicProcessingError,
-        cutDataState
+        cutDataState,
+        isWindow10: isWindow10.current
     };
 
     return (
