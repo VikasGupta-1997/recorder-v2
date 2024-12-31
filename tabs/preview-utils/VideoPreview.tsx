@@ -54,9 +54,7 @@ function VideoPreview({
 
     useEffect(() => {
         if (blobUrl) {
-            bl(blobUrl)
-
-
+            // bl(blobUrl)
 
             setVideoSource({
                 type: "video",

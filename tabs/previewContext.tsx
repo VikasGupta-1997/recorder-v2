@@ -2,6 +2,8 @@ import React, { createContext, useContext, useEffect, useLayoutEffect, useMemo, 
 import onSubmitAdvanceAuphonic, { fetchMp3File } from '~utils/auphonicProduction';
 import { defaultAdvanceAuphonicState } from '~utils/constants';
 import getAuphonicProcessedData from '~utils/getAuphonicProcessedData';
+import fixWebmDuration from "fix-webm-duration";
+import { default as fixWebmDurationFallback } from "webm-duration-fix";
 
 const PreviewContext = createContext<any>(undefined);
 
@@ -140,13 +142,14 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                         // Try to start playing the video when enough data is received
                         if (!isPlaying && receivedChunks.length >= 5) { // Assuming 5 chunks are sufficient to start
                             isPlaying = true;
-                            playPartialRecording(receivedChunks);
+                            const { newBlob } = await playPartialRecording(receivedChunks);
+                            sendPostMessage({ type: "fixMetadata", blob: newBlob })
                         }
 
                         if (message.isLastChunk) {
                             console.log("All chunks received. Reassembling...");
 
-                            const { newBlob, newBlobUrl } = await playPartialRecording(receivedChunks); // Play the complete recording
+                            const { newBlob } = await playPartialRecording(receivedChunks); // Play the complete recording
                             sendPostMessage({ type: "fixMetadata", blob: newBlob })
                             // setOriginalVideo({
                             //     blob: newBlob,
@@ -454,6 +457,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
             if (message.type === "ffmpeg-loaded") {
                 setIsFfmpegLoaded(true)
                 console.log("ffmpeg-loaded Call from Demo!!")
+                chrome.runtime.sendMessage({type: "START_UPLOAD_CHUNKS"})
             }
             if (message.type === "ffmpeg-load-error") {
                 console.log("ffmpeg-load-error==>", message)

@@ -28,6 +28,7 @@ const OffScreen = () => {
   const [recorderState, setRecorderState] = useState('ideal')
   const [camOnlyStream, setCamOnlyStream] = useState(null)
   const [isDiscardRecording, setIsDiscardRecording] = useState(false)
+  const [uploadChunksCall, setUploadChunksCall] = useState(false)
   const [isWindowOnlyRecording, setIsWindowOnlyRecording] = useState(false)
   const videoRef = useRef(null)
   const [base64Data, setBase64Data] = useState(null)
@@ -78,14 +79,14 @@ const OffScreen = () => {
   useEffect(() => {
     if (isPreviewOpened) {
       if (base64Data) {
-        console.log("base64Data1121", base64Data)
-        setTimeout(() => {
+        if(uploadChunksCall) {
+          uploadChunks()
           setIsPreviewOpened(false)
-        }, 500)
-        uploadChunks()
+          setUploadChunksCall(false)
+        }
       }
     }
-  }, [isPreviewOpened, base64Data])
+  }, [isPreviewOpened, base64Data, uploadChunksCall])
 
   const resetAll = async (showVideo?: any) => {
     if (showVideo !== "restart_camonly") {
@@ -266,7 +267,7 @@ const OffScreen = () => {
       ...(windowOnlyAudioRecord ? [windowOnlyAudioRecord] : []) // Only add audio track if it exists
     ]);
 
-    const mediaRecorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm; codecs=vp9' });
+    const mediaRecorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm; codecs=vp8' });
 
     mediaRecorder.ondataavailable = (event) => {
       if (event.data.size > 0) {
@@ -281,7 +282,7 @@ const OffScreen = () => {
     mediaRecorder.onstop = async () => {
       setRecorderState('ideal');
       if (!isRecordingDiscarded) {
-        const blob = new Blob(chunks, { type: 'video/webm' });
+        const blob = new Blob(chunks, { type: 'video/webm; codecs=vp8' });
         // const videoUrl = URL.createObjectURL(blob);
         // const downloadLink = document.createElement('a');
         // downloadLink.href = videoUrl;
@@ -461,7 +462,7 @@ const OffScreen = () => {
       mediaRecorder.onstop = async () => {
         setRecorderState('ideal')
         if (!isRecordingDiscarded) {
-          const blob = new Blob(recordingChunks, { type: 'video/webm' });
+          const blob = new Blob(recordingChunks, { type: 'video/webm; codecs=vp8' });
           function onComplete() {
             const url = (URL as any).createObjectURL(blob);
             chrome.runtime.sendMessage({
@@ -604,7 +605,7 @@ const OffScreen = () => {
 
     camOnlyRecorder.onstop = async () => {
 
-      const blob = new Blob(camOnlyChunks, { type: 'video/webm' });
+      const blob = new Blob(camOnlyChunks, { type: 'video/webm; codecs=vp8' });
       // Convert Blob to Base64
       console.log(isCamOnlyRecordingDiscarded, "onstop", blob)
       function onComplete() {
@@ -734,6 +735,10 @@ const OffScreen = () => {
             chrome.runtime.sendMessage({ type: 'resumeTimer' })
           }
             break;
+          case "START_UPLOAD_CHUNKS": {
+            setUploadChunksCall(true)
+          }
+          break;
           case "START_RECORDING_OFFSCREEN": {
             console.log("MESS OFF", message)
             if (message?.isCamOnly) {
