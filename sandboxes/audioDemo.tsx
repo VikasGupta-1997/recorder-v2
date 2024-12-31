@@ -37,8 +37,7 @@ const DemoSand = () => {
         console.log(message, " ffmpegInstance.current",   ffmpegInstance.current)
         const fixedBlob = await fixMetadata(
           ffmpegInstance.current,
-          message.blob,
-          true
+          message.blob
         );
         console.log("fixedBlob121", fixedBlob)
         sendMessage({

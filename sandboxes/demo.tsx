@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import styleText from "data-text:../tabs/preview.module.css"
-import cutVideo, { toBase64, reencodeVideo, replaceVideoAudio, fixMetadata, extractAudio } from "~utils/cutVideo";
+import cutVideo, { toBase64, replaceVideoAudio, fixMetadata, extractAudio } from "~utils/cutVideo";
 
 export const getStyle = () => {
   const style = document.createElement("style")
@@ -15,7 +15,6 @@ const DemoSand = () => {
   const [editMode, setEditMode] = useState(false)
   const triggerLoad = useRef(false)
   const urlParams = new URLSearchParams(window.location.search);
-  const hasAudio = urlParams.get('hasAudio');
   const sendMessage = (message) => {
     iframeRef.current.contentWindow.postMessage(message, "*");
   };
@@ -94,8 +93,7 @@ const DemoSand = () => {
 
           const fixedBlob = await fixMetadata(
             ffmpegInstance.current,
-            blob,
-            hasAudio
+            blob
           );
           console.log("blob11312 original", blob)
 
@@ -137,8 +135,7 @@ const DemoSand = () => {
 
           const fixedBlob = await fixMetadata(
             ffmpegInstance.current,
-            blob,
-            hasAudio
+            blob
           );
           console.log("blob11312 auphonic", blob)
 
@@ -180,8 +177,7 @@ const DemoSand = () => {
 
           const fixedBlob = await fixMetadata(
             ffmpegInstance.current,
-            blob,
-            hasAudio
+            blob
           );
           console.log("blob11312", blob)
   
@@ -210,11 +206,10 @@ const DemoSand = () => {
       }
 
       if (message.type === 'fixMetadata') {
-        console.log(hasAudio, message, " ffmpegInstance.current",   ffmpegInstance.current)
+        console.log( message, " ffmpegInstance.current",   ffmpegInstance.current)
         const fixedBlob = await fixMetadata(
           ffmpegInstance.current,
-          message.blob,
-          hasAudio
+          message.blob
         );
         console.log("fixedBlob121", fixedBlob)
         sendMessage({

@@ -1,11 +1,13 @@
 async function cutVideo(ffmpeg, videoBlob, start, end, cut, duration, encode) {
+  const isWindow10 = navigator.userAgent.match(/Windows NT 10.0/) ? true : false
+  const extention = isWindow10 ? 'webm' : 'mp4'
   const videoData = new Uint8Array(await videoBlob.arrayBuffer());
 
   // Set the input video file name
-  ffmpeg.FS("writeFile", "input.mp4", videoData);
+  ffmpeg.FS("writeFile", `input.${extention}`, videoData);
 
   // Set the output video file name
-  const outputFileName = cut ? "output-cut.mp4" : "output-trimmed.mp4";
+  const outputFileName = cut ? `output-cut.${extention}` : `output-trimmed.${extention}`;
   let encodeOptions = [
     "-c:v",
     "copy",
@@ -33,11 +35,11 @@ async function cutVideo(ffmpeg, videoBlob, start, end, cut, duration, encode) {
         "-ss",
         "0",
         "-i",
-        "input.mp4",
+        `input.${extention}`,
         "-to",
         start.toString(),
         ...encodeOptions,
-        "part1.mp4"
+        `part1.${extention}`
       );
 
       // Then, cut the video from the end time to the end
@@ -45,15 +47,19 @@ async function cutVideo(ffmpeg, videoBlob, start, end, cut, duration, encode) {
         "-ss",
         end.toString(),
         "-i",
-        "input.mp4",
+        `input.${extention}`,
         "-to",
         duration.toString(),
         ...encodeOptions,
-        "part2.mp4"
+        `part2.${extention}`
       );
 
       // Create a text file with the list of input videos
-      ffmpeg.FS("writeFile", "input.txt", "file 'part1.mp4'\nfile 'part2.mp4'");
+      if(extention === 'mp4'){
+        ffmpeg.FS("writeFile", "input.txt", "file 'part1.mp4'\nfile 'part2.mp4'");
+      } else {
+        ffmpeg.FS("writeFile", "input.txt", "file 'part1.webm'\nfile 'part2.webm'");
+      }
 
       // Concatenate the two remaining parts
       await ffmpeg.run(
@@ -72,7 +78,7 @@ async function cutVideo(ffmpeg, videoBlob, start, end, cut, duration, encode) {
       const data = ffmpeg.FS("readFile", outputFileName);
 
       // Create a Blob from the edited video data
-      const editedVideoBlob = new Blob([data.buffer], { type: "video/mp4" });
+      const editedVideoBlob = new Blob([data.buffer], { type: `video/${extention}` });
 
       // Return the edited video Blob
       return editedVideoBlob;
@@ -81,7 +87,7 @@ async function cutVideo(ffmpeg, videoBlob, start, end, cut, duration, encode) {
         "-ss",
         end.toString(),
         "-i",
-        "input.mp4",
+        `input.${extention}`,
         "-to",
         duration.toString(),
         ...encodeOptions,
@@ -92,7 +98,7 @@ async function cutVideo(ffmpeg, videoBlob, start, end, cut, duration, encode) {
       const data = ffmpeg.FS("readFile", outputFileName);
 
       // Create a Blob from the edited video data
-      const editedVideoBlob = new Blob([data.buffer], { type: "video/mp4" });
+      const editedVideoBlob = new Blob([data.buffer], { type: `video/${extention}` });
 
       // Return the edited video Blob
       return editedVideoBlob;
@@ -101,7 +107,7 @@ async function cutVideo(ffmpeg, videoBlob, start, end, cut, duration, encode) {
         "-ss",
         "0",
         "-i",
-        "input.mp4",
+        `input.${extention}`,
         "-to",
         start.toString(),
         ...encodeOptions,
@@ -112,7 +118,7 @@ async function cutVideo(ffmpeg, videoBlob, start, end, cut, duration, encode) {
       const data = ffmpeg.FS("readFile", outputFileName);
 
       // Create a Blob from the edited video data
-      const editedVideoBlob = new Blob([data.buffer], { type: "video/mp4" });
+      const editedVideoBlob = new Blob([data.buffer], { type: `video/${extention}` });
 
       // Return the edited video Blob
       return editedVideoBlob;
@@ -122,7 +128,7 @@ async function cutVideo(ffmpeg, videoBlob, start, end, cut, duration, encode) {
       "-ss",
       start.toString(),
       "-i",
-      "input.mp4",
+      `input.${extention}`,
       "-t",
       (end - start).toString(),
       ...encodeOptions,
@@ -133,7 +139,7 @@ async function cutVideo(ffmpeg, videoBlob, start, end, cut, duration, encode) {
     const data = ffmpeg.FS("readFile", outputFileName);
 
     // Create a Blob from the edited video data
-    const editedVideoBlob = new Blob([data.buffer], { type: "video/mp4" });
+    const editedVideoBlob = new Blob([data.buffer], { type: `video/${extention}` });
 
     // Return the edited video Blob
     return editedVideoBlob;
@@ -151,27 +157,14 @@ export function toBase64(blob) {
   });
 };
 
-export async function fixMetadata(ffmpeg, blob, hasAudio) {
+export async function fixMetadata(ffmpeg, blob) {
   const isWindow10 = navigator.userAgent.match(/Windows NT 10.0/) ? true : false
   const extention = isWindow10 ? 'webm' : 'mp4'
   const data = new Uint8Array(await blob.arrayBuffer());
   ffmpeg.FS('writeFile', `input.${extention}`, data);
 
-  if (hasAudio === 'false') {
-      console.log('Adding silent audio track to the video...');
-      await ffmpeg.run(
-          '-f', 'lavfi',
-          '-i', 'anullsrc=channel_layout=stereo:sample_rate=44100',
-          '-i', `input.${extention}`,
-          '-shortest',
-          '-c:v', 'copy',
-          '-c:a', 'aac',
-          `output.${extention}`
-      );
-  } else {
-      console.log('Video already has audio. Fixing metadata...');
-      await ffmpeg.run('-i', `input.${extention}`, '-c', 'copy', '-movflags', 'faststart', `output.${extention}`);
-  }
+  console.log('Video already has audio. Fixing metadata...');
+  await ffmpeg.run('-i', `input.${extention}`, '-c', 'copy', '-movflags', 'faststart', `output.${extention}`);
 
   const output = ffmpeg.FS('readFile', `output.${extention}`);
   const fixedBlob = new Blob([output.buffer], { type: `video/${extention}` });
@@ -191,16 +184,18 @@ export async function fixMetadata(ffmpeg, blob, hasAudio) {
 // }
 
 export async function extractAudio(ffmpeg, videoBlob, outputFormat = "mp3") {
+  const isWindow10 = navigator.userAgent.match(/Windows NT 10.0/) ? true : false
+  const extention = isWindow10 ? 'webm' : 'mp4'
   // Convert the video Blob into a Uint8Array
   const videoData = new Uint8Array(await videoBlob.arrayBuffer());
 
   // Write the video data to the FFmpeg virtual filesystem
-  ffmpeg.FS("writeFile", "input.mp4", videoData);
+  ffmpeg.FS("writeFile", `input.${extention}`, videoData);
 
   // Run the FFmpeg command to extract audio
   const outputFileName = `output.${outputFormat}`;
   await ffmpeg.run(
-    "-i", "input.mp4",   // Input file
+    "-i", `input.${extention}`,   // Input file
     "-q:a", "0",         // High audio quality
     "-map", "a",         // Extract only the audio stream
     outputFileName       // Output file
@@ -217,12 +212,14 @@ export async function extractAudio(ffmpeg, videoBlob, outputFormat = "mp3") {
 }
 
 export async function reencodeVideo(ffmpeg, blob) {
+  const isWindow10 = navigator.userAgent.match(/Windows NT 10.0/) ? true : false
+  const extention = isWindow10 ? 'webm' : 'mp4'
   const videoData = new Uint8Array(await blob.arrayBuffer());
-  const outputFileName = "output.mp4";
-  ffmpeg.FS("writeFile", "input.mp4", videoData);
+  const outputFileName = `output.${extention}`;
+  ffmpeg.FS("writeFile", `input.${extention}`, videoData);
   await ffmpeg.run(
     "-i",
-    "input.mp4",
+    `input.${extention}`,
     "-preset",
     "superfast",
     "-threads",
@@ -236,13 +233,15 @@ export async function reencodeVideo(ffmpeg, blob) {
 
   const data = ffmpeg.FS("readFile", outputFileName);
   const editedVideoBlob = new Blob([data.buffer], {
-    type: "video/mp4",
+    type: `video/${extention}`,
   });
   return editedVideoBlob;
 }
 
 export async function replaceVideoAudio(ffmpeg, videoBlob, audioBlob) {
   // Step 1: Validate inputs
+  const isWindow10 = navigator.userAgent.match(/Windows NT 10.0/) ? true : false
+  const extention = isWindow10 ? 'webm' : 'mp4'
   console.log(videoBlob instanceof Blob, "LETS CHCK FOR CALL!!!", videoBlob)
   console.log(audioBlob instanceof Blob, "LETS CHCK FOR Audio CALL!!!", audioBlob)
   if (!videoBlob) {
@@ -262,14 +261,14 @@ export async function replaceVideoAudio(ffmpeg, videoBlob, audioBlob) {
   console.log("audioData", audioData);
 
   // Step 3: Write files to FFmpeg's virtual file system
-  ffmpeg.FS("writeFile", "input-video.mp4", videoData);
+  ffmpeg.FS("writeFile", `input-video.${extention}`, videoData);
   ffmpeg.FS("writeFile", "input-audio.mp3", audioData);
 
   // Step 4: Replace audio in the video
   const outputFileName = "output-video-with-new-audio.mp4";
   try {
     await ffmpeg.run(
-      "-i", "input-video.mp4",  // Input video file
+      "-i", `input-video.${extention}`,  // Input video file
       "-i", "input-audio.mp3",  // Input audio file
       "-c:v", "copy",           // Copy video without re-encoding
       "-map", "0:v:0",          // Map video stream
@@ -286,7 +285,7 @@ export async function replaceVideoAudio(ffmpeg, videoBlob, audioBlob) {
   const outputData = ffmpeg.FS("readFile", outputFileName);
 
   // Step 6: Convert Uint8Array to Blob
-  const outputBlob = new Blob([outputData.buffer], { type: "video/mp4" });
+  const outputBlob = new Blob([outputData.buffer], { type: `video/${extention}` });
 
   console.log("Replacement video created successfully.");
   return outputBlob;

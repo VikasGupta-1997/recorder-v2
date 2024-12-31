@@ -697,7 +697,7 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
             //     chrome.tabs.sendMessage(tabs[0]?.id, {type: "OPEN_SANDBOX"})
             //   }
             // })
-            chrome.tabs.create({ url: chrome.runtime.getURL(message?.isAudioOnly ? 'sandboxes/audioDemo.html' : `sandboxes/demo.html?hasAudio=${message?.hasAudio}`) }, async (tab) => {
+            chrome.tabs.create({ url: chrome.runtime.getURL(message?.isAudioOnly ? 'sandboxes/audioDemo.html' : `sandboxes/demo.html`) }, async (tab) => {
               // chrome.tabs.create({ url: chrome.runtime.getURL('tabs/sandbox-container.html') }, async (tab) => {
                 // const port = chrome.tabs.connect(tab.id, { name: 'sandbox-bridge' });
 

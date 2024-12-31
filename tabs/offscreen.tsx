@@ -449,7 +449,19 @@ const OffScreen = () => {
     }
     if (audioTrack instanceof MediaStreamTrack) {
       tracks.push(audioTrack);
+    } else {
+      console.log('No audio track found. Adding a silent small wave audio track...');
+      const audioContext = new AudioContext();
+      const silentSource = audioContext.createBufferSource(); // Create a silent audio source
+      const emptyBuffer = audioContext.createBuffer(2, audioContext.sampleRate, audioContext.sampleRate); // Stereo buffer
+      silentSource.buffer = emptyBuffer; // Assign the empty buffer to the source
+      const destination = audioContext.createMediaStreamDestination();
+      silentSource.connect(destination); // Connect the source to the destination
+      silentSource.start(); // Start the silent source
+      const silentAudioTrack = destination.stream.getAudioTracks()[0];
+      tracks.push(silentAudioTrack); // Add the silent audio track
     }
+    
     let mediaRecorder
     if (tracks.length > 0) {
       const mediaStream = new MediaStream(tracks);
