@@ -29,6 +29,7 @@ const OffScreen = () => {
   const [camOnlyStream, setCamOnlyStream] = useState(null)
   const [isDiscardRecording, setIsDiscardRecording] = useState(false)
   const [isWindowOnlyRecording, setIsWindowOnlyRecording] = useState(false)
+  const [uploadChunksCall, setUploadChunksCall] = useState(false)
   const videoRef = useRef(null)
   const [base64Data, setBase64Data] = useState(null)
   const [isPreviewOpened, setIsPreviewOpened] = useState(false)
@@ -79,13 +80,14 @@ const OffScreen = () => {
     if (isPreviewOpened) {
       if (base64Data) {
         console.log("base64Data1121", base64Data)
-        setTimeout(() => {
+        if(uploadChunksCall){
+          uploadChunks()
           setIsPreviewOpened(false)
-        }, 500)
-        uploadChunks()
+          setUploadChunksCall(false)
+        }
       }
     }
-  }, [isPreviewOpened, base64Data])
+  }, [isPreviewOpened, base64Data, uploadChunksCall])
 
   const resetAll = async (showVideo?: any) => {
     if (showVideo !== "restart_camonly") {
@@ -722,6 +724,10 @@ const OffScreen = () => {
             sendResponse("close")
           }
             break;
+          case "START_UPLOAD_CHUNKS": {
+            setUploadChunksCall(true)
+          }
+          break;
           case "RESTART_MICONLY_RECORDING": {
             // camOnlyChunks = []
             isMicOnlyRecordingDiscarded = true
