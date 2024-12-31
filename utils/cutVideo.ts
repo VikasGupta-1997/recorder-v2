@@ -2,10 +2,10 @@ async function cutVideo(ffmpeg, videoBlob, start, end, cut, duration, encode) {
   const videoData = new Uint8Array(await videoBlob.arrayBuffer());
 
   // Set the input video file name
-  ffmpeg.FS("writeFile", "input.mp4", videoData);
+  ffmpeg.FS("writeFile", "input.webm", videoData);
 
   // Set the output video file name
-  const outputFileName = cut ? "output-cut.mp4" : "output-trimmed.mp4";
+  const outputFileName = cut ? "output-cut.webm" : "output-trimmed.webm";
   let encodeOptions = [
     "-c:v",
     "copy",
@@ -33,11 +33,11 @@ async function cutVideo(ffmpeg, videoBlob, start, end, cut, duration, encode) {
         "-ss",
         "0",
         "-i",
-        "input.mp4",
+        "input.webm",
         "-to",
         start.toString(),
         ...encodeOptions,
-        "part1.mp4"
+        "part1.webm"
       );
 
       // Then, cut the video from the end time to the end
@@ -45,15 +45,15 @@ async function cutVideo(ffmpeg, videoBlob, start, end, cut, duration, encode) {
         "-ss",
         end.toString(),
         "-i",
-        "input.mp4",
+        "input.webm",
         "-to",
         duration.toString(),
         ...encodeOptions,
-        "part2.mp4"
+        "part2.webm"
       );
 
       // Create a text file with the list of input videos
-      ffmpeg.FS("writeFile", "input.txt", "file 'part1.mp4'\nfile 'part2.mp4'");
+      ffmpeg.FS("writeFile", "input.txt", "file 'part1.webm'\nfile 'part2.webm'");
 
       // Concatenate the two remaining parts
       await ffmpeg.run(
@@ -81,7 +81,7 @@ async function cutVideo(ffmpeg, videoBlob, start, end, cut, duration, encode) {
         "-ss",
         end.toString(),
         "-i",
-        "input.mp4",
+        "input.webm",
         "-to",
         duration.toString(),
         ...encodeOptions,
@@ -101,7 +101,7 @@ async function cutVideo(ffmpeg, videoBlob, start, end, cut, duration, encode) {
         "-ss",
         "0",
         "-i",
-        "input.mp4",
+        "input.webm",
         "-to",
         start.toString(),
         ...encodeOptions,
@@ -122,7 +122,7 @@ async function cutVideo(ffmpeg, videoBlob, start, end, cut, duration, encode) {
       "-ss",
       start.toString(),
       "-i",
-      "input.mp4",
+      "input.webm",
       "-t",
       (end - start).toString(),
       ...encodeOptions,
@@ -153,38 +153,61 @@ export function toBase64(blob) {
 
 export async function fixMetadata(ffmpeg, blob, hasAudio) {
   const data = new Uint8Array(await blob.arrayBuffer());
-  ffmpeg.FS('writeFile', 'input.mp4', data);
+  console.log("UNit8ArrData mm", data)
+  ffmpeg.FS('writeFile', 'input.webm', data);
 
   if (hasAudio === 'false') {
       console.log('Adding silent audio track to the video...');
-      await ffmpeg.run(
+     
+      try {
+        await ffmpeg.run(
           '-f', 'lavfi',
           '-i', 'anullsrc=channel_layout=stereo:sample_rate=44100',
-          '-i', 'input.mp4',
+          '-i', 'input.webm',
           '-shortest',
           '-c:v', 'copy',
           '-c:a', 'aac',
-          'output.mp4'
+          'output.webm'
       );
+        const output = ffmpeg.FS('readFile', 'output.webm');
+        console.log("outputoutput", output)
+        const fixedBlob = new Blob([output.buffer], { type: 'video/webm' });
+  
+        // Return the processed blob
+        return fixedBlob;
+      } catch (err) {
+          console.error('FFmpeg run error:', err);
+      }
   } else {
       console.log('Video already has audio. Fixing metadata...');
-      await ffmpeg.run('-i', 'input.mp4', '-c', 'copy', '-movflags', 'faststart', 'output.mp4');
+      console.log('Writing input.webm to FS...');
+    ffmpeg.FS('writeFile', 'input.webm', data);
+    console.log('Reading input.wesbm from FS...');
+    const inputExists = ffmpeg.FS('readdir', '/').includes('input.webm');
+    console.log('Input exists in FS:', inputExists);
+    try {
+      await ffmpeg.run('-i', 'input.webm', '-c', 'copy', '-movflags', 'faststart', 'output.webm');
+      const output = ffmpeg.FS('readFile', 'output.webm');
+      console.log("outputoutput", output)
+      const fixedBlob = new Blob([output.buffer], { type: 'video/webm' });
+
+      // Return the processed blob
+      return fixedBlob;
+    } catch (err) {
+        console.error('FFmpeg run error:', err);
+    }
   }
 
-  const output = ffmpeg.FS('readFile', 'output.mp4');
-  const fixedBlob = new Blob([output.buffer], { type: 'video/mp4' });
-
-  // Return the processed blob
-  return fixedBlob;
+  
 }
 
 
 
 // export async function fixMetadata(ffmpeg, blob) {
 //   const data = new Uint8Array(await blob.arrayBuffer());
-//   ffmpeg.FS('writeFile', 'input.mp4', data);
-//   await ffmpeg.run('-i', 'input.mp4', '-c', 'copy', '-movflags', 'faststart', 'output.mp4');
-//   const output = ffmpeg.FS('readFile', 'output.mp4');
+//   ffmpeg.FS('writeFile', 'input.webm', data);
+//   await ffmpeg.run('-i', 'input.webm', '-c', 'copy', '-movflags', 'faststart', 'output.webm');
+//   const output = ffmpeg.FS('readFile', 'output.webm');
 //   return new Blob([output.buffer], { type: 'video/mp4' });
 // }
 
@@ -193,12 +216,12 @@ export async function extractAudio(ffmpeg, videoBlob, outputFormat = "mp3") {
   const videoData = new Uint8Array(await videoBlob.arrayBuffer());
 
   // Write the video data to the FFmpeg virtual filesystem
-  ffmpeg.FS("writeFile", "input.mp4", videoData);
+  ffmpeg.FS("writeFile", "input.webm", videoData);
 
   // Run the FFmpeg command to extract audio
   const outputFileName = `output.${outputFormat}`;
   await ffmpeg.run(
-    "-i", "input.mp4",   // Input file
+    "-i", "input.webm",   // Input file
     "-q:a", "0",         // High audio quality
     "-map", "a",         // Extract only the audio stream
     outputFileName       // Output file
@@ -216,11 +239,11 @@ export async function extractAudio(ffmpeg, videoBlob, outputFormat = "mp3") {
 
 export async function reencodeVideo(ffmpeg, blob) {
   const videoData = new Uint8Array(await blob.arrayBuffer());
-  const outputFileName = "output.mp4";
-  ffmpeg.FS("writeFile", "input.mp4", videoData);
+  const outputFileName = "output.webm";
+  ffmpeg.FS("writeFile", "input.webm", videoData);
   await ffmpeg.run(
     "-i",
-    "input.mp4",
+    "input.webm",
     "-preset",
     "superfast",
     "-threads",
@@ -260,14 +283,14 @@ export async function replaceVideoAudio(ffmpeg, videoBlob, audioBlob) {
   console.log("audioData", audioData);
 
   // Step 3: Write files to FFmpeg's virtual file system
-  ffmpeg.FS("writeFile", "input-video.mp4", videoData);
+  ffmpeg.FS("writeFile", "input-video.webm", videoData);
   ffmpeg.FS("writeFile", "input-audio.mp3", audioData);
 
   // Step 4: Replace audio in the video
-  const outputFileName = "output-video-with-new-audio.mp4";
+  const outputFileName = "output-video-with-new-audio.webm";
   try {
     await ffmpeg.run(
-      "-i", "input-video.mp4",  // Input video file
+      "-i", "input-video.webm",  // Input video file
       "-i", "input-audio.mp3",  // Input audio file
       "-c:v", "copy",           // Copy video without re-encoding
       "-map", "0:v:0",          // Map video stream

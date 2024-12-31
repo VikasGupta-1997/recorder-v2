@@ -57,6 +57,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     const showConfirmation = useRef(true)
     const currentUniqid = useRef(null)
     const audioF = useRef(null)
+    const [isWindow10, setIsWindow10] = useState(null)
     const switchModeAudios = useRef({
         auphonicAudio: null,
         originalAudio: null,
@@ -123,6 +124,75 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
+    const reconstructVideo = async (blob) => {
+        const isWindows10 = navigator.userAgent.match(/Windows NT 10.0/);
+        console.log("isWindows10isWindows10", isWindows10)
+        setIsWindow10(isWindows10)
+        if (!isWindows10) {
+            console.log("IN HERE Wronmg!!!")
+            fixWebmDuration(
+                blob,
+                16,
+                async (fixedWebm) => {
+                    console.log("fixedWebm", fixedWebm)
+                    setVideoSource({
+                        type: "video",
+                        sources: [
+                            {
+                                src: URL.createObjectURL(fixedWebm),
+                                type: "video/webm",
+                            },
+                        ],
+                    });
+                  const reader = new FileReader();
+                  reader.onloadend = function () {
+                    const base64data = reader.result;
+                    // setContentState((prevContentState) => ({
+                    //   ...prevContentState,
+                    //   base64: base64data,
+                    //   driveEnabled: driveEnabled,
+                    // }));
+                  };
+                  reader.readAsDataURL(fixedWebm);
+                },
+                { logger: false }
+              );
+        } else {
+            console.log("YED ITS WINDOW 101", blob)
+            const fixedWebm = await (fixWebmDurationFallback as any)(blob, {
+                type: "video/webm; codecs=vp8, opus",
+              });
+              console.log("HERE Gone===>", fixedWebm)
+             
+                // setContentState((prevState) => ({
+                //   ...prevState,
+                //   webm: fixedWebm,
+                //   ready: true,
+                // }));
+
+                setVideoSource({
+                    type: "video",
+                    sources: [
+                        {
+                            src: URL.createObjectURL(fixedWebm),
+                            type: "video/webm",
+                        },
+                    ],
+                });
+    
+              const reader = new FileReader();
+              reader.onloadend = function () {
+                const base64data = reader.result;
+                // setContentState((prevContentState) => ({
+                //   ...prevContentState,
+                //   base64: base64data,
+                //   driveEnabled: driveEnabled,
+                // }));
+              };
+              reader.readAsDataURL(fixedWebm);
+            }
+    }
+
     const onMountListeners = () => {
         chrome.runtime.onMessage.addListener(
             async function async(message) {
@@ -143,13 +213,22 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                         if (!isPlaying && receivedChunks.length >= 5) { // Assuming 5 chunks are sufficient to start
                             isPlaying = true;
                             const { newBlob } = await playPartialRecording(receivedChunks);
-                            sendPostMessage({ type: "fixMetadata", blob: newBlob })
+                            // setBlob(newBlob)
+                            // setBlobUrl(URL.createObjectURL(newBlob))
+                            // sendPostMessage({ type: "fixMetadata", blob: newBlob })
                         }
 
                         if (message.isLastChunk) {
                             console.log("All chunks received. Reassembling...");
 
                             const { newBlob } = await playPartialRecording(receivedChunks); // Play the complete recording
+                            // setBlob(newBlob)
+                            // setBlobUrl(URL.createObjectURL(newBlob))
+                            // setIsVideoEncoding(false)
+                            // setOriginalVideo({
+                            //     blob: newBlob,
+                            //     url: URL.createObjectURL(newBlob)
+                            // })
                             sendPostMessage({ type: "fixMetadata", blob: newBlob })
                             // setOriginalVideo({
                             //     blob: newBlob,
@@ -701,7 +780,8 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         showConfirmation,
         auphonicProcessingError,
         setAuphonicProcessingError,
-        cutDataState
+        cutDataState,
+        isWindow10
     };
 
     return (

@@ -104,7 +104,7 @@ const DemoSand = () => {
             type: "updated-original-blob",
             // base64: base64,
             addToHistory: true,
-            blob: fixedBlob,
+            blob: blob,
             cut: message.cut
           });
           // console.log(fixedBlob, "original NEW BVLOBBB", blob)
@@ -140,17 +140,17 @@ const DemoSand = () => {
             blob,
             hasAudio
           );
-          console.log("blob11312 auphonic", blob)
+          console.log("blob121312 auphonic", blob)
 
           // const base64 = await toBase64(blob);
           sendMessage({
             type: "updated-auphonic-blob",
             // base64: base64,
             addToHistory: true,
-            blob: fixedBlob,
+            blob: blob,
             cut: message.cut
           });
-          console.log(fixedBlob, "NEW auphonic BVLOBBB", blob)
+          console.log(blob, "NEW auphonic BVLOBBB", blob)
           // const video = document.createElement("audio");
           // video.preload = "metadata";
           // video.onloadedmetadata = async () => {
@@ -190,7 +190,7 @@ const DemoSand = () => {
             type: "updated-blob",
             // base64: base64,
             addToHistory: true,
-            blob: fixedBlob,
+            blob: blob,
             cut: message.cut,
             isEdit: true,
             uniqid: returnRandomUniqId()
@@ -216,7 +216,7 @@ const DemoSand = () => {
           message.blob,
           hasAudio
         );
-        console.log("fixedBlob121", fixedBlob)
+        console.log("fixedBlob121#", fixedBlob)
         sendMessage({
           type: "updated-blob",
           // base64: base64,

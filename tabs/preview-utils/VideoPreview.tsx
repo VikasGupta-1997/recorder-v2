@@ -4,6 +4,8 @@ import { useRef, useState, useEffect, memo, useLayoutEffect } from "react"
 import Plyr from "plyr-react";
 import "plyr-react/plyr.css";
 import { usePreview } from "../previewContext";
+import fixWebmDuration from "fix-webm-duration";
+import { default as fixWebmDurationFallback } from "webm-duration-fix";
 
 export const getStyle = () => {
     const style = document.createElement("style")
@@ -23,7 +25,9 @@ function VideoPreview({
         setVideoSource,
         videoSource,
         setDuration,
-        setTrimState
+        setTrimState,
+        blob,
+        isWindow10
     } = usePreview();
 
 
@@ -52,20 +56,24 @@ function VideoPreview({
         };
     }
 
-    useEffect(() => {
+    const loadUrl = async () => {
         if (blobUrl) {
             // bl(blobUrl)
-
             setVideoSource({
                 type: "video",
                 sources: [
                     {
                         src: blobUrl,
-                        type: "video/mp4",
+                        type: isWindow10 ? "video/webm" : "video/mp4",
                     },
                 ],
             });
         }
+        // }
+    }
+
+    useEffect(() => {
+        loadUrl()
     }, [blobUrl]);
 
     useEffect(() => {
