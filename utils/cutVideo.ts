@@ -1,11 +1,14 @@
 async function cutVideo(ffmpeg, videoBlob, start, end, cut, duration, encode) {
+  const window10 = navigator.userAgent.match(/Windows NT 10.0/)
+  const ext = window10 ? 'webm' : 'mp4'
+
   const videoData = new Uint8Array(await videoBlob.arrayBuffer());
 
   // Set the input video file name
-  ffmpeg.FS("writeFile", "input.webm", videoData);
+  ffmpeg.FS("writeFile", `input.${ext}`, videoData);
 
   // Set the output video file name
-  const outputFileName = cut ? "output-cut.webm" : "output-trimmed.webm";
+  const outputFileName = cut ? `output-cut.${ext}` : `output-trimmed.${ext}`;
   let encodeOptions = [
     "-c:v",
     "copy",
@@ -33,11 +36,11 @@ async function cutVideo(ffmpeg, videoBlob, start, end, cut, duration, encode) {
         "-ss",
         "0",
         "-i",
-        "input.webm",
+        `input.${ext}`,
         "-to",
         start.toString(),
         ...encodeOptions,
-        "part1.webm"
+        `part1.${ext}`
       );
 
       // Then, cut the video from the end time to the end
@@ -45,15 +48,19 @@ async function cutVideo(ffmpeg, videoBlob, start, end, cut, duration, encode) {
         "-ss",
         end.toString(),
         "-i",
-        "input.webm",
+        `input.${ext}`,
         "-to",
         duration.toString(),
         ...encodeOptions,
-        "part2.webm"
+        `part2.${ext}`
       );
 
       // Create a text file with the list of input videos
-      ffmpeg.FS("writeFile", "input.txt", "file 'part1.webm'\nfile 'part2.webm'");
+      if(ext === 'mp4'){
+        ffmpeg.FS("writeFile", "input.txt", "file 'part1.mp4'\nfile 'part2.mp4'");
+      } else {
+        ffmpeg.FS("writeFile", "input.txt", "file 'part1.webm'\nfile 'part2.webm'");
+      }
 
       // Concatenate the two remaining parts
       await ffmpeg.run(
@@ -72,7 +79,7 @@ async function cutVideo(ffmpeg, videoBlob, start, end, cut, duration, encode) {
       const data = ffmpeg.FS("readFile", outputFileName);
 
       // Create a Blob from the edited video data
-      const editedVideoBlob = new Blob([data.buffer], { type: "video/mp4" });
+      const editedVideoBlob = new Blob([data.buffer], { type: `video/${ext}` });
 
       // Return the edited video Blob
       return editedVideoBlob;
@@ -81,7 +88,7 @@ async function cutVideo(ffmpeg, videoBlob, start, end, cut, duration, encode) {
         "-ss",
         end.toString(),
         "-i",
-        "input.webm",
+        `input.${ext}`,
         "-to",
         duration.toString(),
         ...encodeOptions,
@@ -92,7 +99,7 @@ async function cutVideo(ffmpeg, videoBlob, start, end, cut, duration, encode) {
       const data = ffmpeg.FS("readFile", outputFileName);
 
       // Create a Blob from the edited video data
-      const editedVideoBlob = new Blob([data.buffer], { type: "video/mp4" });
+      const editedVideoBlob = new Blob([data.buffer], { type: `video/${ext}` });
 
       // Return the edited video Blob
       return editedVideoBlob;
@@ -101,7 +108,7 @@ async function cutVideo(ffmpeg, videoBlob, start, end, cut, duration, encode) {
         "-ss",
         "0",
         "-i",
-        "input.webm",
+        `input.${ext}`,
         "-to",
         start.toString(),
         ...encodeOptions,
@@ -112,7 +119,7 @@ async function cutVideo(ffmpeg, videoBlob, start, end, cut, duration, encode) {
       const data = ffmpeg.FS("readFile", outputFileName);
 
       // Create a Blob from the edited video data
-      const editedVideoBlob = new Blob([data.buffer], { type: "video/mp4" });
+      const editedVideoBlob = new Blob([data.buffer], { type: `video/${ext}` });
 
       // Return the edited video Blob
       return editedVideoBlob;
@@ -122,7 +129,7 @@ async function cutVideo(ffmpeg, videoBlob, start, end, cut, duration, encode) {
       "-ss",
       start.toString(),
       "-i",
-      "input.webm",
+      `input.${ext}`,
       "-t",
       (end - start).toString(),
       ...encodeOptions,
@@ -133,7 +140,7 @@ async function cutVideo(ffmpeg, videoBlob, start, end, cut, duration, encode) {
     const data = ffmpeg.FS("readFile", outputFileName);
 
     // Create a Blob from the edited video data
-    const editedVideoBlob = new Blob([data.buffer], { type: "video/mp4" });
+    const editedVideoBlob = new Blob([data.buffer], { type: `video/${ext}` });
 
     // Return the edited video Blob
     return editedVideoBlob;
