@@ -152,26 +152,29 @@ export function toBase64(blob) {
 };
 
 export async function fixMetadata(ffmpeg, blob, hasAudio) {
+  const window10 = navigator.userAgent.match(/Windows NT 10.0/)
+  const ext = window10 ? 'webm' : 'mp4'
+
   const data = new Uint8Array(await blob.arrayBuffer());
-  console.log("UNit8ArrData mm", data)
-  ffmpeg.FS('writeFile', 'input.webm', data);
+  console.log(ext,"UNit8ArrData mm", data, `input.${ext}`)
+  ffmpeg.FS('writeFile', `input.${ext}`, data);
 
   if (hasAudio === 'false') {
       console.log('Adding silent audio track to the video...');
      
       try {
         await ffmpeg.run(
-          '-f', 'lavfi',
+          '-f', 'lavfi',    
           '-i', 'anullsrc=channel_layout=stereo:sample_rate=44100',
-          '-i', 'input.webm',
+          '-i', `input.${ext}`,
           '-shortest',
           '-c:v', 'copy',
           '-c:a', 'aac',
-          'output.webm'
+          `output.${ext}`
       );
-        const output = ffmpeg.FS('readFile', 'output.webm');
+        const output = ffmpeg.FS('readFile', `output.${ext}`);
         console.log("outputoutput", output)
-        const fixedBlob = new Blob([output.buffer], { type: 'video/webm' });
+        const fixedBlob = new Blob([output.buffer], { type: `video/${ext}` });
   
         // Return the processed blob
         return fixedBlob;
@@ -180,16 +183,14 @@ export async function fixMetadata(ffmpeg, blob, hasAudio) {
       }
   } else {
       console.log('Video already has audio. Fixing metadata...');
-      console.log('Writing input.webm to FS...');
-    ffmpeg.FS('writeFile', 'input.webm', data);
     console.log('Reading input.wesbm from FS...');
-    const inputExists = ffmpeg.FS('readdir', '/').includes('input.webm');
+    const inputExists = ffmpeg.FS('readdir', '/').includes(`input.${ext}`);
     console.log('Input exists in FS:', inputExists);
     try {
-      await ffmpeg.run('-i', 'input.webm', '-c', 'copy', '-movflags', 'faststart', 'output.webm');
-      const output = ffmpeg.FS('readFile', 'output.webm');
+      await ffmpeg.run('-i', `input.${ext}`, '-c', 'copy', '-movflags', 'faststart', `output.${ext}`);
+      const output = ffmpeg.FS('readFile', `output.${ext}`);
       console.log("outputoutput", output)
-      const fixedBlob = new Blob([output.buffer], { type: 'video/webm' });
+      const fixedBlob = new Blob([output.buffer], { type: `video/${ext}` });
 
       // Return the processed blob
       return fixedBlob;
