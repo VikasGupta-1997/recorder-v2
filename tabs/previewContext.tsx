@@ -147,7 +147,12 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                             console.log("All chunks received. Reassembling...");
 
                             const { newBlob, newBlobUrl } = await playPartialRecording(receivedChunks); // Play the complete recording
-                            sendPostMessage({ type: "fixMetadata", blob: newBlob })
+                            setIsVideoEncoding(false)
+                            setOriginalVideo({
+                                blob: newBlob,
+                                url: URL.createObjectURL(newBlob)
+                            })
+                            // sendPostMessage({ type: "fixMetadata", blob: newBlob })
                             // setOriginalVideo({
                             //     blob: newBlob,
                             //     url: URL.createObjectURL(newBlob)

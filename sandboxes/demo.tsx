@@ -104,7 +104,8 @@ const DemoSand = () => {
             type: "updated-original-blob",
             // base64: base64,
             addToHistory: true,
-            blob: fixedBlob,
+            // blob: fixedBlob,
+            blob: blob,
             cut: message.cut
           });
           // console.log(fixedBlob, "original NEW BVLOBBB", blob)
@@ -147,7 +148,8 @@ const DemoSand = () => {
             type: "updated-auphonic-blob",
             // base64: base64,
             addToHistory: true,
-            blob: fixedBlob,
+            // blob: fixedBlob,
+            blob: blob,
             cut: message.cut
           });
           console.log(fixedBlob, "NEW auphonic BVLOBBB", blob)
@@ -190,7 +192,8 @@ const DemoSand = () => {
             type: "updated-blob",
             // base64: base64,
             addToHistory: true,
-            blob: fixedBlob,
+            // blob: fixedBlob,
+            blob: blob,
             cut: message.cut,
             isEdit: true,
             uniqid: returnRandomUniqId()
