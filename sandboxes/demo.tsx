@@ -39,7 +39,7 @@ const DemoSand = () => {
           ffmpegInstance.current,
           message.blob,
         )
-        console.log("blob", blob)
+        console.log("extract-audio blob", blob)
         sendMessage({
           type: "extracted-audio-blob",
           blob

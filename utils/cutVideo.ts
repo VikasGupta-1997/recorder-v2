@@ -214,15 +214,18 @@ export async function fixMetadata(ffmpeg, blob, hasAudio) {
 
 export async function extractAudio(ffmpeg, videoBlob, outputFormat = "mp3") {
   // Convert the video Blob into a Uint8Array
+  const window10 = navigator.userAgent.match(/Windows NT 10.0/)
+  const ext = window10 ? 'webm' : 'mp4'
+  
   const videoData = new Uint8Array(await videoBlob.arrayBuffer());
-
+  console.log("extractAudio videoData", videoData)
   // Write the video data to the FFmpeg virtual filesystem
-  ffmpeg.FS("writeFile", "input.webm", videoData);
+  ffmpeg.FS("writeFile", `input.${ext}`, videoData);
 
   // Run the FFmpeg command to extract audio
   const outputFileName = `output.${outputFormat}`;
   await ffmpeg.run(
-    "-i", "input.webm",   // Input file
+    "-i", `input.${ext}`,   // Input file
     "-q:a", "0",         // High audio quality
     "-map", "a",         // Extract only the audio stream
     outputFileName       // Output file
@@ -233,6 +236,7 @@ export async function extractAudio(ffmpeg, videoBlob, outputFormat = "mp3") {
 
   // Create a Blob from the extracted audio data
   const audioBlob = new Blob([audioData.buffer], { type: `audio/${outputFormat}` });
+  console.log("extractAudio videoData", audioBlob)
 
   // Return the audio Blob
   return audioBlob;
@@ -264,6 +268,8 @@ export async function reencodeVideo(ffmpeg, blob) {
 }
 
 export async function replaceVideoAudio(ffmpeg, videoBlob, audioBlob) {
+  const window10 = navigator.userAgent.match(/Windows NT 10.0/)
+  const ext = window10 ? 'webm' : 'mp4'
   // Step 1: Validate inputs
   console.log(videoBlob instanceof Blob, "LETS CHCK FOR CALL!!!", videoBlob)
   console.log(audioBlob instanceof Blob, "LETS CHCK FOR Audio CALL!!!", audioBlob)
@@ -284,14 +290,15 @@ export async function replaceVideoAudio(ffmpeg, videoBlob, audioBlob) {
   console.log("audioData", audioData);
 
   // Step 3: Write files to FFmpeg's virtual file system
-  ffmpeg.FS("writeFile", "input-video.webm", videoData);
+  ffmpeg.FS("writeFile", `input-video.${ext}`, videoData);
   ffmpeg.FS("writeFile", "input-audio.mp3", audioData);
 
   // Step 4: Replace audio in the video
-  const outputFileName = "output-video-with-new-audio.webm";
+  const outputFileName = `output-video-with-new-audio.${ext}`;
+  console.log("outputFileName", outputFileName)
   try {
     await ffmpeg.run(
-      "-i", "input-video.webm",  // Input video file
+      "-i", `input-video.${ext}`,  // Input video file
       "-i", "input-audio.mp3",  // Input audio file
       "-c:v", "copy",           // Copy video without re-encoding
       "-map", "0:v:0",          // Map video stream
@@ -308,7 +315,7 @@ export async function replaceVideoAudio(ffmpeg, videoBlob, audioBlob) {
   const outputData = ffmpeg.FS("readFile", outputFileName);
 
   // Step 6: Convert Uint8Array to Blob
-  const outputBlob = new Blob([outputData.buffer], { type: "video/mp4" });
+  const outputBlob = new Blob([outputData.buffer], { type: `video/${ext}` });
 
   console.log("Replacement video created successfully.");
   return outputBlob;
