@@ -166,29 +166,29 @@ export async function fixMetadata(ffmpeg, blob, hasAudio) {
   console.log(ext,"UNit8ArrData mm", data, `input.${ext}`)
   ffmpeg.FS('writeFile', `input.${ext}`, data);
 
-  if (hasAudio === 'false') {
-      console.log('Adding silent audio track to the video...');
+  // if (hasAudio === 'false') {
+  //     console.log('Adding silent audio track to the video...');
      
-      try {
-        await ffmpeg.run(
-          '-f', 'lavfi',    
-          '-i', 'anullsrc=channel_layout=stereo:sample_rate=44100',
-          '-i', `input.${ext}`,
-          '-shortest',
-          '-c:v', 'copy',
-          '-c:a', 'aac',
-          `output.${ext}`
-      );
-        const output = ffmpeg.FS('readFile', `output.${ext}`);
-        console.log("outputoutput", output)
-        const fixedBlob = new Blob([output.buffer], { type: `video/${ext}` });
+  //     try {
+  //       await ffmpeg.run(
+  //         '-f', 'lavfi',    
+  //         '-i', 'anullsrc=channel_layout=stereo:sample_rate=44100',
+  //         '-i', `input.${ext}`,
+  //         '-shortest',
+  //         '-c:v', 'copy',
+  //         '-c:a', 'aac',
+  //         `output.${ext}`
+  //     );
+  //       const output = ffmpeg.FS('readFile', `output.${ext}`);
+  //       console.log("outputoutput", output)
+  //       const fixedBlob = new Blob([output.buffer], { type: `video/${ext}` });
   
-        // Return the processed blob
-        return fixedBlob;
-      } catch (err) {
-          console.error('FFmpeg run error:', err);
-      }
-  } else {
+  //       // Return the processed blob
+  //       return fixedBlob;
+  //     } catch (err) {
+  //         console.error('FFmpeg run error:', err);
+  //     }
+  // } else {
       console.log('Video already has audio. Fixing metadata...');
     console.log('Reading input.wesbm from FS...');
     const inputExists = ffmpeg.FS('readdir', '/').includes(`input.${ext}`);
@@ -204,7 +204,7 @@ export async function fixMetadata(ffmpeg, blob, hasAudio) {
     } catch (err) {
         console.error('FFmpeg run error:', err);
     }
-  }
+  // }
 
   
 }

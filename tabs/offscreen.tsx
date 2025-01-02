@@ -448,6 +448,17 @@ const OffScreen = () => {
     }
     if (audioTrack instanceof MediaStreamTrack) {
       tracks.push(audioTrack);
+    } else {
+      console.log('No audio track found. Adding a silent small wave audio track...');
+      const audioContext = new AudioContext();
+      const silentSource = audioContext.createBufferSource(); // Create a silent audio source
+      const emptyBuffer = audioContext.createBuffer(2, audioContext.sampleRate, audioContext.sampleRate); // Stereo buffer
+      silentSource.buffer = emptyBuffer; // Assign the empty buffer to the source
+      const destination = audioContext.createMediaStreamDestination();
+      silentSource.connect(destination); // Connect the source to the destination
+      silentSource.start(); // Start the silent source
+      const silentAudioTrack = destination.stream.getAudioTracks()[0];
+      tracks.push(silentAudioTrack); // Add the silent audio track
     }
     let mediaRecorder
     if (tracks.length > 0) {
@@ -589,64 +600,149 @@ const OffScreen = () => {
   }
 
   const recordCameraOnly = async (selections) => {
-    const mediaStream = await navigator.mediaDevices.getUserMedia({
-      audio: selections?.micRecording.value !== "mic_off" ? { deviceId: selections?.micRecording?.value } : false,
-      video: { deviceId: selections?.cameraRecording?.value }
-    });
-    camOnlyRecorder = new MediaRecorder(mediaStream);
-    camOnlyRecorder.ondataavailable = (event) => {
-      if (event.data.size > 0) {
-        camOnlyChunks.push(event.data)
-        // Handle recorded data (e.g., save it or upload it)
-        console.log('Recorded data available:', event.data);
-      }
-    };
-    camOnlyRecorder.start();
-
-    camOnlyRecorder.onstop = async () => {
-
-      const blob = new Blob(camOnlyChunks, { type: 'video/webm; codecs=vp8' });
-      // Convert Blob to Base64
-      console.log(isCamOnlyRecordingDiscarded, "onstop", blob)
-      function onComplete() {
-        console.log("Recording saved to IndexedDB", isCamOnlyRecordingDiscarded)
-        const url = (URL as any).createObjectURL(blob);
-       
-        if (!isCamOnlyRecordingDiscarded) {
-          chrome.runtime.sendMessage({
-            type: 'OPEN_PREVIEW_TAB',
-            videoUrl: url,
-            hasAudio: selections?.micRecording.value !== "mic_off"
-          });
-          chrome.runtime.sendMessage({ type: "CLOSE_CAM_ONLY_WINDOW" })
-          chrome.runtime.sendMessage({ type: "RECORDING_IN_PROGRESS_END" })
+    const tracks = [];
+    let mediaStream;
+  
+    if (selections?.micRecording.value !== "mic_off") {
+      const audioStream = await navigator.mediaDevices.getUserMedia({
+        audio: { deviceId: selections?.micRecording?.value },
+      });
+      const audioTrack = audioStream.getAudioTracks()[0];
+      tracks.push(audioTrack);
+    } else {
+      console.log("No audio track found. Adding a silent small wave audio track...");
+      const audioContext = new AudioContext();
+      const silentSource = audioContext.createBufferSource();
+      const emptyBuffer = audioContext.createBuffer(2, audioContext.sampleRate, audioContext.sampleRate);
+      silentSource.buffer = emptyBuffer;
+      const destination = audioContext.createMediaStreamDestination();
+      silentSource.connect(destination);
+      silentSource.start();
+      const silentAudioTrack = destination.stream.getAudioTracks()[0];
+      tracks.push(silentAudioTrack);
+    }
+  
+    if (selections?.cameraRecording?.value) {
+      const videoStream = await navigator.mediaDevices.getUserMedia({
+        video: { deviceId: selections?.cameraRecording?.value },
+      });
+      const videoTrack = videoStream.getVideoTracks()[0];
+      tracks.push(videoTrack);
+    }
+  
+    if (tracks.length > 0) {
+      mediaStream = new MediaStream(tracks);
+      camOnlyRecorder = new MediaRecorder(mediaStream);
+  
+      camOnlyRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          camOnlyChunks.push(event.data);
+          console.log("Recorded data available:", event.data);
         }
-        camOnlyChunks = []
-        resetAll()
-      }
-      console.log("SHould Not call", isCamOnlyRecordingDiscarded)
-      onComplete()
-      if (!isCamOnlyRecordingDiscarded) {
-        console.log("CAM RECORDIGN ENDEDDD!!!!")
-        const base64Data = await saveRecordingToIndexedDB(blob)
-        recordedStreamBase64 = base64Data
-        setBase64Data(base64Data)
-      }
-    };
-
-    camOnlyRecorder.onended = () => {
-      camOnlyRecorder.onstop()
+      };
+  
+      camOnlyRecorder.onstop = async () => {
+        const blob = new Blob(camOnlyChunks, { type: "video/webm; codecs=vp8" });
+        function onComplete() {
+          console.log("Recording saved to IndexedDB", isCamOnlyRecordingDiscarded);
+          const url = (URL as any).createObjectURL(blob);
+          if (!isCamOnlyRecordingDiscarded) {
+            chrome.runtime.sendMessage({
+              type: "OPEN_PREVIEW_TAB",
+              videoUrl: url,
+              hasAudio: selections?.micRecording.value !== "mic_off",
+            });
+            chrome.runtime.sendMessage({ type: "CLOSE_CAM_ONLY_WINDOW" });
+            chrome.runtime.sendMessage({ type: "RECORDING_IN_PROGRESS_END" });
+          }
+          camOnlyChunks = [];
+          resetAll();
+        }
+        onComplete();
+        if (!isCamOnlyRecordingDiscarded) {
+          const base64Data = await saveRecordingToIndexedDB(blob);
+          recordedStreamBase64 = base64Data;
+          setBase64Data(base64Data);
+        }
+      };
+  
+      camOnlyRecorder.onended = () => {
+        camOnlyRecorder.onstop();
+      };
+  
+      camOnlyRecorder.onstart = () => {
+        console.log("STARTED HERE!!");
+        chrome.runtime.sendMessage({ type: "startTimer" });
+        chrome.runtime.sendMessage({ type: "RECORDING_IN_PROGRESS" });
+        isRecordingStarted = true;
+      };
+  
+      camOnlyRecorder.start();
+    } else {
+      console.error("No valid MediaStreamTrack objects provided for recording.");
     }
+  };
+  
 
-    camOnlyRecorder.onstart = () => {
-      console.log("STARTED HERE!!")
-      // setIsRecordingPaused(false);
-      chrome.runtime.sendMessage({ type: 'startTimer' })
-      chrome.runtime.sendMessage({ type: "RECORDING_IN_PROGRESS" })
-      isRecordingStarted = true
-    }
-    // setCamOnlyStream(mediaStream)
-  }
+  // const recordCameraOnly = async (selections) => {
+  //   const mediaStream = await navigator.mediaDevices.getUserMedia({
+  //     audio: selections?.micRecording.value !== "mic_off" ? { deviceId: selections?.micRecording?.value } : false,
+  //     video: { deviceId: selections?.cameraRecording?.value }
+  //   });
+  //   camOnlyRecorder = new MediaRecorder(mediaStream);
+  //   camOnlyRecorder.ondataavailable = (event) => {
+  //     if (event.data.size > 0) {
+  //       camOnlyChunks.push(event.data)
+  //       // Handle recorded data (e.g., save it or upload it)
+  //       console.log('Recorded data available:', event.data);
+  //     }
+  //   };
+  //   camOnlyRecorder.start();
+
+  //   camOnlyRecorder.onstop = async () => {
+
+  //     const blob = new Blob(camOnlyChunks, { type: 'video/webm; codecs=vp8' });
+  //     // Convert Blob to Base64
+  //     console.log(isCamOnlyRecordingDiscarded, "onstop", blob)
+  //     function onComplete() {
+  //       console.log("Recording saved to IndexedDB", isCamOnlyRecordingDiscarded)
+  //       const url = (URL as any).createObjectURL(blob);
+       
+  //       if (!isCamOnlyRecordingDiscarded) {
+  //         chrome.runtime.sendMessage({
+  //           type: 'OPEN_PREVIEW_TAB',
+  //           videoUrl: url,
+  //           hasAudio: selections?.micRecording.value !== "mic_off"
+  //         });
+  //         chrome.runtime.sendMessage({ type: "CLOSE_CAM_ONLY_WINDOW" })
+  //         chrome.runtime.sendMessage({ type: "RECORDING_IN_PROGRESS_END" })
+  //       }
+  //       camOnlyChunks = []
+  //       resetAll()
+  //     }
+  //     console.log("SHould Not call", isCamOnlyRecordingDiscarded)
+  //     onComplete()
+  //     if (!isCamOnlyRecordingDiscarded) {
+  //       console.log("CAM RECORDIGN ENDEDDD!!!!")
+  //       const base64Data = await saveRecordingToIndexedDB(blob)
+  //       recordedStreamBase64 = base64Data
+  //       setBase64Data(base64Data)
+  //     }
+  //   };
+
+  //   camOnlyRecorder.onended = () => {
+  //     camOnlyRecorder.onstop()
+  //   }
+
+  //   camOnlyRecorder.onstart = () => {
+  //     console.log("STARTED HERE!!")
+  //     // setIsRecordingPaused(false);
+  //     chrome.runtime.sendMessage({ type: 'startTimer' })
+  //     chrome.runtime.sendMessage({ type: "RECORDING_IN_PROGRESS" })
+  //     isRecordingStarted = true
+  //   }
+  //   // setCamOnlyStream(mediaStream)
+  // }
 
   const onMountListners = () => {
     chrome.runtime.onMessage.addListener(
