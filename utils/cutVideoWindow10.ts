@@ -155,21 +155,21 @@ async function cutVideoWindow10(ffmpeg, videoBlob, start, end, cut, duration, en
     const data = new Uint8Array(await blob.arrayBuffer());
     ffmpeg.FS('writeFile', 'input.webm', data);
   
-    if (hasAudio === 'false') {
-        console.log('Adding silent audio track to the video...');
-        await ffmpeg.run(
-            '-f', 'lavfi',
-            '-i', 'anullsrc=channel_layout=stereo:sample_rate=44100',
-            '-i', 'input.webm',
-            '-shortest',
-            '-c:v', 'copy',
-            '-c:a', 'aac',
-            'output.webm'
-        );
-    } else {
+    // if (hasAudio === 'false') {
+    //     console.log('Adding silent audio track to the video...');
+    //     await ffmpeg.run(
+    //         '-f', 'lavfi',
+    //         '-i', 'anullsrc=channel_layout=stereo:sample_rate=44100',
+    //         '-i', 'input.webm',
+    //         '-shortest',
+    //         '-c:v', 'copy',
+    //         '-c:a', 'aac',
+    //         'output.webm'
+    //     );
+    // } else {
         console.log('Video already has audio. Fixing metadata...');
         await ffmpeg.run('-i', 'input.webm', '-c', 'copy', '-movflags', 'faststart', 'output.webm');
-    }
+    // }
   
     const output = ffmpeg.FS('readFile', 'output.webm');
     const fixedBlob = new Blob([output.buffer], { type: 'video/mp4' });
