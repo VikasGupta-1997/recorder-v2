@@ -388,6 +388,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
             if (message.type === "ffmpeg-loaded") {
                 setIsFfmpegLoaded(true)
                 console.log("ffmpeg-loaded Call from Demo!!")
+                chrome.runtime.sendMessage({type: "START_UPLOAD_CHUNKS"})
             }
             if (message.type === "ffmpeg-load-error") {
                 console.log("ffmpeg-load-error==>", message)

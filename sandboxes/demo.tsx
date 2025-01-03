@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import styleText from "data-text:../tabs/preview.module.css"
 import cutVideo, { toBase64, reencodeVideo, replaceVideoAudio, fixMetadata, extractAudio } from "~utils/cutVideo";
+import cutVideoWindow10, { toBase64Window10, reencodeVideoWindow10, replaceVideoAudioWindow10, fixMetadataWindow10, extractAudioWindow10 } from "~utils/cutVideoWindow10";
 
 export const getStyle = () => {
   const style = document.createElement("style")
@@ -20,10 +21,11 @@ const DemoSand = () => {
     iframeRef.current.contentWindow.postMessage(message, "*");
   };
 
-  const returnRandomUniqId = () =>  (String.fromCharCode(65 + Math.floor(Math.random() * 26)) +  Date.now());
+  const returnRandomUniqId = () => (String.fromCharCode(65 + Math.floor(Math.random() * 26)) + Date.now());
 
   useEffect(() => {
     const handleIframeMessage = async (event) => {
+      const window10 = navigator.userAgent.match(/Windows NT 10.0/)
       const message = event.data;
       console.log("Message received in sandbox from iframe:", message);
       if (message.type === "SEND_FROM_PREVIEW") {
@@ -35,10 +37,19 @@ const DemoSand = () => {
       }
 
       if (message.type === 'extract-audio') {
-        const blob = await extractAudio(
-          ffmpegInstance.current,
-          message.blob,
-        )
+        let blob;
+        if (window10) {
+          blob = await extractAudioWindow10(
+            ffmpegInstance.current,
+            message.blob,
+          )
+        } else {
+          blob = await extractAudio(
+            ffmpegInstance.current,
+            message.blob,
+          )
+        }
+
         console.log("blob", blob)
         sendMessage({
           type: "extracted-audio-blob",
@@ -48,25 +59,34 @@ const DemoSand = () => {
 
       if (message.type === 'replace-videos-audio') {
         console.log("REah replace-videos-audio", message)
-        const blob = await replaceVideoAudio(
-          ffmpegInstance.current,
-          message.videoBlob,
-          message.audioBlob
-        )
+        let blob;
+        if (window10) {
+          blob = await replaceVideoAudioWindow10(
+            ffmpegInstance.current,
+            message.videoBlob,
+            message.audioBlob
+          )
+        } else {
+          blob = await replaceVideoAudio(
+            ffmpegInstance.current,
+            message.videoBlob,
+            message.audioBlob
+          )
+        }
         console.log("blob112", blob)
         console.log("updated-blob-check", message)
         const sendMessageData = {
-            type: "updated-blob",
-            // base64: base64,
-            addToHistory: message.isFromSwitch,
-            blob: blob,
-            isMergedTrack: true,
-            auphonicMode: message?.auphonicMode,
-            uniqid: message?.uniqid || returnRandomUniqId(),
-            fileName: message?.fileName,
-            uuid: message?.uuid
+          type: "updated-blob",
+          // base64: base64,
+          addToHistory: message.isFromSwitch,
+          blob: blob,
+          isMergedTrack: true,
+          auphonicMode: message?.auphonicMode,
+          uniqid: message?.uniqid || returnRandomUniqId(),
+          fileName: message?.fileName,
+          uuid: message?.uuid
         }
-        if(message.auphonicBlob){
+        if (message.auphonicBlob) {
           sendMessageData['auphonicBlob'] = message.auphonicBlob
           sendMessageData['originalAudioBlob'] = message.originalAudioBlob
         }
@@ -80,23 +100,45 @@ const DemoSand = () => {
       }
 
       if (message.type === "cut-original-audio") {
+        let blob;
         try {
           console.log("cut-original-audio", message)
-          const blob = await cutVideo(
-            ffmpegInstance.current,
-            message.blob,
-            message.startTime,
-            message.endTime,
-            message.cut,
-            message.duration,
-            message.encode
-          );
+          if (window10) {
+            blob = await cutVideoWindow10(
+              ffmpegInstance.current,
+              message.blob,
+              message.startTime,
+              message.endTime,
+              message.cut,
+              message.duration,
+              message.encode
+            );
+          } else {
+            blob = await cutVideo(
+              ffmpegInstance.current,
+              message.blob,
+              message.startTime,
+              message.endTime,
+              message.cut,
+              message.duration,
+              message.encode
+            );
+          }
+          let fixedBlob;
+          if (window10) {
+            fixedBlob = await fixMetadataWindow10(
+              ffmpegInstance.current,
+              blob,
+              hasAudio
+            );
+          } else {
+            fixedBlob = await fixMetadata(
+              ffmpegInstance.current,
+              blob,
+              hasAudio
+            );
+          }
 
-          const fixedBlob = await fixMetadata(
-            ffmpegInstance.current,
-            blob,
-            hasAudio
-          );
           console.log("blob11312 original", blob)
 
           // const base64 = await toBase64(blob);
@@ -123,23 +165,46 @@ const DemoSand = () => {
       }
 
       if (message.type === "cut-auphonic-audio") {
+        let blob;
         try {
           console.log("cut-auphonic-audio", message)
-          const blob = await cutVideo(
-            ffmpegInstance.current,
-            message.blob,
-            message.startTime,
-            message.endTime,
-            message.cut,
-            message.duration,
-            message.encode
-          );
+          if (window10) {
+            blob = await cutVideoWindow10(
+              ffmpegInstance.current,
+              message.blob,
+              message.startTime,
+              message.endTime,
+              message.cut,
+              message.duration,
+              message.encode
+            );
+          } else {
+            blob = await cutVideo(
+              ffmpegInstance.current,
+              message.blob,
+              message.startTime,
+              message.endTime,
+              message.cut,
+              message.duration,
+              message.encode
+            );
+          }
+          let fixedBlob;
+          if (window10) {
+            fixedBlob = await fixMetadataWindow10(
+              ffmpegInstance.current,
+              blob,
+              hasAudio
+            );
+          } else {
+            fixedBlob = await fixMetadata(
+              ffmpegInstance.current,
+              blob,
+              hasAudio
+            );
+          }
 
-          const fixedBlob = await fixMetadata(
-            ffmpegInstance.current,
-            blob,
-            hasAudio
-          );
+
           console.log("blob11312 auphonic", blob)
 
           // const base64 = await toBase64(blob);
@@ -166,25 +231,52 @@ const DemoSand = () => {
       }
 
       if (message.type === "cut-video") {
+        let blob;
         try {
           console.log("cut-video-message", message)
-          const blob = await cutVideo(
-            ffmpegInstance.current,
-            message.blob,
-            message.startTime,
-            message.endTime,
-            message.cut,
-            message.duration,
-            message.encode
-          );
+          if (window10) {
+            console.log("IN Window")
+            blob = await cutVideoWindow10(
+              ffmpegInstance.current,
+              message.blob,
+              message.startTime,
+              message.endTime,
+              message.cut,
+              message.duration,
+              message.encode
+            );
+          } else {
+            console.log("IN Mac")
+            blob = await cutVideo(
+              ffmpegInstance.current,
+              message.blob,
+              message.startTime,
+              message.endTime,
+              message.cut,
+              message.duration,
+              message.encode
+            );
+          }
 
-          const fixedBlob = await fixMetadata(
-            ffmpegInstance.current,
-            blob,
-            hasAudio
-          );
+          let fixedBlob;
+          if (window10) {
+          console.log("IN Window")
+            fixedBlob = await fixMetadataWindow10(
+              ffmpegInstance.current,
+              blob,
+              hasAudio
+            );
+          } else {
+            console.log("IN Mac")
+            fixedBlob = await fixMetadata(
+              ffmpegInstance.current,
+              blob,
+              hasAudio
+            );
+          }
+
           console.log("blob11312", blob)
-  
+
           // const base64 = await toBase64(blob);
           sendMessage({
             type: "updated-blob",
@@ -210,12 +302,24 @@ const DemoSand = () => {
       }
 
       if (message.type === 'fixMetadata') {
-        console.log(hasAudio, message, " ffmpegInstance.current",   ffmpegInstance.current)
-        const fixedBlob = await fixMetadata(
-          ffmpegInstance.current,
-          message.blob,
-          hasAudio
-        );
+        console.log(hasAudio, message, " ffmpegInstance.current", ffmpegInstance.current)
+        let fixedBlob;
+        if (window10) {
+          console.log("IN Window")
+          fixedBlob = await fixMetadataWindow10(
+            ffmpegInstance.current,
+            message.blob,
+            hasAudio
+          );
+        } else {
+          console.log("IN MAC")
+          fixedBlob = await fixMetadata(
+            ffmpegInstance.current,
+            message.blob,
+            hasAudio
+          );
+        }
+
         console.log("fixedBlob121", fixedBlob)
         sendMessage({
           type: "updated-blob",
