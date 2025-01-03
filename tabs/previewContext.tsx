@@ -35,6 +35,8 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     const url = useRef('')
     const auphonicPlyrRef = useRef(null)
 
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasAudio = urlParams.get('hasAudio');
     const [showAuphonicAdvanceForm, setShowAuphonicAdvanceForm] = useState(false)
     const [confirmSendToAuphonic, setConfirmSendToAuphonic] = useState(false)
     const [history, setHistory] = useState([])
@@ -279,6 +281,20 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                 }
 
                 if (message?.isEdit) {
+                    const window10 = navigator.userAgent.match(/Windows NT 10.0/)
+                    if(window10 && hasAudio === 'false') {
+                        const video = document.createElement("video");
+                        video.preload = "metadata";
+                        video.onloadedmetadata = async () => {
+                          console.log("video.durationvideo.duration", video.duration)
+                          setTimeout(() => {
+                            setTrimState(prev => ({...prev, endTime: video.duration}))
+                          }, 800)
+                          URL.revokeObjectURL(video.src);
+                          video.remove();
+                        };
+                        video.src = URL.createObjectURL(message.blob);
+                    }
                     setShowRevertButtons(false)
                     // if(!!!latestAuphonicDataRef?.current?.auphonicBlob){
                     setCutDataState(prev => [...prev, {
