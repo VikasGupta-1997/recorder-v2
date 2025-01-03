@@ -2,6 +2,8 @@ import React, { createContext, useContext, useEffect, useLayoutEffect, useMemo, 
 import onSubmitAdvanceAuphonic, { fetchMp3File } from '~utils/auphonicProduction';
 import { defaultAdvanceAuphonicState } from '~utils/constants';
 import getAuphonicProcessedData from '~utils/getAuphonicProcessedData';
+import fixWebmDuration from "fix-webm-duration";
+import { default as fixWebmDurationFallback } from "webm-duration-fix";
 
 const PreviewContext = createContext<any>(undefined);
 
@@ -98,10 +100,10 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                     console.log("newBlob1121", newBlob)
                     const newBlobUrl = URL.createObjectURL(newBlob);
                     console.log("newBlobUrl11221", newBlobUrl)
-                    setBlobUrl(newBlobUrl)
-                    blobRef.current = newBlob
-                    setBlob(newBlob)
-                    setLoadingVideo(false)
+                    // setBlobUrl(newBlobUrl)
+                    // blobRef.current = newBlob
+                    // setBlob(newBlob)
+                    // setLoadingVideo(false)
                     // Revoke old URL to prevent memory leaks
                     if (url.current) {
                         URL.revokeObjectURL(url.current);
@@ -120,6 +122,27 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
             // Handle the error appropriately, maybe set an error state
         }
     };
+
+    const getFixedFromWebM = async blob => {
+        console.log("getFixedFromWebM==>", blob)
+        const isWindows10 = navigator.userAgent.match(/Windows NT 10.0/);
+        try {
+            if (!isWindows10) {
+                const fixedWebm = await fixWebmDuration(blob, 22);
+                console.log("fixedWebmfixedWebmWWW", fixedWebm)
+                return fixedWebm
+            } else {
+                const fixedWebm = await (fixWebmDurationFallback as any)(blob, {
+                    type: "video/webm; codecs=vp8, opus",
+                });
+                console.log("fixedWebm121212",fixedWebm)
+                return fixedWebm
+            }
+        } catch (error) {
+            console.log("getFixedFromWebM Error", error)
+        }
+
+    }
 
     const onMountListeners = () => {
         chrome.runtime.onMessage.addListener(
@@ -140,14 +163,26 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                         // Try to start playing the video when enough data is received
                         if (!isPlaying && receivedChunks.length >= 5) { // Assuming 5 chunks are sufficient to start
                             isPlaying = true;
-                            playPartialRecording(receivedChunks);
+                            const { newBlob, newBlobUrl } = await playPartialRecording(receivedChunks);
+                            setBlobUrl(newBlobUrl)
+                            blobRef.current = newBlob
+                            setBlob(newBlob)
+                            setLoadingVideo(false)
                         }
 
                         if (message.isLastChunk) {
                             console.log("All chunks received. Reassembling...");
 
-                            const { newBlob, newBlobUrl } = await playPartialRecording(receivedChunks); // Play the complete recording
-                            sendPostMessage({ type: "fixMetadata", blob: newBlob })
+                            const { newBlob } = await playPartialRecording(receivedChunks); // Play the complete recording
+                            console.log("Blob Before Processing", newBlob)
+                            const processedBlob = await getFixedFromWebM(newBlob)
+                            console.log("processedBlobprocessedBlob", processedBlob)
+                            const newBlobUrl = URL.createObjectURL(processedBlob);
+                            setBlobUrl(newBlobUrl)
+                            blobRef.current = processedBlob
+                            setBlob(processedBlob)
+                            setLoadingVideo(false)
+                            // sendPostMessage({ type: "fixMetadata", blob: processedBlob })
                             // setOriginalVideo({
                             //     blob: newBlob,
                             //     url: URL.createObjectURL(newBlob)
@@ -454,7 +489,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
             if (message.type === "ffmpeg-loaded") {
                 setIsFfmpegLoaded(true)
                 console.log("ffmpeg-loaded Call from Demo!!")
-                chrome.runtime.sendMessage({type: "START_UPLOAD_CHUNKS"})
+                chrome.runtime.sendMessage({ type: "START_UPLOAD_CHUNKS" })
             }
             if (message.type === "ffmpeg-load-error") {
                 console.log("ffmpeg-load-error==>", message)
