@@ -546,8 +546,9 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                 }
                 url.current = newBlobUrl;
             }
-
-            setTrimState(lastState.trimState);
+            setTimeout(() => {
+                setTrimState(lastState.trimState);
+            }, 300)
             setIsAuphonicUiMode(lastState.isAuphonicMode);
 
             // Remove the last state from history
@@ -589,8 +590,9 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                 }
                 url.current = newBlobUrl;
             }
-
-            setTrimState(redoState.trimState);
+            setTimeout(() => {
+                setTrimState(redoState.trimState);
+            }, 300)
             setIsAuphonicUiMode(redoState.isAuphonicMode);
 
             // Remove the used redo state
