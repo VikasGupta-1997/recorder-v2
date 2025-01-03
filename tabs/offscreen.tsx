@@ -214,13 +214,23 @@ const OffScreen = () => {
     if (isAudioDeviceSelected) {
       windowOnlyAudioRecord = await mergeAudioWithStream(true, audioDevice);
     } else {
+      console.log('No audio track found. Adding a silent small wave audio track...');
       const audioContext = new AudioContext();
-      const oscillator = audioContext.createOscillator();
+      const silentSource = audioContext.createBufferSource(); // Create a silent audio source
+      const emptyBuffer = audioContext.createBuffer(2, audioContext.sampleRate, audioContext.sampleRate); // Stereo buffer
+      silentSource.buffer = emptyBuffer; // Assign the empty buffer to the source
       const destination = audioContext.createMediaStreamDestination();
-      oscillator.connect(destination);
-      oscillator.start();
-      oscillator.stop(audioContext.currentTime + 1); // Create a short silent sound
+      silentSource.connect(destination); // Connect the source to the destination
+      silentSource.start(); // Start the silent source
       const silentAudioTrack = destination.stream.getAudioTracks()[0];
+      // tracks.push(silentAudioTrack); // Add the silent audio track
+      // const audioContext = new AudioContext();
+      // const oscillator = audioContext.createOscillator();
+      // const destination = audioContext.createMediaStreamDestination();
+      // oscillator.connect(destination);
+      // oscillator.start();
+      // oscillator.stop(audioContext.currentTime + 1); // Create a short silent sound
+      // const silentAudioTrack = destination.stream.getAudioTracks()[0];
   
       // Merge the silent audio with the webcam stream (we don't want to capture actual audio if mic is off)
       windowOnlyAudioRecord = silentAudioTrack;
@@ -605,15 +615,27 @@ const OffScreen = () => {
       tracks.push(audioTrack);
     }else {
       if(window10){
-        console.log('No audio track found. Adding a silent audio track...');
+
+        console.log('No audio track found. Adding a silent small wave audio track...');
         const audioContext = new AudioContext();
-        const oscillator = audioContext.createOscillator();
+        const silentSource = audioContext.createBufferSource(); // Create a silent audio source
+        const emptyBuffer = audioContext.createBuffer(2, audioContext.sampleRate, audioContext.sampleRate); // Stereo buffer
+        silentSource.buffer = emptyBuffer; // Assign the empty buffer to the source
         const destination = audioContext.createMediaStreamDestination();
-        oscillator.connect(destination);
-        oscillator.start();
-        oscillator.stop(audioContext.currentTime + 1); // Short duration to create silence
+        silentSource.connect(destination); // Connect the source to the destination
+        silentSource.start(); // Start the silent source
         const silentAudioTrack = destination.stream.getAudioTracks()[0];
-        tracks.push(silentAudioTrack);
+        tracks.push(silentAudioTrack); // Add the silent audio track
+
+        // console.log('No audio track found. Adding a silent audio track...');
+        // const audioContext = new AudioContext();
+        // const oscillator = audioContext.createOscillator();
+        // const destination = audioContext.createMediaStreamDestination();
+        // oscillator.connect(destination);
+        // oscillator.start();
+        // oscillator.stop(audioContext.currentTime + 1); // Short duration to create silence
+        // const silentAudioTrack = destination.stream.getAudioTracks()[0];
+        // tracks.push(silentAudioTrack);
       }
     }
     let mediaRecorder
@@ -825,14 +847,26 @@ const OffScreen = () => {
         video: { deviceId: selections?.cameraRecording?.value }
       });
     } else {
-      // If no mic is selected, create a silent audio track
+
+      console.log('No audio track found. Adding a silent small wave audio track...');
       const audioContext = new AudioContext();
-      const oscillator = audioContext.createOscillator();
+      const silentSource = audioContext.createBufferSource(); // Create a silent audio source
+      const emptyBuffer = audioContext.createBuffer(2, audioContext.sampleRate, audioContext.sampleRate); // Stereo buffer
+      silentSource.buffer = emptyBuffer; // Assign the empty buffer to the source
       const destination = audioContext.createMediaStreamDestination();
-      oscillator.connect(destination);
-      oscillator.start();
-      oscillator.stop(audioContext.currentTime + 1); // Create a short silent sound
+      silentSource.connect(destination); // Connect the source to the destination
+      silentSource.start(); // Start the silent source
       const silentAudioTrack = destination.stream.getAudioTracks()[0];
+      // tracks.push(silentAudioTrack); // Add the silent audio track
+
+      // If no mic is selected, create a silent audio track
+      // const audioContext = new AudioContext();
+      // const oscillator = audioContext.createOscillator();
+      // const destination = audioContext.createMediaStreamDestination();
+      // oscillator.connect(destination);
+      // oscillator.start();
+      // oscillator.stop(audioContext.currentTime + 1); // Create a short silent sound
+      // const silentAudioTrack = destination.stream.getAudioTracks()[0];
   
       // Get video stream as usual
       const videoStream = await navigator.mediaDevices.getUserMedia({
