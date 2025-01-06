@@ -92,14 +92,14 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
             if (base64Data.startsWith('data:')) {
                 try {
                     const response = await fetch(base64Data);
-                    console.log("response1212", response)
+                    // console.log("response1212", response)
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
                     const newBlob = await response.blob();
-                    console.log("newBlob1121", newBlob)
+                    // console.log("newBlob1121", newBlob)
                     const newBlobUrl = URL.createObjectURL(newBlob);
-                    console.log("newBlobUrl11221", newBlobUrl)
+                    // console.log("newBlobUrl11221", newBlobUrl)
                     setBlobUrl(newBlobUrl)
                     blobRef.current = newBlob
                     setBlob(newBlob)
@@ -126,18 +126,18 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     const onMountListeners = () => {
         chrome.runtime.onMessage.addListener(
             async function async(message) {
-                console.log("MESSAAGE", message)
+                // console.log("MESSAAGE", message)
                 switch (message.type) {
                     case "RECORDING_CHUNK_PREVIEW": {
                         // Debug log to see chunk format
-                        console.log('Received chunk format:', {
-                            index: message.index,
-                            dataStart: message.data.substring(0, 50) + '...',
-                            dataLength: message.data.length
-                        });
+                        // console.log('Received chunk format:', {
+                        //     index: message.index,
+                        //     dataStart: message.data.substring(0, 50) + '...',
+                        //     dataLength: message.data.length
+                        // });
 
                         receivedChunks[message.index] = message.data;
-                        console.log(`Received chunk ${message.index}`);
+                        // console.log(`Received chunk ${message.index}`);
 
                         // Try to start playing the video when enough data is received
                         if (!isPlaying && receivedChunks.length >= 5) { // Assuming 5 chunks are sufficient to start
@@ -188,7 +188,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
 
     const addToHistory = (newState) => {
         // Add the current state to history before applying new changes
-        console.log(currentUniqid.current, "newStatenewStatenewState", newState)
+        // console.log(currentUniqid.current, "newStatenewStatenewState", newState)
         // if(newState?.uniqid){
         //     setHistory(prev => prev.map(p => {
         //         if(p.uniqid === newState.uniqid && !!p.auphonicBlob){
@@ -249,7 +249,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     const latestAuphonicData = useMemo(() => {
         if (!!cutDataState?.length) {
             const lastHistoryData = history[history.length - 1];
-            console.log(cutDataState, "lastHistoryDatalastHistoryData", lastHistoryData)
+            // console.log(cutDataState, "lastHistoryDatalastHistoryData", lastHistoryData)
             const reprocessState = cutDataState?.find(cut => cut.id === lastHistoryData?.uniqid)
             latestAuphonicDataRef.current = reprocessState
             return reprocessState
@@ -257,7 +257,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         return null
     }, [history, cutDataState])
 
-    console.log("lReffff", latestAuphonicData)
+    // console.log("lReffff", latestAuphonicData)
 
     useEffect(() => {
         window.addEventListener("message", async (event) => {
@@ -265,9 +265,9 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
             if (message.type === "updated-blob") {
                 if (message.isMergedTrack) {
                     if (message?.uuid) {
-                        console.log("GOT HERE!!")
+                        // console.log("GOT HERE!!")
                         if (!!!latestAuphonicDataRef?.current?.auphonicBlob) {
-                            console.log("HERE!!!!")
+                            // console.log("HERE!!!!")
                             setCutDataState(prev => [...prev, {
                                 id: message.uniqid,
                                 auphonicBlob: message.auphonicBlob,
@@ -305,9 +305,9 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                         fileName: null
                     }])
                     // }
-                    console.log("switchModeAudios.current", switchModeAudios.current)
+                    // console.log("switchModeAudios.current", switchModeAudios.current)
                     if (switchModeAudios.current.originalAudio) {
-                        console.log("originalAudio send", message)
+                        // console.log("originalAudio send", message)
                         const messageTobeSent = {
                             type: "cut-original-audio",
                             blob: switchModeAudios.current.originalAudio,
@@ -324,10 +324,10 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
             }
 
             if (message.type === 'updated-original-blob') {
-                console.log("updated-original-blob called!!", switchModeAudios.current)
+                // console.log("updated-original-blob called!!", switchModeAudios.current)
                 switchModeAudios.current.originalAudio = message.blob
                 if (switchModeAudios.current.auphonicAudio) {
-                    console.log("auphonicAudio send")
+                    // console.log("auphonicAudio send")
                     const messageTobeSent = {
                         type: "cut-auphonic-audio",
                         blob: switchModeAudios.current.auphonicAudio,
@@ -342,7 +342,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
             }
 
             if (message.type === 'updated-auphonic-blob') {
-                console.log("Edited Auphonic Blob", message)
+                // console.log("Edited Auphonic Blob", message)
             }
 
             if (message.type === 'extracted-audio-blob') {
@@ -356,15 +356,15 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                     }
                     try {
                         switchModeAudios.current.originalAudio = message.blob;
-                        console.log(latestAuphonicDataRef.current, "latestAuphonicDatalatestAuphonicData 318", latestAuphonicData)
+                        // console.log(latestAuphonicDataRef.current, "latestAuphonicDatalatestAuphonicData 318", latestAuphonicData)
                         const { file, uuid, fileName } = await onSubmitAdvanceAuphonic(sendData, message.blob, setIspublishing, uuidRef, setUuid, fileNameRef, isAuphonicSubmitted, switchModeAudios.current, latestAuphonicDataRef.current)
                         switchModeAudios.current.auphonicAudio = file
-                        console.log(blobRef.current, ":RecoievedFile", file)
+                        // console.log(blobRef.current, ":RecoievedFile", file)
                         const sendUniqId = latestAuphonicDataRef.current?.uuid ? latestAuphonicDataRef.current?.id : null
                         const isFromSwitch = latestAuphonicDataRef.current?.uuid ? false : true
                         sendPostMessage({ type: "replace-videos-audio", isFromSwitch: isFromSwitch, fileName: fileName, uniqid: sendUniqId, uuid: uuid, videoBlob: blobRef.current, audioBlob: file, auphonicMode: true, auphonicBlob: file, originalAudioBlob: message.blob })
                     } catch (error) {
-                        console.log("Error Occured:", error)
+                        // console.log("Error Occured:", error)
                         setAuphonicProcessingError(error)
                         setIspublishing(false)
                     }
@@ -372,7 +372,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
             }
 
             if (message.type === 'auphonic-merged-video') {
-                console.log("auphonic-merged-video", message)
+                // console.log("auphonic-merged-video", message)
                 const videoP = document.getElementById('check-video') as HTMLVideoElement
                 videoP.src = URL.createObjectURL(message.blob);
                 videoP.play()
@@ -390,7 +390,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                 switchModeAudios.current.auphonicAudio = message.blob
             }
             if (message.type === "updated-blob") {
-                console.log("Received updated blob:", message.blob);
+                // console.log("Received updated blob:", message.blob);
                 // Update the blob and blobUrl for the preview
                 const newBlobUrl = URL.createObjectURL(message.blob);
 
@@ -411,7 +411,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                     if (message.isMergedTrack) {
                         setShowRevertButtons(true)
                         // if(!!!latestAuphonicDataRef?.current?.auphonicBlob){
-                        console.log("HERE I COMEE!!")
+                        // console.log("HERE I COMEE!!")
                         currentUniqid.current = message.uniqid
                         historyData["uniqid"] = message.uniqid
                         // }
@@ -419,7 +419,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                     }
 
                     if (message.auphonicMode) {
-                        console.log("YES IT COMES HERE!!!!", message)
+                        // console.log("YES IT COMES HERE!!!!", message)
                         setIsAuphonicUiMode(true)
                         addToHistory({
                             ...historyData,
@@ -473,7 +473,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                 chrome.runtime.sendMessage({type: "START_UPLOAD_CHUNKS"})
             }
             if (message.type === "ffmpeg-load-error") {
-                console.log("ffmpeg-load-error==>", message)
+                // console.log("ffmpeg-load-error==>", message)
                 setIsFfmpegLoaded(true)
                 setFfmpegLoadError(true)
             }

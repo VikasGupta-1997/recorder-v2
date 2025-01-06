@@ -96,13 +96,13 @@ function PreviewPage() {
     }
 
     const lastHistoryData = history[history.length - 1];
-    console.log("Check Historyyyy", history)
-    console.log(cutDataState,"lastHistoryDatalastHistoryData", lastHistoryData)
+    // console.log("Check Historyyyy", history)
+    // console.log(cutDataState,"lastHistoryDatalastHistoryData", lastHistoryData)
     const reprocessState = cutDataState?.find(cut => cut.id === lastHistoryData?.uniqid)
-    console.log("reprocessStatereprocessState", reprocessState)
+    // console.log("reprocessStatereprocessState", reprocessState)
 
-    console.log(showConfirmation.current, "history", history)
-    console.log("Redo History", redoHistory)
+    // console.log(showConfirmation.current, "history", history)
+    // console.log("Redo History", redoHistory)
     return (
         <div id="container" className={style["container"]}>
             <span className={style["span-wrapper"]} style={{

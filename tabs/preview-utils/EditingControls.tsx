@@ -118,7 +118,7 @@ const EditingControls = ({
     };
 
     const handleMouseUp = () => {
-        console.log("NOW MOUSE LEFT!!")
+        // console.log("NOW MOUSE LEFT!!")
         addToHistory(trimState)
         isDragging.current = false;
         activeHandle.current = null;
@@ -256,24 +256,24 @@ const EditingControls = ({
             const message = {
                 type: "cut-video",
                 blob: blob,
-                startTime: trimState.startTime,
-                endTime: trimState.endTime,
+                startTime: parseFloat(trimState.startTime?.toFixed(2)),
+                endTime: parseFloat(trimState.endTime?.toFixed(2)),
                 cut: cut,
-                duration: trimState.duration,
+                duration: parseFloat(trimState.duration?.toFixed(2)),
                 encode: false,
             };
 
             switchModeAudios.current.trimState = {
-                startTime: trimState.startTime,
-                endTime: trimState.endTime,
-                duration: trimState.duration,
+                startTime: parseFloat(trimState.startTime?.toFixed(2)),
+                endTime: parseFloat(trimState.endTime?.toFixed(2)),
+                duration: parseFloat(trimState.duration?.toFixed(2)),
             }
 
 
             console.log("Sending trim message:", {
-                startTime: trimState.startTime,
-                endTime: trimState.endTime,
-                duration: trimState.duration
+                startTime: parseFloat(trimState.startTime?.toFixed(2)),
+                endTime: parseFloat(trimState.endTime?.toFixed(2)),
+                duration: parseFloat(trimState.duration?.toFixed(2))
             });
 
             // Send the message to process the trim
@@ -337,10 +337,10 @@ const EditingControls = ({
     }
     
     const lastHistoryData = history[history.length - 1];
-    console.log("Check Historyyyy", history)
-    console.log(cutDataState, "lastHistoryDatalastHistoryData", lastHistoryData)
+    // console.log("Check Historyyyy", history)
+    // console.log(cutDataState, "lastHistoryDatalastHistoryData", lastHistoryData)
     const reprocessState = cutDataState?.find(cut => cut.id === lastHistoryData?.uniqid)
-    console.log(uuidState, "reprocessStatereprocessState", reprocessState)
+    // console.log(uuidState, "reprocessStatereprocessState", reprocessState)
     return (
         <>
             <div>
