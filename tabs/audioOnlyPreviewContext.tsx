@@ -497,7 +497,10 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
                 url.current = newBlobUrl;
             }
 
-            setTrimState(lastState.trimState);
+            setTimeout(() => {
+                setTrimState(lastState.trimState);
+            }, 500)
+
             setIsAuphonicUiMode(lastState.isAuphonicMode);
             // Remove the last state from history
             setHistory(history.slice(0, -1));
@@ -536,7 +539,9 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
                 url.current = newBlobUrl;
             }
 
-            setTrimState(redoState.trimState);
+            setTimeout(() => {
+                setTrimState(redoState.trimState);
+            }, 500)
             setIsAuphonicUiMode(redoState.isAuphonicMode);
             // Remove the used redo state
             setRedoHistory(redoHistory.slice(0, -1));

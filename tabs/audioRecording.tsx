@@ -21,7 +21,7 @@ let recordedChunks = [];
 let isRecordingStarted = false;
 let isRestartRecording = false
 
-const CountDown = 1
+const CountDown = 5
 const Audio = () => {
     const [isRecordingPaused, setIsRecordingPaused] = useStorage("isRecordingPaused", false);
     // const [isRecordingPaused, setIsRecordingPaused] = useState(false);

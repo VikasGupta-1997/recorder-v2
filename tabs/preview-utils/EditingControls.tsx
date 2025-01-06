@@ -51,7 +51,8 @@ const EditingControls = ({
         switchModeAudios,
         showRevertButton,
         startAuphonicAudioProcessing,
-        cutDataState
+        cutDataState,
+        hasAudio = { current: 'true' }
     } = usePreview();
 
     const waveContainerRef = useRef<HTMLDivElement>(null);
@@ -417,7 +418,7 @@ const EditingControls = ({
                 </div>
 
                 <div className={styles["editing-actions"]} >
-                    <div>
+                    {hasAudio?.current === 'false' ? null : <div>
                         <button disabled={isPublishing} onClick={() => handleMagic()} className={`${styles["magic-btn"]} ${isPublishing ? styles["shining"] : ""}`} >
                             {isPublishing ? <span className={styles["little-spinner-loader"]}></span>
                                 : <span>
@@ -433,7 +434,7 @@ const EditingControls = ({
                             <GiSplashyStream />
                             {isPublishing ? "Uploading to the AI machine..." : "Advanced Enhancement"}
                         </p>}
-                    </div>
+                    </div>}
                     {
                         ["cut", "trim", "delete recording", "publish"].map(action => (
                             <button disabled={disableButtons(action)} onClick={() => handleClick(action)} key={action} className={action === 'publish' ? styles["publish-btn"] : ""} >

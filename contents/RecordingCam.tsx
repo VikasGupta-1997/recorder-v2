@@ -19,7 +19,7 @@ export const getStyle = () => {
   return style
 }
 
-const CountDown = 2
+const CountDown = 5
 const CustomButton = () => {
   const [mediaRecorder, setMediaRecorder] = useState(null)
   const [showStartOverlay, setShowStartOverlay] = useState(false);

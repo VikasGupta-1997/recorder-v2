@@ -45,13 +45,13 @@ const OffScreen = () => {
         isRecordingDiscarded = false
         // resetAll()
         recorder = null
-        if(window10){
-          console.log("Is window 10 call")
-          windowOnlyOptionWindow10(newStream, "./giphy.gif")
-        }else {
+        // if(window10){
+        //   console.log("Is window 10 call")
+        //   windowOnlyOptionWindow10(newStream, "./giphy.gif")
+        // }else {
           console.log("Is normal  call")
           windowOnlyOption(newStream, "./giphy.gif")
-        }
+        // }
         chrome.runtime.sendMessage({ type: "SCREEN_SHARE_WINDOW_SELECTED", selections: recordSelections })
       } else {
         recordStream()
@@ -432,7 +432,7 @@ const OffScreen = () => {
       ...(windowOnlyAudioRecord ? [windowOnlyAudioRecord] : []) // Only add audio track if it exists
     ]);
 
-    const mediaRecorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm; codecs=vp9' });
+    const mediaRecorder = new MediaRecorder(combinedStream, { mimeType: 'video/mp4' });
 
     mediaRecorder.ondataavailable = (event) => {
       if (event.data.size > 0) {
@@ -447,7 +447,7 @@ const OffScreen = () => {
     mediaRecorder.onstop = async () => {
       setRecorderState('ideal');
       if (!isRecordingDiscarded) {
-        const blob = new Blob(chunks, { type: 'video/webm' });
+        const blob = new Blob(chunks, { type: 'video/mp4' });
         // const videoUrl = URL.createObjectURL(blob);
         // const downloadLink = document.createElement('a');
         // downloadLink.href = videoUrl;

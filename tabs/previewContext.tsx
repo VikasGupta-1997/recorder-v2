@@ -36,7 +36,8 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     const auphonicPlyrRef = useRef(null)
 
     const urlParams = new URLSearchParams(window.location.search);
-    const hasAudio = urlParams.get('hasAudio');
+    const hasAudio = useRef(null);
+
     const [showAuphonicAdvanceForm, setShowAuphonicAdvanceForm] = useState(false)
     const [confirmSendToAuphonic, setConfirmSendToAuphonic] = useState(false)
     const [history, setHistory] = useState([])
@@ -282,7 +283,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
 
                 if (message?.isEdit) {
                     const window10 = navigator.userAgent.match(/Windows NT 10.0/)
-                    if(window10 && hasAudio === 'false') {
+                    if(window10 && hasAudio.current === 'false') {
                         const video = document.createElement("video");
                         video.preload = "metadata";
                         video.onloadedmetadata = async () => {
@@ -470,6 +471,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
             if (message.type === "ffmpeg-loaded") {
                 setIsFfmpegLoaded(true)
                 console.log("ffmpeg-loaded Call from Demo!!")
+                hasAudio.current = message.hasAudio
                 chrome.runtime.sendMessage({type: "START_UPLOAD_CHUNKS"})
             }
             if (message.type === "ffmpeg-load-error") {
@@ -564,7 +566,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
             }
             setTimeout(() => {
                 setTrimState(lastState.trimState);
-            }, 300)
+            }, 500)
             setIsAuphonicUiMode(lastState.isAuphonicMode);
 
             // Remove the last state from history
@@ -608,7 +610,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
             }
             setTimeout(() => {
                 setTrimState(redoState.trimState);
-            }, 300)
+            }, 500)
             setIsAuphonicUiMode(redoState.isAuphonicMode);
 
             // Remove the used redo state
@@ -716,7 +718,8 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         showConfirmation,
         auphonicProcessingError,
         setAuphonicProcessingError,
-        cutDataState
+        cutDataState,
+        hasAudio
     };
 
     return (

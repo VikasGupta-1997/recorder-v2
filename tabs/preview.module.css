@@ -6,6 +6,7 @@
   flex-direction: column;
   margin-top: 1.5rem;
   height: 100vh;
+  padding-bottom: 2rem;
 }
 
 .react-player-wrapper-video {
@@ -357,7 +358,7 @@ video {
 
 .editing-container .editing-actions {
   display: flex;
-  gap: 16px;
+  gap: 12px;
   flex-wrap: wrap;
   align-items: start;
 }
@@ -922,6 +923,7 @@ video {
   gap: 2rem;
   justify-content: center;
   align-items: center;
+  padding-bottom: 2rem;
 }
 
 .auphonic-video {

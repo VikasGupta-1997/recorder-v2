@@ -366,7 +366,7 @@ const DemoSand = () => {
       console.log("Loading FFmpeg...");
       await ffmpegInstance.current.load();
       console.log("FFmpeg Loaded!", ffmpegInstance.current?.isLoaded());
-      sendMessage({ type: "ffmpeg-loaded" });
+      sendMessage({ type: "ffmpeg-loaded", hasAudio });
       // Notify the parent (background or popup script) that FFmpeg is ready
       // window.parent.postMessage({ type: "ready" }, "*");
     } catch (error) {

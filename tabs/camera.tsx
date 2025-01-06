@@ -20,7 +20,7 @@ let recorder;
 let isRecordingStarted = false;
 let recordedChunksV = []
 let isRestartRecording = false
-const CountDown = 2
+const CountDown = 5
 
 const Camera = () => {
     const [mediaRecorder, setMediaRecorder] = useState(null);
