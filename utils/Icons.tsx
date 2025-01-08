@@ -2,9 +2,9 @@ export const ScreenAndCam = () => <svg xmlns="http://www.w3.org/2000/svg" width=
   <g id="Group_18246" data-name="Group 18246" transform="translate(-129.6 -475)">
     <g id="Group_18239" data-name="Group 18239" transform="translate(130.6 476)">
       <g id="monitor" transform="translate(0 0)">
-        <rect id="Rectangle_16999" data-name="Rectangle 16999" width="35" height="24" rx="2" fill="none" stroke="#21455e" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
-        <line id="Line_557" data-name="Line 557" x2="13" transform="translate(11 30)" fill="none" stroke="#21455e" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
-        <line id="Line_558" data-name="Line 558" y2="6" transform="translate(17 24)" fill="none" stroke="#21455e" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
+        <rect id="Rectangle_16999" data-name="Rectangle 16999" width="35" height="24" rx="2" fill="none" stroke="#21455e" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+        <line id="Line_557" data-name="Line 557" x2="13" transform="translate(11 30)" fill="none" stroke="#21455e" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+        <line id="Line_558" data-name="Line 558" y2="6" transform="translate(17 24)" fill="none" stroke="#21455e" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
       </g>
     </g>
     <g id="Group_18244" data-name="Group 18244" transform="translate(153.784 491.959)">
@@ -17,9 +17,9 @@ export const ScreenAndCam = () => <svg xmlns="http://www.w3.org/2000/svg" width=
 export const ScreenOnly = () => <svg xmlns="http://www.w3.org/2000/svg" width="37" height="32" viewBox="0 0 37 32">
   <g id="Group_18239" data-name="Group 18239" transform="translate(1 1)">
     <g id="monitor" transform="translate(0 0)">
-      <rect id="Rectangle_16999" data-name="Rectangle 16999" width="35" height="24" rx="2" fill="none" stroke="#21455e" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
-      <line id="Line_557" data-name="Line 557" x2="13" transform="translate(11 30)" fill="none" stroke="#21455e" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
-      <line id="Line_558" data-name="Line 558" y2="6" transform="translate(17 24)" fill="none" stroke="#21455e" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
+      <rect id="Rectangle_16999" data-name="Rectangle 16999" width="35" height="24" rx="2" fill="none" stroke="#21455e" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+      <line id="Line_557" data-name="Line 557" x2="13" transform="translate(11 30)" fill="none" stroke="#21455e" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+      <line id="Line_558" data-name="Line 558" y2="6" transform="translate(17 24)" fill="none" stroke="#21455e" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
     </g>
   </g>
 </svg>
@@ -31,8 +31,8 @@ export const CameraOnly = () => <svg xmlns="http://www.w3.org/2000/svg" width="4
 
 export const Camera = () => <svg xmlns="http://www.w3.org/2000/svg" width="15.509" height="12.962" viewBox="0 0 15.509 12.962">
   <g id="camera" transform="translate(-0.25 -2.25)">
-    <path id="Path_10093" data-name="Path 10093" d="M15.009,13.188a1.274,1.274,0,0,1-1.274,1.274H2.274A1.274,1.274,0,0,1,1,13.188v-7A1.274,1.274,0,0,1,2.274,4.91H4.821L6.094,3H9.915l1.274,1.91h2.547a1.274,1.274,0,0,1,1.274,1.274Z" fill="none" stroke="#21455e" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" />
-    <circle id="Ellipse_4485" data-name="Ellipse 4485" cx="2.492" cy="2.492" r="2.492" transform="translate(5.512 7.069)" fill="none" stroke="#21455e" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" />
+    <path id="Path_10093" data-name="Path 10093" d="M15.009,13.188a1.274,1.274,0,0,1-1.274,1.274H2.274A1.274,1.274,0,0,1,1,13.188v-7A1.274,1.274,0,0,1,2.274,4.91H4.821L6.094,3H9.915l1.274,1.91h2.547a1.274,1.274,0,0,1,1.274,1.274Z" fill="none" stroke="#21455e" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
+    <circle id="Ellipse_4485" data-name="Ellipse 4485" cx="2.492" cy="2.492" r="2.492" transform="translate(5.512 7.069)" fill="none" stroke="#21455e" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
   </g>
 </svg>
 
@@ -55,34 +55,34 @@ export const AudioOnly = () => <svg xmlns="http://www.w3.org/2000/svg" width="42
 
 export const Mic = () => <svg xmlns="http://www.w3.org/2000/svg" width="11.819" height="17.608" viewBox="0 0 11.819 17.608">
   <g id="mic" transform="translate(-4.25 -0.25)">
-    <path id="Path_10091" data-name="Path 10091" d="M11.211,1A2.211,2.211,0,0,0,9,3.211v5.9a2.211,2.211,0,0,0,4.423,0v-5.9A2.211,2.211,0,0,0,11.211,1Z" transform="translate(-1.052)" fill="none" stroke="#21455e" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" />
-    <path id="Path_10092" data-name="Path 10092" d="M15.319,10v1.474A5.16,5.16,0,0,1,5,11.474V10" transform="translate(0 -2.366)" fill="none" stroke="#21455e" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" />
-    <line id="Line_566" data-name="Line 566" y2="3" transform="translate(10.16 14.108)" fill="none" stroke="#21455e" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" />
-    <line id="Line_567" data-name="Line 567" x2="6" transform="translate(7.16 17.108)" fill="none" stroke="#21455e" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" />
+    <path id="Path_10091" data-name="Path 10091" d="M11.211,1A2.211,2.211,0,0,0,9,3.211v5.9a2.211,2.211,0,0,0,4.423,0v-5.9A2.211,2.211,0,0,0,11.211,1Z" transform="translate(-1.052)" fill="none" stroke="#21455e" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
+    <path id="Path_10092" data-name="Path 10092" d="M15.319,10v1.474A5.16,5.16,0,0,1,5,11.474V10" transform="translate(0 -2.366)" fill="none" stroke="#21455e" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
+    <line id="Line_566" data-name="Line 566" y2="3" transform="translate(10.16 14.108)" fill="none" stroke="#21455e" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
+    <line id="Line_567" data-name="Line 567" x2="6" transform="translate(7.16 17.108)" fill="none" stroke="#21455e" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
   </g>
 </svg>
 
 export const MicOff = () => <svg xmlns="http://www.w3.org/2000/svg" width="15.119" height="15.119" viewBox="0 0 15.119 15.119">
   <g id="mic-off" transform="translate(0.061 0.062)">
-    <line id="Line_559" data-name="Line 559" x2="12.998" y2="12.998" transform="translate(1 0.999)" fill="none" stroke="#21455e" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" />
-    <path id="Path_10088" data-name="Path 10088" d="M9,5.725V7.5A1.772,1.772,0,0,0,12.025,8.75m.52-2.824V2.771a1.772,1.772,0,0,0-3.509-.354" transform="translate(-3.273)" fill="none" stroke="#21455e" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" />
-    <path id="Path_10089" data-name="Path 10089" d="M12.09,14.106A4.136,4.136,0,0,1,5,11.182V10m8.272,0v1.182a4.136,4.136,0,0,1-.065.727" transform="translate(-1.637 -3.684)" fill="none" stroke="#21455e" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" />
-    <line id="Line_560" data-name="Line 560" y2="2.363" transform="translate(7.499 11.634)" fill="none" stroke="#21455e" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" />
-    <line id="Line_561" data-name="Line 561" x2="4.727" transform="translate(5.136 13.997)" fill="none" stroke="#21455e" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" />
+    <line id="Line_559" data-name="Line 559" x2="12.998" y2="12.998" transform="translate(1 0.999)" fill="none" stroke="#21455e" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
+    <path id="Path_10088" data-name="Path 10088" d="M9,5.725V7.5A1.772,1.772,0,0,0,12.025,8.75m.52-2.824V2.771a1.772,1.772,0,0,0-3.509-.354" transform="translate(-3.273)" fill="none" stroke="#21455e" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
+    <path id="Path_10089" data-name="Path 10089" d="M12.09,14.106A4.136,4.136,0,0,1,5,11.182V10m8.272,0v1.182a4.136,4.136,0,0,1-.065.727" transform="translate(-1.637 -3.684)" fill="none" stroke="#21455e" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
+    <line id="Line_560" data-name="Line 560" y2="2.363" transform="translate(7.499 11.634)" fill="none" stroke="#21455e" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
+    <line id="Line_561" data-name="Line 561" x2="4.727" transform="translate(5.136 13.997)" fill="none" stroke="#21455e" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
   </g>
 </svg>
 
 export const CameraInOptions = () => <svg xmlns="http://www.w3.org/2000/svg" width="15.509" height="12.962" viewBox="0 0 15.509 12.962">
   <g id="camera" transform="translate(-0.25 -2.25)">
-    <path id="Path_10093" data-name="Path 10093" d="M15.009,13.188a1.274,1.274,0,0,1-1.274,1.274H2.274A1.274,1.274,0,0,1,1,13.188v-7A1.274,1.274,0,0,1,2.274,4.91H4.821L6.094,3H9.915l1.274,1.91h2.547a1.274,1.274,0,0,1,1.274,1.274Z" fill="none" stroke="#21455e" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" />
-    <circle id="Ellipse_4485" data-name="Ellipse 4485" cx="2.492" cy="2.492" r="2.492" transform="translate(5.512 7.069)" fill="none" stroke="#21455e" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" />
+    <path id="Path_10093" data-name="Path 10093" d="M15.009,13.188a1.274,1.274,0,0,1-1.274,1.274H2.274A1.274,1.274,0,0,1,1,13.188v-7A1.274,1.274,0,0,1,2.274,4.91H4.821L6.094,3H9.915l1.274,1.91h2.547a1.274,1.274,0,0,1,1.274,1.274Z" fill="none" stroke="#21455e" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
+    <circle id="Ellipse_4485" data-name="Ellipse 4485" cx="2.492" cy="2.492" r="2.492" transform="translate(5.512 7.069)" fill="none" stroke="#21455e" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
   </g>
 </svg>
 
 export const CameraOff = () => <svg xmlns="http://www.w3.org/2000/svg" width="14.444" height="14.121" viewBox="0 0 14.444 14.121">
   <g id="camera-off" transform="translate(-0.25 -0.411)">
-    <path id="Path_10090" data-name="Path 10090" d="M12.767,13.591H2.177A1.177,1.177,0,0,1,1,12.414V5.942A1.177,1.177,0,0,1,2.177,4.765H3.942M5.707,3h3.53l1.177,1.765h2.353a1.177,1.177,0,0,1,1.177,1.177v5.5M9.4,10.225A2.353,2.353,0,1,1,6.131,6.954" transform="translate(0 -0.823)" fill="none" stroke="#21455e" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" />
-    <line id="Line_565" data-name="Line 565" x2="12" y2="12" transform="translate(1.472 1.472)" fill="none" stroke="#21455e" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" />
+    <path id="Path_10090" data-name="Path 10090" d="M12.767,13.591H2.177A1.177,1.177,0,0,1,1,12.414V5.942A1.177,1.177,0,0,1,2.177,4.765H3.942M5.707,3h3.53l1.177,1.765h2.353a1.177,1.177,0,0,1,1.177,1.177v5.5M9.4,10.225A2.353,2.353,0,1,1,6.131,6.954" transform="translate(0 -0.823)" fill="none" stroke="#21455e" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
+    <line id="Line_565" data-name="Line 565" x2="12" y2="12" transform="translate(1.472 1.472)" fill="none" stroke="#21455e" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
   </g>
 </svg>
 
@@ -91,14 +91,14 @@ export const AdiloLogo = () => <svg xmlns="http://www.w3.org/2000/svg" xmlnsXlin
     <filter id="Rectangle_2" x="0" y="0" width="65" height="67" filterUnits="userSpaceOnUse">
       <feOffset dy="6" />
       <feGaussianBlur stdDeviation="3" result="blur" />
-      <feFlood flood-opacity="0.259" />
+      <feFlood floodOpacity="0.259" />
       <feComposite operator="in" in2="blur" />
       <feComposite in="SourceGraphic" />
     </filter>
   </defs>
   <g id="record-button" transform="translate(9.214 3.365)">
     <g transform="matrix(1, 0, 0, 1, -9.21, -3.36)" filter="url(#Rectangle_2)">
-      <rect id="Rectangle_2-2" data-name="Rectangle 2" width="46" height="48" rx="12" transform="translate(9.5 3.5)" fill="#fff" stroke="#e2e5ed" stroke-width="1" />
+      <rect id="Rectangle_2-2" data-name="Rectangle 2" width="46" height="48" rx="12" transform="translate(9.5 3.5)" fill="#fff" stroke="#e2e5ed" strokeWidth="1" />
     </g>
     <g id="Group_2" data-name="Group 2" transform="translate(-179.726 -411.781)">
       <g id="Group_1" data-name="Group 1" transform="translate(185.5 417.347)">
@@ -109,6 +109,46 @@ export const AdiloLogo = () => <svg xmlns="http://www.w3.org/2000/svg" xmlnsXlin
     </g>
   </g>
 </svg>
+
+export const RoundedUser = () => <svg id="Group_17082" data-name="Group 17082" xmlns="http://www.w3.org/2000/svg" width="28.577" height="28.577" viewBox="0 0 28.577 28.577">
+<circle id="Ellipse_4183" data-name="Ellipse 4183" cx="12.379" cy="12.379" r="12.379" transform="translate(2.045 1.926)" fill="#21455e"/>
+<g id="noun_profile_1995071" transform="translate(0 0)">
+  <path id="Path_9196" data-name="Path 9196" d="M16.788,2.5A14.288,14.288,0,1,0,31.077,16.788,14.3,14.3,0,0,0,16.788,2.5Zm0,8.182a4.482,4.482,0,1,1-4.482,4.482A4.493,4.493,0,0,1,16.788,10.682ZM8.967,25.452V24.79a3.46,3.46,0,0,1,3.459-3.459H21.15a3.46,3.46,0,0,1,3.459,3.459v.662a11.671,11.671,0,0,1-15.642,0Z" transform="translate(-2.5 -2.5)" fill="#e2e5ed"/>
+</g>
+</svg>
+
+export const Home = () => <svg xmlns="http://www.w3.org/2000/svg" width="19.5" height="21.5" viewBox="0 0 19.5 21.5">
+<g id="home" transform="translate(-2.25 -1.25)">
+  <path id="Path_10012" data-name="Path 10012" d="M3,9l9-7,9,7V20a2,2,0,0,1-2,2H5a2,2,0,0,1-2-2Z" fill="none" stroke="#000" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5"/>
+  <path id="Path_10013" data-name="Path 10013" d="M9,22V12h6V22" fill="none" stroke="#000" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5"/>
+</g>
+</svg>
+
+export const OpenOptions = () => <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 40 40">
+<g id="Group_18273" data-name="Group 18273" transform="translate(-440.5 -353)">
+  <g id="Group_17090" data-name="Group 17090" transform="translate(-525.5 34)">
+    <circle id="Ellipse_4322" data-name="Ellipse 4322" cx="2.5" cy="2.5" r="2.5" transform="translate(991 337)"/>
+    <circle id="Ellipse_4321" data-name="Ellipse 4321" cx="2.5" cy="2.5" r="2.5" transform="translate(983 337)"/>
+    <circle id="Ellipse_4320" data-name="Ellipse 4320" cx="2.5" cy="2.5" r="2.5" transform="translate(975 337)"/>
+  </g>
+  <g id="Ellipse_4325" data-name="Ellipse 4325" transform="translate(440.5 353)" fill="none" stroke="#e2e5ed" strokeWidth="1">
+    <circle cx="20" cy="20" r="18" stroke="none"/>
+    <circle cx="20" cy="20" r="17.5" fill="none"/>
+  </g>
+</g>
+</svg>
+
+export const LogoutSvg = () => <svg xmlns="http://www.w3.org/2000/svg" width="14.098" height="12.696" viewBox="0 0 14.098 12.696">
+<g id="log-out" transform="translate(-2.25 -2.25)">
+  <path id="Path_10014" data-name="Path 10014" d="M6.732,14.2H4.244A1.244,1.244,0,0,1,3,12.952V4.244A1.244,1.244,0,0,1,4.244,3H6.732" fill="none" stroke="#000" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5"/>
+  <path id="Path_10015" data-name="Path 10015" d="M16,13.22l3.11-3.11L16,7" transform="translate(-3.512 -1.512)" fill="none" stroke="#000" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5"/>
+  <line id="Line_8" data-name="Line 8" x1="8" transform="translate(6.598 8.598)" fill="none" stroke="#000" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"/>
+</g>
+</svg>
+
+
+
+
 
 
 

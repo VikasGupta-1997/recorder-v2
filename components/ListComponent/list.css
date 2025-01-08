@@ -1,0 +1,5 @@
+.truncate-text {
+    white-space: nowrap;  /* Prevent text wrapping */
+    overflow: hidden;     /* Hide overflow text */
+    text-overflow: ellipsis; /* Add '...' at the end */
+  }

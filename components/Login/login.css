@@ -1,0 +1,96 @@
+/* Tab styling */
+.tabs {
+    @apply flex gap-6 justify-center;
+}
+
+.tab {
+    padding: 10px 32px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.tab.active {
+    /* background-color: #e0e0e0; */
+    /* font-weight: bold; */
+}
+
+/* Tabs container */
+.tabs-container {
+    position: relative;
+    /* overflow: hidden; */
+    width: 100%;
+    /* min-height: 250px;
+    max-height: 500px; */
+    /* height: 100px; */
+    /* border: 1px solid #ddd; */
+    margin-top: 0px;
+}
+
+/* Tab content */
+.tab-content {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 100%; /* Start off-screen */
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.5s ease-in-out;
+    /* background-color: #f9f9f9; */
+    display: flex;
+    justify-content: center;
+}
+
+.tab-content.active {
+    left: 0; /* Slide into view */
+    opacity: 1;
+    transform: translateX(0);
+    /* border: 1px solid #ddd; */
+}
+
+.tab-content:not(.active) {
+    left: -100%; /* Slide out of view */
+    opacity: 0;
+  transform: translateX(-100%);
+}
+
+.tabs-container button, .tabs button {
+    @apply h-[40px]  rounded-[48px] opacity-100 flex items-center justify-center gap-4;
+  }
+
+  form {
+    @apply w-full;
+  }
+
+  button:disabled {
+    opacity: 0.5;
+  }
+
+.input {
+    @apply mt-4 block w-full p-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-[3rem] focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500;
+}
+
+.prefix {
+   @apply ps-4 pe-10 
+}
+
+.welcome {
+    @apply text-2xl  text-center;
+}
+
+.loader {
+    width: 60px;
+    aspect-ratio: 4;
+    --_g: no-repeat radial-gradient(circle closest-side,#1780d8 90%,#0000);
+    background: 
+      var(--_g) 0%   50%,
+      var(--_g) 50%  50%,
+      var(--_g) 100% 50%;
+    background-size: calc(100%/3) 100%;
+    animation: l7 1s infinite linear;
+  }
+  @keyframes l7 {
+      33%{background-size:calc(100%/3) 0%  ,calc(100%/3) 100%,calc(100%/3) 100%}
+      50%{background-size:calc(100%/3) 100%,calc(100%/3) 0%  ,calc(100%/3) 100%}
+      66%{background-size:calc(100%/3) 100%,calc(100%/3) 100%,calc(100%/3) 0%  }
+  }

@@ -3,15 +3,22 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import Header from '~components/Header'
 import RecordingSection from '~components/RecordingSection'
 import Footer from '~components/Footer'
+import LoginForm from '~components/Login'
 
 import './styles.css'
 import { defaultRecordingOptions, callBackConstants, storageKeys, screenRecordingOptions } from '~utils/constants'
 import formatTime from '~utils/formatTime'
+import useStorage from '~useStorageCustom'
+import ListComponent from '~components/ListComponent'
 
 let tabId;
 function IndexPopup() {
   const formattedTimeRef = useRef(null)
+  const [activeTab, setActiveTab] = useState("login");
 
+  const mainDivRef = useRef(null)
+  const [isLoggedIn, setIsLoggedIn] = useStorage("isLoggedIn", false)
+  const [inRecordingMode, setInRecordingMode] = useState(false)
   const [recordingOptions, setRecordingOptions] = useState<recordingOptions>({
     screenOptions: screenRecordingOptions,
     micOptions: [defaultRecordingOptions.micOptions],
@@ -37,8 +44,8 @@ function IndexPopup() {
     } else {
       micRecording = micOptions?.find(mic => mic?.label?.startsWith("Default"))
       chrome.storage.local.get(["firstMicSet"], async result => {
-        if(!result.firstMicSet){
-           await chrome.storage.local.set({"firstMicSet": micRecording})
+        if (!result.firstMicSet) {
+          await chrome.storage.local.set({ "firstMicSet": micRecording })
         }
       })
     }
@@ -83,19 +90,19 @@ function IndexPopup() {
       setRecordingOptions({
         ...recordingOptions,
         micOptions: [defaultRecordingOptions.micOptions, ...micOptions].map(mic => {
-          if(isMicOffAndAudioOnlyRecording && mic.value === 'mic_off'){
+          if (isMicOffAndAudioOnlyRecording && mic.value === 'mic_off') {
             return {
               ...mic,
               isDisabled: true
             }
           } else {
-            return {...mic}
+            return { ...mic }
           }
         }),
         cameraOptions: [
           {
             ...defaultRecordingOptions.cameraOptions,
-            ...((result?.selectedScreenRecordings?.value === "camera_only" || isCamOffAndCamOnlyRecording)? { isDisabled: true } : { isDisabled: false })
+            ...((result?.selectedScreenRecordings?.value === "camera_only" || isCamOffAndCamOnlyRecording) ? { isDisabled: true } : { isDisabled: false })
           },
           ...cameraOptions]
       });
@@ -119,7 +126,7 @@ function IndexPopup() {
             console.log("DRTT", message)
           }
             break;
-          
+
           case "updateTimer": {
             formatTime(message.time, formattedTimeRef)
           }
@@ -128,19 +135,53 @@ function IndexPopup() {
       })
   }
 
+  const checkForLoggin = () => {
+    setIsLoggedIn(false)
+  }
+
+
   useEffect(() => {
+    checkForLoggin()
     onMountListners()
     getDeviceLists()
     return () => {
     };
   }, [])
 
+  useLayoutEffect(() => {
+    console.log("mainDivRefmainDivRef", mainDivRef)
+    if(activeTab === 'register'){
+      console.log("register Tab New Styles")
+        // mainDivRef.current.style.maxHeight = '350px'
+        // mainDivRef.current.style.minHeight = '450px'
+      // mainDivRef.current.style.height = '600px'
+    } else {
+      console.log("Login Tab")
+      // mainDivRef.current.style.maxHeight = '250px'
+      // mainDivRef.current.style.minHeight = '300px'
+      // mainDivRef.current.style.height = '300px'
+    }
+  }, [activeTab])
+
   return (
-    <main className="main">
-      <Header />
-      <RecordingSection isRecordingInProgress={isRecordingInProgress} setRecordingOptions={setRecordingOptions} recordingOptions={recordingOptions} selections={selections} setSelections={setSelections} />
-      <Footer formattedTimeRef={formattedTimeRef} isRecordingInProgress={isRecordingInProgress} selections={selections} />
-    </main>
+      <main ref={mainDivRef} className="main">
+        <Header setInRecordingMode={setInRecordingMode} isLoggedIn={isLoggedIn} inRecordingMode={inRecordingMode} />
+        {
+          isLoggedIn ? <>
+            {
+              inRecordingMode ? <>
+              <RecordingSection isRecordingInProgress={isRecordingInProgress} setRecordingOptions={setRecordingOptions} recordingOptions={recordingOptions} selections={selections} setSelections={setSelections} />
+              <Footer formattedTimeRef={formattedTimeRef} isRecordingInProgress={isRecordingInProgress} selections={selections} />
+              </> : 
+              <>
+                <ListComponent setInRecordingMode={setInRecordingMode} />
+              </>
+            }
+          </> : <>
+            <LoginForm activeTab={activeTab} setActiveTab={setActiveTab} setIsLoggedIn={setIsLoggedIn} />
+          </>
+        }
+      </main>
   )
 }
 
