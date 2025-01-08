@@ -78,7 +78,8 @@ function PreviewPage() {
         showConfirmation,
         auphonicProcessingError,
         setAuphonicProcessingError,
-        cutDataState
+        cutDataState,
+        auphonicAlgorithm
     } = usePreview();
     const [showGhost, setShowGhost] = useState(false);
 
@@ -165,7 +166,7 @@ function PreviewPage() {
                 onSubmit={startAuphonicAudioProcessing}
                 title="Audio Enhancement"
                 onClose={() => setConfirmSendToAuphonic(false)} />}
-            {showAuphonicAdvanceForm && <AdvanceAuphonicForm startAuphonicAudioProcessing={startAuphonicAudioProcessing} uuidState={uuidState} setConfirmSendToAuphonic={setConfirmSendToAuphonic} onClose={() => setShowAuphonicAdvanceForm(false)} />}
+            {showAuphonicAdvanceForm && <AdvanceAuphonicForm auphonicAlgorithm={auphonicAlgorithm} startAuphonicAudioProcessing={startAuphonicAudioProcessing} uuidState={uuidState} setConfirmSendToAuphonic={setConfirmSendToAuphonic} onClose={() => setShowAuphonicAdvanceForm(false)} />}
             {isPublishing && <>
                 <div className={style["full-screen-loader"]} />
                 <div className={style['overlay']} />

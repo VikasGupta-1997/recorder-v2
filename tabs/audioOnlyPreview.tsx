@@ -75,7 +75,8 @@ function PreviewPage() {
         setConfirmSendToAuphonic,
         startAuphonicAudioProcessing,
         auphonicProcessingError,
-        setAuphonicProcessingError
+        setAuphonicProcessingError,
+        auphonicAlgorithm
     } = useAudioOnlyPreview();
     const [showGhost, setShowGhost] = useState(false);
     const containerRef = useRef(null)
@@ -148,7 +149,7 @@ function PreviewPage() {
                 </div>}
                 title="Audio Enhancement"
                 onClose={() => setConfirmSendToAuphonic(false)} />}
-            {showAuphonicAdvanceForm && <AdvanceAuphonicForm startAuphonicAudioProcessing={startAuphonicAudioProcessing} uuidState={null} setConfirmSendToAuphonic={setConfirmSendToAuphonic} onClose={() => setShowAuphonicAdvanceForm(false)} />}
+            {showAuphonicAdvanceForm && <AdvanceAuphonicForm auphonicAlgorithm={auphonicAlgorithm} startAuphonicAudioProcessing={startAuphonicAudioProcessing} uuidState={null} setConfirmSendToAuphonic={setConfirmSendToAuphonic} onClose={() => setShowAuphonicAdvanceForm(false)} />}
             {(isPublishing || isStreamLoading) && <>
                 <div className={style["full-screen-loader"]} />
                 <div className={style['overlay']} />

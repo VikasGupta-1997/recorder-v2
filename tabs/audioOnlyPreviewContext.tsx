@@ -26,6 +26,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
         blob: new Blob(), url: ''
     })
     const originalDuration = useRef(0)
+    const auphonicAlgorithm = useRef(null)
     const [isVideoEndcoding, setIsVideoEncoding] = useState(true)
     const [loadingVideo, setLoadingVideo] = useState(true)
     const [showAuphonicAdvanceForm, setShowAuphonicAdvanceForm] = useState(false)
@@ -587,12 +588,17 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
         setConfirmSendToAuphonic(false)
         chrome.storage.local.get(['advanceAuphonicSettings'], async result => {
             let sendData;
-            if (result?.advanceAuphonicSettings && result?.advanceAuphonicSettings?.trackCutting) {
-                sendData = result?.advanceAuphonicSettings
-            } else {
-                sendData = defaultAdvanceAuphonicState
-            }
+            // if (result?.advanceAuphonicSettings && result?.advanceAuphonicSettings?.trackCutting) {
+            //     sendData = result?.advanceAuphonicSettings
+            // } else {
+            //     sendData = defaultAdvanceAuphonicState
+            // }
             try {
+                if(auphonicAlgorithm.current) {
+                    sendData = auphonicAlgorithm.current
+                } else {
+                    sendData = defaultAdvanceAuphonicState
+                }
                 switchModeAudios.current.originalAudio = blob;
                 const {file, uuid, fileName} = await onSubmitAdvanceAuphonic(sendData, blob, setIspublishing, uuidRef, setUuid, fileNameRef, isAuphonicSubmitted, switchModeAudios.current, latestAuphonicDataRef.current)
                 switchModeAudios.current.auphonicAudio = file
@@ -676,7 +682,8 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
         isAuphonicUiMode,
         cutDataState,
         auphonicProcessingError,
-        setAuphonicProcessingError
+        setAuphonicProcessingError,
+        auphonicAlgorithm
     };
 
     return (

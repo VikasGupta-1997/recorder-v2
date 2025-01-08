@@ -58,6 +58,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     const showConfirmation = useRef(true)
     const currentUniqid = useRef(null)
     const audioF = useRef(null)
+    const auphonicAlgorithm = useRef(null)
     const switchModeAudios = useRef({
         auphonicAudio: null,
         originalAudio: null,
@@ -350,12 +351,23 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                 setConfirmSendToAuphonic(false)
                 chrome.storage.local.get(['advanceAuphonicSettings'], async result => {
                     let sendData;
-                    if (result?.advanceAuphonicSettings && result?.advanceAuphonicSettings?.trackCutting) {
-                        sendData = result?.advanceAuphonicSettings
-                    } else {
-                        sendData = defaultAdvanceAuphonicState
-                    }
+                    console.log("resultadvanceAuphonicSettings=>", result)
+                    // if (result?.advanceAuphonicSettings && result?.advanceAuphonicSettings?.trackCutting) {
+                    //     console.log("In Advance Method Mode !!")
+                    //     sendData = result?.advanceAuphonicSettings
+                    // } else {
+                    //     console.log("In Default Method Mode !!")
+                    //     sendData = defaultAdvanceAuphonicState
+                    // }
+                    console.log("auphonicAlgorithm====>", auphonicAlgorithm.current)
+                    
                     try {
+                        if(auphonicAlgorithm.current) {
+                            sendData = auphonicAlgorithm.current
+                        } else {
+                            sendData = defaultAdvanceAuphonicState
+                        }
+                        console.log("sendDatasendData==>", sendData)
                         switchModeAudios.current.originalAudio = message.blob;
                         // console.log(latestAuphonicDataRef.current, "latestAuphonicDatalatestAuphonicData 318", latestAuphonicData)
                         const { file, uuid, fileName } = await onSubmitAdvanceAuphonic(sendData, message.blob, setIspublishing, uuidRef, setUuid, fileNameRef, isAuphonicSubmitted, switchModeAudios.current, latestAuphonicDataRef.current)
@@ -719,7 +731,8 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         auphonicProcessingError,
         setAuphonicProcessingError,
         cutDataState,
-        hasAudio
+        hasAudio,
+        auphonicAlgorithm
     };
 
     return (

@@ -215,71 +215,6 @@ const LoginForm = ({ setIsLoggedIn, activeTab, setActiveTab }) => {
     const handleLoginSubmit = async (e) => {
         e.preventDefault()
         console.log("State", state)
-        console.log("redirectUrl1212", chrome.identity.getRedirectURL())
-        // const redirectUrl = chrome.identity.getRedirectURL();
-        // // const redirectUrl = "https://kpmhhbfkoncghnknlokeklgdlekmnigo.chromiumapp.org/";
-        // const config = await fetchAuthConfig();
-        // console.log("configconfig", config)
-        // // Generate code verifier and code challenge
-        // const verifier = buf2Base64(getRandomBytes());
-        // const shaHash = await windowSha256(verifier);
-        // const codeChallenge = buf2Base64(shaHash);
-        // // Build the authorization URL
-        // const options = {
-        //     client_id: config.clientId,
-        //     redirect_uri: redirectUrl,
-        //     response_type: "code",
-        //     audience: config.audience,
-        //     scope: "openid",
-        //     code_challenge: codeChallenge,
-        //     code_challenge_method: "S256",
-        // };
-        // const queryString = new URLSearchParams(options).toString();
-        // const authUrl = `https://${config.domain}/authorize?${new URLSearchParams(options).toString()}`;
-        // // const authUrl = `https://${config.domain}/authorize?${queryString}`;
-        // console.log(options,"authUrlauthUrl", authUrl)
-        // // Launch WebAuthFlow
-        // const resultUrl = await new Promise<string | null>((resolve, reject) => {
-        //     chrome.identity.launchWebAuthFlow({ url: authUrl, interactive: true }, (url) => {
-        //     if (chrome.runtime.lastError) {
-        //         console.log("Erroor", chrome.runtime.lastError.message)
-        //         reject(chrome.runtime.lastError.message);
-        //     } else {
-        //         resolve(url);
-        //     }
-        //     });
-        // });
-        // console.log("resultUrlresultUrl OPOPOP" ,resultUrl)
-        // if (resultUrl) {
-        //     const code = getParameterByName("code", resultUrl);
-        //     if (!code) {
-        //         console.error("Authorization code not found");
-        //         return;
-        //     }
-        //      // Exchange the code for a token
-        //     const body = {
-        //         redirect_uri: redirectUrl,
-        //         grant_type: "authorization_code",
-        //         client_id: config.clientId,
-        //         code_verifier: verifier,
-        //         code,
-        //     };
-        //     console.log("bodybody", body)
-        //     const response = await fetch(`https://${config.domain}/oauth/token`, {
-        //         method: "POST",
-        //         headers: { "Content-Type": "application/json" },
-        //         body: JSON.stringify(body),
-        //       });
-        //     const result = await response.json();
-        //     console.log("resultresult", result)
-        //     if (result.access_token) {
-        //         // setAccessToken(result.access_token);
-        //         console.log("Access Token:", result.access_token);
-        //     } else {
-        //         console.error("Failed to get access token");
-        //     }
-        // }
-
         authenticateUser(state.userName, state.password);
     }
 
@@ -327,45 +262,6 @@ const LoginForm = ({ setIsLoggedIn, activeTab, setActiveTab }) => {
         }
     }
 
-    async function exchangeAuthorizationCodeForTokens(authorizationCode, redirectUri) {
-        chrome.runtime.sendMessage({ type: "FROM_LOGIN_SUCCESS_CALL_2" })
-        const tokenEndpoint = `https://dev-avzj5r1tnyppqkol.us.auth0.com/oauth/token`;
-
-        const body = {
-            grant_type: "authorization_code",
-            client_id: "93MyrkvkXURMu8Otd0xda9cKIersXV8X",
-            client_secret: clientSecret, // Include only if required by Auth0
-            code: authorizationCode,
-            redirect_uri: redirectUri,
-        };
-
-        try {
-            const response = await fetch(tokenEndpoint, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(body),
-            });
-
-            const tokenData = await response.json();
-
-            if (!response.ok) {
-                throw new Error(tokenData.error_description || "Token exchange failed");
-            }
-
-            console.log("Access Token:", tokenData.access_token);
-            console.log("ID Token:", tokenData.id_token);
-            chrome.runtime.sendMessage({ type: "FROM_LOGIN_SUCCESS_CALL_1" })
-            // Save tokens securely (optional)
-            chrome.storage.local.set({ accessToken: tokenData.access_token, idToken: tokenData.id_token }, () => {
-                console.log("Tokens saved to Chrome storage");
-                setIsLoggedIn(true)
-            });
-        } catch (error) {
-            console.error("Error exchanging tokens:", error);
-        }
-    }
 
     const logout = async () => {
         await chrome.identity.clearAllCachedAuthTokens();

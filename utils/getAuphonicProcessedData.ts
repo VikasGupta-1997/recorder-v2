@@ -21,6 +21,7 @@ export default function getAuphonicProcessedData(data){
             processedData['deverbamount'] = data.noiseReduction.removereverb.value;
             processedData['debreathamount'] = data.noiseReduction.removeBreathing.value;
         } else {
+            processedData['denoisemethod'] = data.noiseReduction.denoiseMethod.value;
             processedData['denoiseamount'] = data.noiseReduction.removeNoiseStatic.value;
             processedData['dehum'] = data.noiseReduction.humBaseFrequency.value;
             processedData['dehumamount'] = data.noiseReduction.humReductionAmount.value;

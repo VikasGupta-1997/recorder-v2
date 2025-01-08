@@ -19,24 +19,16 @@ export const fetchMp3File = async (url) => {
 };
 
 export default async function onSubmitAdvanceAuphonic(data, blob, setIspublishing, uuidRef, setUuid, fileNameRef, isAuphonicSubmitted, switchModeAudios, latestAuphonicDataRef) {
-    console.log("Data=======>", latestAuphonicDataRef)
     const generatedData = getAuphonicProcessedData(data)
     let sendData = { algorithms: { ...generatedData } }
-    // const sendData = {  }
-    // console.log("generatedData", sendData)
     let downloadUrl;
     let uuidResp;
     let fileName;
     setIspublishing(true)
-    const fileUrl = 'http://localhost:8080/fetch-file?url=https://auphonic.com/api/download/audio-result/v9XA9hxzEqZF9aCGpEzj4Y/audio_1735298398132_5sohsyg9.mp3'
-    const file = await fetchMp3File(fileUrl)
-    setIspublishing(false)
-    const randomUuid = latestAuphonicDataRef?.uuid || (String.fromCharCode(65 + Math.floor(Math.random() * 26)) +  Date.now())
-    setUuid(randomUuid)
-    return {file, uuid: randomUuid, fileName: latestAuphonicDataRef?.fileName  ?  latestAuphonicDataRef?.fileName : (String.fromCharCode(65 + Math.floor(Math.random() * 26)) +  Date.now()) + '_name' + `_${Math.random() * 1000}`}
+    
     try {
+        //If latestAuphonicDataRef had no uuid it means its a new production
         if (!!!latestAuphonicDataRef?.uuid) {
-            console.log("processAudioWithAuphonic called with Blob:", blob);
             // Step 1: Create a new production
             const formData = new FormData();
             const timestamp = Date.now(); // Get current timestamp in milliseconds
@@ -45,6 +37,11 @@ export default async function onSubmitAdvanceAuphonic(data, blob, setIspublishin
             fileName = `audio_${timestamp}_${randomString}`
             fileNameRef.current = fileName
             formData.append('input_file', blob, fileName + '.mp3');
+            // Step 3: Append algorithm settings to FormData
+            Object.keys(generatedData).forEach((key) => {
+                formData.append(key, generatedData[key]);
+            });
+            // formData.append('algorithms', JSON.stringify(generatedData));
             // formData.append('input_file', new File([blob], fileName + '.mp3' , { type: blob.type }));
             // formData.append('preset', presetUuid);
             const productionResponse = await fetch(`${process.env.PLASMO_PUBLIC_AUPHONICURL}/simple/productions.json`, {
@@ -71,14 +68,12 @@ export default async function onSubmitAdvanceAuphonic(data, blob, setIspublishin
         //Extra step to add configs
         const uuid = uuidResp || latestAuphonicDataRef.uuid
         console.log("isAuphonicSubmitted==>", isAuphonicSubmitted.current)
+        //isAuphonicSubmitted ref boolean which tells if the last  data is submitted , so If true it means we are in edit mode
         if (isAuphonicSubmitted.current) {
                 sendData['reset_data'] = true
                 sendData["output_files"] = [
                     { "format": "mp3" }
                 ]
-                // sendData["cut_start"] = parseFloat(switchModeAudios.trimState.startTime.toFixed(2))
-                // sendData["cut_end"] = parseFloat(switchModeAudios.trimState.endTime.toFixed(2))
-                // sendData['output_basename'] = fileNameRef.current,
                 sendData["algorithms"] = {
                     ...sendData['algorithms'],
                 }
