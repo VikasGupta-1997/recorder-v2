@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import Header from '~components/Header'
 import RecordingSection from '~components/RecordingSection'
@@ -6,7 +6,7 @@ import Footer from '~components/Footer'
 import LoginForm from '~components/Login'
 
 import './styles.css'
-import { defaultRecordingOptions, callBackConstants, storageKeys, screenRecordingOptions } from '~utils/constants'
+import { defaultRecordingOptions, screenRecordingOptions } from '~utils/constants'
 import formatTime from '~utils/formatTime'
 import useStorage from '~useStorageCustom'
 import ListComponent from '~components/ListComponent'
@@ -14,10 +14,11 @@ import ListComponent from '~components/ListComponent'
 let tabId;
 function IndexPopup() {
   const formattedTimeRef = useRef(null)
-  const [activeTab, setActiveTab] = useState("login");
-
   const mainDivRef = useRef(null)
-  const [isLoggedIn, setIsLoggedIn] = useStorage("isLoggedIn", false)
+
+  const [userDetails, setUserDetails] = useStorage("userInfo", null)
+  const [selectedProjected, setSelectedProject] = useStorage("selectedProject", null)
+
   const [inRecordingMode, setInRecordingMode] = useState(false)
   const [recordingOptions, setRecordingOptions] = useState<recordingOptions>({
     screenOptions: screenRecordingOptions,
@@ -30,6 +31,10 @@ function IndexPopup() {
     cameraRecording: defaultRecordingOptions.cameraOptions
   })
   const [isRecordingInProgress, setIsRecordingInProgress] = useState(false)
+  const [projectList, setProjectList] = useState([])
+  const [mediaFiles, setMediaFiles] = useState([])
+  const [projectListLoading, setProjectListLoading] = useState(false)
+  const [mediaListLoading, setMediaListLoading] = useState(false)
 
   const setCurrentSelection = (selections, micOptions, cameraOptions, newDevices) => {
     let micRecording;
@@ -135,53 +140,111 @@ function IndexPopup() {
       })
   }
 
-  const checkForLoggin = () => {
-    setIsLoggedIn(false)
-  }
-
-
   useEffect(() => {
-    checkForLoggin()
     onMountListners()
     getDeviceLists()
     return () => {
     };
   }, [])
 
-  useLayoutEffect(() => {
-    console.log("mainDivRefmainDivRef", mainDivRef)
-    if(activeTab === 'register'){
-      console.log("register Tab New Styles")
-        // mainDivRef.current.style.maxHeight = '350px'
-        // mainDivRef.current.style.minHeight = '450px'
-      // mainDivRef.current.style.height = '600px'
+  const handleProjectChange = async (project) => {
+    setSelectedProject({ label: project.label, project_id: project.project_id })
+    getMediaFile(projectList, project)
+  }
+
+  const getMediaFile = async (projectList, selectedProjected) => {
+    const findIfExistsOrNot = projectList.find(project => project.project_id === selectedProjected?.project_id)
+    let tobeQueryProject;
+    if (findIfExistsOrNot) {
+      tobeQueryProject = findIfExistsOrNot
     } else {
-      console.log("Login Tab")
-      // mainDivRef.current.style.maxHeight = '250px'
-      // mainDivRef.current.style.minHeight = '300px'
-      // mainDivRef.current.style.height = '300px'
+      tobeQueryProject = projectList?.[0]
+      setSelectedProject({ label: projectList?.[0]?.label, project_id: projectList?.[0]?.project_id })
     }
-  }, [activeTab])
+    setMediaListLoading(true)
+    try {
+      const response = await fetch(`${process.env.PLASMO_PUBLIC_ADILO_API}/projects/show?id=${tobeQueryProject.project_id}&v2=true`, {
+        method: 'GET',
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${userDetails.access_token}`
+        },
+      })
+      const mediaFiles = await response.json();
+      setMediaFiles(mediaFiles?.videos || [])
+      setMediaListLoading(false)
+    } catch (error) {
+      setMediaListLoading(false)
+      console.log("Error", error)
+    }
+  }
+
+  const getProjectList = async () => {
+    setProjectListLoading(true)
+    setMediaListLoading(true)
+    try {
+      const response = await fetch(`${process.env.PLASMO_PUBLIC_ADILO_API}/projects`, {
+        method: 'GET',
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${userDetails.access_token}`
+        },
+      })
+      const projectlist = await response.json();
+      const listItems = projectlist.map(item => ({ ...item, label: item?.title }))
+      setProjectList([...listItems])
+      setProjectListLoading(false)
+      await getMediaFile([...listItems], selectedProjected)
+    } catch (error) {
+      setProjectListLoading(false)
+      console.log("Error", error)
+    }
+  }
+
+  useEffect(() => {
+    if (userDetails?.user_id) {
+      getProjectList()
+    }
+  }, [userDetails])
 
   return (
-      <main ref={mainDivRef} className="main">
-        <Header setInRecordingMode={setInRecordingMode} isLoggedIn={isLoggedIn} inRecordingMode={inRecordingMode} />
-        {
-          isLoggedIn ? <>
-            {
-              inRecordingMode ? <>
-              <RecordingSection isRecordingInProgress={isRecordingInProgress} setRecordingOptions={setRecordingOptions} recordingOptions={recordingOptions} selections={selections} setSelections={setSelections} />
-              <Footer formattedTimeRef={formattedTimeRef} isRecordingInProgress={isRecordingInProgress} selections={selections} />
-              </> : 
+    <main ref={mainDivRef} className="main">
+      <Header
+        setInRecordingMode={setInRecordingMode}
+        userDetails={userDetails}
+        inRecordingMode={inRecordingMode} />
+      {
+        userDetails?.user_id ? <>
+          {
+            inRecordingMode ? <>
+              <RecordingSection
+                isRecordingInProgress={isRecordingInProgress}
+                setRecordingOptions={setRecordingOptions}
+                recordingOptions={recordingOptions}
+                selections={selections}
+                setSelections={setSelections} />
+              <Footer
+                formattedTimeRef={formattedTimeRef}
+                isRecordingInProgress={isRecordingInProgress}
+                selections={selections} />
+            </> :
               <>
-                <ListComponent setInRecordingMode={setInRecordingMode} />
+                <ListComponent
+                  mediaListLoading={mediaListLoading}
+                  handleProjectChange={handleProjectChange}
+                  projectList={projectList}
+                  mediaFiles={mediaFiles}
+                  projectListLoading={projectListLoading}
+                  selectedProjected={selectedProjected}
+                  userDetails={userDetails}
+                  setInRecordingMode={setInRecordingMode} />
               </>
-            }
-          </> : <>
-            <LoginForm activeTab={activeTab} setActiveTab={setActiveTab} setIsLoggedIn={setIsLoggedIn} />
-          </>
-        }
-      </main>
+          }
+        </> : <>
+          <LoginForm setUserDetails={setUserDetails} />
+        </>
+      }
+    </main>
   )
 }
 

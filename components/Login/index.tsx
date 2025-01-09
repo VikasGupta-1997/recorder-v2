@@ -3,317 +3,166 @@ import "./login.css";
 import { IoEyeOffOutline, IoEyeOutline } from "react-icons/io5";
 import { RoundedUser } from "~utils/Icons";
 
-const clientId = '93MyrkvkXURMu8Otd0xda9cKIersXV8X'
-const connection = 'Username-Password-Authentication'
-const domain = 'dev-avzj5r1tnyppqkol.us.auth0.com'
-const audience = 'https://extention-kpmhhbfkoncghnknlokeklgdlekmnigo.com/api'
-const clientSecret = '2JEYU7DaxMqxZRdHFMMGgtPgs5ZMQsast3Iq2Bhc71qXmOHC042BMKrL6MyV5jzz'
-
-const Form = ({ onSubmit, setState, state, type, setActiveTab, loading }) => {
-    const isLoginForm = type === 'login'
-    const validatePassword = (password) => {
-        const minLength = password.length >= 8;
-        const lowerCase = /[a-z]/.test(password);
-        const upperCase = /[A-Z]/.test(password);
-        const number = /\d/.test(password);
-        const specialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-    
-        // Ensure at least one lowercase letter is present
-        return minLength && lowerCase && upperCase && number && specialChar;
-    };
-
-    const disableButton = isLoginForm ? !state.userName || !state.password || !state.isValidPassword || loading :  !state.userName || !state.password || !state?.confirmPassword || !state.isValidPassword || !state.isPasswordMatched || loading
+const Form = ({ onSubmit, setState, state, loading }) => {
+    const disableButton = !state.userName || state.password.length < 4 || loading;
     return (
-        <form id={type} onSubmit={onSubmit} className="">
+        <form onSubmit={onSubmit} className="">
             <div>
                 <label htmlFor="default-search" className="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white">Search</label>
                 <div className="relative">
                     <div className="absolute inset-y-0 start-0 flex items-center ps-1 pointer-events-none">
                         <RoundedUser />
                     </div>
-                    <input onChange={e => setState(prev => ({ ...prev, userName: e.target.value }))} type="email" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$"  id="default-search" className="input" placeholder="Enter your email" required />
+                    <input disabled={loading} onChange={e => setState(prev => ({ ...prev, userName: e.target.value }))} type="email" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$" id="default-search" className="input" placeholder="Enter your email" required />
                 </div>
             </div>
             <div>
                 <label htmlFor="default-search" className="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white">Search</label>
                 <div className="relative">
-                    <input onChange={e => setState(prev => ({ ...prev, password: e.target.value, isValidPassword: validatePassword(e.target.value) }))} type={state?.showPassword ? "text" : "password"} id="default-search" className="input prefix rounded-md" placeholder="Password" required />
+                    <input onChange={e => setState(prev => ({ ...prev, password: e.target.value }))} type={state?.showPassword ? "text" : "password"} id="default-search" className="input prefix rounded-md" placeholder="Password" required />
                     <div className="text-white absolute end-2.5 bottom-2.5 focus:ring-4 focus:outline-none  font-medium rounded-lg text-sm">
                         {state?.showPassword ? <IoEyeOutline onClick={() => setState(prev => ({ ...prev, showPassword: false }))} color="black" size={20} /> : <IoEyeOffOutline onClick={() => setState(prev => ({ ...prev, showPassword: true }))} color="black" size={20} />}
                     </div>
                 </div>
-                {!state.isValidPassword && (
-                            <p className="error text-red-500 text-[12px] pl-1">password must have at least 8 characters, including 1 Uppercase, 1 lowercase, 1 special character and 1 number</p>
-                )}
             </div>
-            {!isLoginForm && (
-                <div>
-                    <label htmlFor="default-search" className="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white">Search</label>
-                    <div className="relative">
-                        <input onChange={e => setState(prev => ({ ...prev, confirmPassword: e.target.value }))} type={state?.showConfirmPassword ? "text" : "password"} id="default-search-Confirm" className="input prefix rounded-md" placeholder="Confirm Password" required />
-                        <div className="text-white absolute end-2.5 bottom-2.5 focus:ring-4 focus:outline-none  font-medium rounded-lg text-sm">
-                            {state?.showConfirmPassword ? <IoEyeOutline onClick={() => setState(prev => ({ ...prev, showConfirmPassword: false }))} color="black" size={20} /> : <IoEyeOffOutline onClick={() => setState(prev => ({ ...prev, showConfirmPassword: true }))} color="black" size={20} />}
-                        </div>
-                    </div>
-                    {!state.isPasswordMatched && (
-                            <p className="error text-red-500 text-[12px] pl-1">confirm password do not match</p>
-                    )}
-                </div>
-            )}
-            {isLoginForm && <div className="flex justify-between pt-3 px-2" >
+            <div className="flex justify-between pt-3 px-2" >
                 <div className="checkbox flex gap-1" >
-                    <input id="remember-me" type="checkbox" />
+                    <input disabled={loading}  id="remember-me" type="checkbox" />
                     <label htmlFor="remember-me" >Remember Me</label>
                 </div>
                 <div className="forgot-pass text-blue-500" >
-                    <a target="_blank" href="#" >Forgot password?</a>
+                    <a target="_blank" href="https://adilo.bigcommand.com/forgot-password" >Forgot password?</a>
                 </div>
-            </div>}
+            </div>
             <div className={`pt-4`} >
                 <button disabled={disableButton} type="submit" className={`tab w-full text-base font-semibold active text-white bg-[#0DABD8] text-black"}`}>
-                   {loading ? <div className="loader" ></div> : <p>{isLoginForm ? "Log In" : "Register"}</p>} 
+                    {loading ? <div className="loader" ></div> : <p>{"Log In"}</p>}
                 </button>
-                {/* <button onClick={logoutAuth0} type="button" className={`tab w-full text-base font-semibold active text-white bg-[#0DABD8] text-black"}`}>
-                Log Out
-            </button> */}
             </div>
-            <div className={`pt-${isLoginForm ? 4 : 2} flex align-center justify-center gap-1 pb-4`} >
-                {isLoginForm ?
-                    <> Don't have an account <p onClick={() => setActiveTab('register')} className="text-blue-500 m-0 cursor-pointer" >Sign up</p> </>
-                    : <> Already have an account <p onClick={() => setActiveTab('login')} className="text-blue-500 m-0 cursor-pointer" >Sign in</p> </>}
+            <div className={`pt-4 flex align-center justify-center gap-1 pb-4`} >
+                {<> Don't have an account <a className="text-blue-500 m-0 cursor-pointer" target="_blank" href="https://adilo.com/join" >Sign up</a> </>}
             </div>
         </form>
     )
 }
 
-const LoginForm = ({ setIsLoggedIn, activeTab, setActiveTab }) => {
+const LoginForm = ({setUserDetails }) => {
     const [state, setState] = useState({
         userName: '',
         forgetEmail: '',
         password: '',
         showPassword: false,
-        isValidPassword:  true
     })
-
-    const [registerState, setRegisterState] = useState({
-        userName: '',
-        password: '',
-        confirmPassword: '',
-        showConfirmPassword: false,
-        userImage: null,
-        isPasswordMatched: true,
-        isValidPassword:  true
-    })
-
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
-    const [info, setInfo] = useState('')
 
-    useEffect(() => {
-        if(!!registerState.password && !!registerState.confirmPassword) {
-            setRegisterState(prev => ({...prev, isPasswordMatched: registerState.password === registerState.confirmPassword  }))
-        }
-    }, [registerState.password, registerState.confirmPassword])
-
-    const fetchAuthConfig = async () => {
-        // const response = await fetch(chrome.runtime.getURL("auth_config.json"));
-        return {
-            "domain": "dev-avzj5r1tnyppqkol.us.auth0.com",
-            "clientId": "93MyrkvkXURMu8Otd0xda9cKIersXV8X",
-            "audience": "https://extention-kpmhhbfkoncghnknlokeklgdlekmnigo.com/api"
-        }
-    };
-
-    const getRandomBytes = () => {
-        const rndArray = new Uint8Array(44);
-        window.crypto.getRandomValues(rndArray);
-        return rndArray;
-    };
-
-    const buf2Base64 = (buffer: ArrayBuffer) => {
-        return btoa(String.fromCharCode(...new Uint8Array(buffer)))
-            .replace(/\+/g, "-")
-            .replace(/\//g, "_")
-            .replace(/=/g, "");
-    };
-
-    const getParameterByName = (name: string, url: string) => {
-        name = name.replace(/[\[\]]/g, "\\$&");
-        const regex = new RegExp(`[?&]${name}(=([^&#]*)|&|#|$)`),
-            results = regex.exec(url);
-        if (!results) return null;
-        if (!results[2]) return "";
-        return decodeURIComponent(results[2].replace(/\+/g, " "));
-    };
-
-    const windowSha256 = async (buffer: string) => {
-        const bytes = new TextEncoder().encode(buffer);
-        return await window.crypto.subtle.digest("SHA-256", bytes);
-    };
-
-    const getUserInfo = async (token) => {
+    const authenticateEmail = async (email) => {
         try {
-            const response = await fetch(`https://${domain}/userinfo`, {
-                method: "POST",
+            const response = await fetch(`${process.env.PLASMO_PUBLIC_ADILO_API}/check-email`, {
+                method: 'POST',
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({access_token: token}),
-            });
-            const userData = await response.json()
-            console.log("userDatauserData", userData)
-            setIsLoggedIn(true)
-            await chrome.storage.local.set({"userInfo": userData})
-        } catch(error){
-            console.log("error", error)
+                body: JSON.stringify({ email })
+            })
+            const data = await response.json()
+            return data
+        } catch (error) {
+            throw new Error(error)
         }
     }
 
-    const authenticateUser = async (email: string, password: string) => {
-        const body = {
-            grant_type: "password",
-            username: email,
-            password: password,
-            client_id: clientId,
-            client_secret: clientSecret,
-            scope: "openid profile email",// Add other scopes as needed
-            audience: audience,
-            connection: connection,
-        };
-        setLoading(true)
+    const fetchUser = async user => {
         try {
-            // Send the request to Auth0's /oauth/token endpoint
-            const response = await fetch(`https://${domain}/oauth/token`, {
-                method: "POST",
+            const response = await fetch(`${process.env.PLASMO_PUBLIC_ADILO_API}/user`, {
+                method: 'GET',
                 headers: {
                     "Content-Type": "application/json",
-                },
-                body: JSON.stringify(body),
-            });
-
-            // Parse the response
-            const result = await response.json();
-            if (response.ok) {
-                // Authentication successful, access token is returned
-                console.log("Access Token:", result.access_token);
-                await chrome.storage.local.set({ "accesss_token": result.access_token, "id_token": result.id_token })
-                await getUserInfo(result.access_token)
-                setLoading(false)
-                // Use the access token for further API requests
-            } else {
-                setLoading(false)
-                console.error("Authentication failed:", result);
-                setError(result.error_description)
-            }
-        } catch (error) {
-            setLoading(false)
-            setError(error.message)
-            console.error("Error during authentication:", error);
+                    "Authorization": `Bearer ${user.access_token}`
+                }
+            })
+            const data = await response.json()
+            console.log("data user", data)
+            return data
+        }catch(error){
+            throw new Error(error.message || "User is invalid")
         }
-    };
+    }
 
     const handleLoginSubmit = async (e) => {
         e.preventDefault()
         console.log("State", state)
-        authenticateUser(state.userName, state.password);
-    }
-
-    useEffect(() => {
-        setError('')
-        setLoading(false)
-    }, [activeTab])
-
-    const handleRegister = async e => {
-        setInfo('')
-        setError('')
-        e.preventDefault()
-        const body = {
-            client_id: clientId,
-            email: registerState.userName,
-            password: registerState.password,
-            connection: connection,
-            // picture: 'url-pointing-towards-image'
-        };
         setLoading(true)
         try {
-            // Send the request to Auth0's /oauth/token endpoint
-            const response = await fetch(`https://${domain}/dbconnections/signup`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(body),
-            });
-
-            // Parse the response
-            const result = await response.json();
-            if(result?.email){
-                if(!result?.email_verified) {
-                    setInfo('Please check your email and verify it.')
+            const data = await authenticateEmail(state.userName)
+            if (data.result === 'success') {
+                try {
+                    const response = await fetch(`${process.env.PLASMO_PUBLIC_ADILO_API}/login`, {
+                        method: 'POST',
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({ email: state.userName, password: state.password })
+                    })
+                    const data = await response.json()
+                    if (data.user_id) {
+                        const userData = await fetchUser(data)
+                        const userDetails = {
+                            access_token: data.access_token,
+                            current_plan: data.current_plan,
+                            user_id: data.user_id,
+                            first_name: userData.first_name,
+                            last_name: userData.last_name,
+                            plan_name: userData.plan_name,
+                            name: userData.name,
+                            email: userData.email,
+                            billing_status: userData.billing_status,
+                            avtar: userData.photo_url
+                        }
+                        setUserDetails(userDetails)
+                        // await chrome.storage.local.set({  "isLoggedIn": true })
+                        setLoading(false)
+                    } else {
+                        setLoading(false)
+                        setError(data?.message || "Invalid username Or password")
+                    }
+                } catch (error) {
+                    setLoading(false)
+                    throw new Error(error)
                 }
             } else {
-                setError(result.description)
+                setLoading(false)
+                throw new Error(data?.result || "Invalid username Or password")
             }
+        } catch (error) {
             setLoading(false)
-        } catch(error){
-            console.log("error", error)
-            setLoading(false)
-            setError(error.message)
+            console.log("Error", error)
         }
-    }
-
-
-    const logout = async () => {
-        await chrome.identity.clearAllCachedAuthTokens();
-        // setAccessToken(null);
-        console.log("Logged out");
-    };
-
-    function logoutAuth0() {
-        const redirectUrl = chrome.identity.getRedirectURL();
-        const logoutUrl = `https://dev-avzj5r1tnyppqkol.us.auth0.com/v2/logout?client_id=93MyrkvkXURMu8Otd0xda9cKIersXV8X&returnTo=${redirectUrl}`;
-
-        // Clear tokens from Chrome storage
-        chrome.storage.local.remove(["accessToken", "idToken", "isLoggedIn", "isLoogedIn"], () => {
-            console.log("Tokens cleared");
-        });
-
-        // Open logout URL in a new tab or window
-        chrome.tabs.create({ url: logoutUrl });
+        // await chrome.storage.local.set({ "isLoggedIn": true })
     }
 
     return (
         <div className="mt-3 px-8 pt-2 pb-0" >
             <div className="tabs mb-3">
-                <button
-                    className={`tab ${activeTab === "login" ? "active text-base text-white bg-[#0DABD8]" : "text-black text-base"}`}
-                    onClick={() => setActiveTab("login")}
-                >
+                <button className={`tab active text-base text-white bg-[#0DABD8]`}>
                     Log In
                 </button>
-                <button
-                    className={`tab ${activeTab === "register" ? "active text-base text-white bg-[#0DABD8]" : "text-black text-base"}`}
-                    onClick={() => setActiveTab("register")}
-                >
+                <a target="_blank" className={`tab text-black text-base`} href="https://adilo.com/join"  >
                     Sign Up
-                </button>
+                </a>
             </div>
             <p className="welcome" >Welcome!</p>
             {!!error && <p className="error capitalize text-center text-red-500 text-base pl-1">{error}</p>}
-            {!!info && <p className="capitalize text-center text-blue-500 text-base pl-1">{info}</p>}
             {/* Tab Contents */}
             <div className="tabs-container">
                 <div
-                    className={`tab-content ${activeTab === "login" ? "active" : ""
-                        }`}
+                    className={`tab-content active`}
                 >
-                    <Form loading={loading} setActiveTab={setActiveTab} type="login" onSubmit={handleLoginSubmit} state={state} setState={setState} />
+                    <Form loading={loading} onSubmit={handleLoginSubmit} state={state} setState={setState} />
                 </div>
                 <div
-                    className={`tab-content ${activeTab === "register" ? "active" : ""
-                        }`}
+                    className={`tab-content`}
                 >
-                    <Form  loading={loading} setActiveTab={setActiveTab} type="register" onSubmit={handleRegister} state={registerState} setState={setRegisterState} />
                 </div>
             </div>
         </div>

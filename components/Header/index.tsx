@@ -8,7 +8,7 @@ import { AdiloLogo, Home, LogoutSvg, OpenOptions } from "~utils/Icons";
 import { useEffect, useRef, useState } from "react";
 import CustomMenu from "~components/Menu";
 
-function Header({ inRecordingMode, isLoggedIn, setInRecordingMode }) {
+function Header({ inRecordingMode, setInRecordingMode, userDetails }) {
     const closePopUp = () => {
         // chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
         // chrome.tabs.sendMessage(tabs[0].id, { type: callBackConstants.POPUP_CLOSED }, function(){})
@@ -16,11 +16,28 @@ function Header({ inRecordingMode, isLoggedIn, setInRecordingMode }) {
         window.close()
     }
 
+    const handleLogout = async () => {
+        try {
+            await fetch(`${process.env.PLASMO_PUBLIC_ADILO_API}/logout`, {
+                method: 'GET',
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${userDetails.access_token}`
+                },
+            })
+        } catch(error){
+            console.log("Error", error)
+        }
+        await chrome.storage.local.clear()
+        await chrome.storage.sync.clear()
+    }
+
 
     const handleMenuClick = async option => {
         switch (option.id) {
             case 5: {
-                console.log("Call Logout!")
+                handleLogout()
+               
             }
                 break;
         }
@@ -37,17 +54,17 @@ function Header({ inRecordingMode, isLoggedIn, setInRecordingMode }) {
                     <p className="text-sm" >by BigCommand</p>
                 </div>
             </div>
-            {isLoggedIn ?
+            {userDetails?.user_id ?
                 <div className="flex gap-7 items-center" >
                     <span className="cursor-pointer" >
-                        {inRecordingMode ? <span onClick={() => setInRecordingMode(false)} ><VscChromeMinimize color="#637C8E" fontSize={30} /> </span> : <Home />}
+                        {inRecordingMode ? <span onClick={() => setInRecordingMode(false)} ><VscChromeMinimize color="#637C8E" fontSize={30} /> </span> : <a href="https://adilo.bigcommand.com" target="_blank" ><Home /></a>}
                     </span>
                     <span className="cursor-pointer" >
                         {inRecordingMode ? <IoMdClose onClick={closePopUp} color="#637C8E" fontSize={30} /> :
                             <CustomMenu menuButton={<OpenOptions />} menuList={[{ id: 1, label: 'Prefrences' },
                             { id: 2, label: 'Check for updates' },
                             { id: 3, label: 'Get Help' },
-                            { id: 4, label: 'Quick SnapByte' },
+                            { id: 4, label: 'Quit Recorder' },
                             { id: 5, label: 'Sign out' }]} onMenuClick={handleMenuClick} />
                         }
                     </span>

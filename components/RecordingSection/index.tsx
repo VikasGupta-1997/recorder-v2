@@ -192,12 +192,13 @@ const RenderIcon = ({ item, setSelections, setRecordingOptions, recordingOptions
 const RecordingSection = ({ isRecordingInProgress, selections, setSelections, recordingOptions, setRecordingOptions }) => {
   const isCamDisabled = ["screenOnly", "audioOnly"].includes(selections?.screenRecording?.value)
   return (
-    <section className={`container ${isRecordingInProgress ? 'opacity-50 pointer-events-none' : 'opacity-100 pointer-events-auto' } `} >
+    <section className={`container ${isRecordingInProgress ? 'opacity-50 pointer-events-none' : 'opacity-100 pointer-events-auto'} `} >
       <h3 className='text-lg font-bold' >
         Recording mode
       </h3>
       <div className='screen-recording' >
-        {screenRecordingOptions?.map(options => <RenderIcon
+        {screenRecordingOptions?.map((options, index) => <RenderIcon
+          key={index}
           selections={selections}
           recordingOptions={recordingOptions}
           setRecordingOptions={setRecordingOptions}
