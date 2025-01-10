@@ -18,14 +18,19 @@ export const fetchMp3File = async (url) => {
     }
 };
 
-export default async function onSubmitAdvanceAuphonic(data, blob, setIspublishing, uuidRef, setUuid, fileNameRef, isAuphonicSubmitted, switchModeAudios, latestAuphonicDataRef) {
+export default async function onSubmitAdvanceAuphonic(data, blob, setIspublishing, uuidRef, setUuid, fileNameRef, isAuphonicSubmitted, switchModeAudios, latestAuphonicDataRef, toast) {
     const generatedData = getAuphonicProcessedData(data)
     let sendData = { algorithms: { ...generatedData } }
     let downloadUrl;
     let uuidResp;
     let fileName;
     setIspublishing(true)
-    
+    // const fileUrl = 'http://localhost:8080/fetch-file?url=https://auphonic.com/api/download/audio-result/v9XA9hxzEqZF9aCGpEzj4Y/audio_1735298398132_5sohsyg9.mp3'
+    // const file = await fetchMp3File(fileUrl)
+    // setIspublishing(false)
+    // const randomUuid = latestAuphonicDataRef?.uuid || (String.fromCharCode(65 + Math.floor(Math.random() * 26)) +  Date.now())
+    // setUuid(randomUuid)
+    // return {file, uuid: randomUuid, fileName: latestAuphonicDataRef?.fileName  ?  latestAuphonicDataRef?.fileName : (String.fromCharCode(65 + Math.floor(Math.random() * 26)) +  Date.now()) + '_name' + `_${Math.random() * 1000}`}
     try {
         //If latestAuphonicDataRef had no uuid it means its a new production
         if (!!!latestAuphonicDataRef?.uuid) {
@@ -156,6 +161,7 @@ export default async function onSubmitAdvanceAuphonic(data, blob, setIspublishin
             setUuid(uuid)
             isAuphonicSubmitted.current = true
             console.log("Production completed. Downloading the processed file...");
+            toast.success("Auphonic production completed  succesfully ! ")
             return { file, uuid: uuid, fileName: fileName || latestAuphonicDataRef?.fileName }
         } else {
             setIspublishing(false)
@@ -164,6 +170,7 @@ export default async function onSubmitAdvanceAuphonic(data, blob, setIspublishin
         }
 
     } catch (error) {
+        toast.error("Auphonic production failed, please contact to adilo support")
         setIspublishing(false)
         console.error("Error processing audio with Auphonic:", error);
         throw error; // Re-throw the error for further handling if needed
