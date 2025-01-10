@@ -8,6 +8,7 @@ import { CiEdit, CiGlobe } from "react-icons/ci";
 import { FaRegTrashAlt } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import fetchImageAsBase64 from "~utils/fetchImageAsBase64";
+import { processingImage } from '~utils/mediaProcessing'
 
 const ListComponent = ({
     projectList,
@@ -20,14 +21,14 @@ const ListComponent = ({
     handleProjectChange
 }) => {
     const [thumbnails, setThumbnails] = useState({})
-    const handleMenuClick = (item) => {
+    const handleMenuClick = async (item) => {
         console.log("Item==>", item)
     }
-    
+
     useEffect(() => {
         const loadThumbnails = async () => {
             const promises = mediaFiles.map(async (l) => {
-                const base64 = await fetchImageAsBase64(l.thumbnail);
+                const base64 = l.thumbnail.includes("sunshine.website") ? processingImage : await fetchImageAsBase64(l.thumbnail);
                 return { id: l.id, base64 };
             });
 
@@ -41,7 +42,7 @@ const ListComponent = ({
 
         loadThumbnails();
     }, [mediaFiles]);
-    
+
     return (
         <div className="" >
             <UserInfo
@@ -61,7 +62,7 @@ const ListComponent = ({
                                 <div className=" flex justify-between items-center" key={l.id} >
                                     <div className="flex items-center gap-2" >
                                         <div className="cursor-pointer w-[60px] h-[60px] flex items-center " >
-                                            <img className="rounded-md" src={thumbnails[l.id]} />
+                                            <a target="_blank" href={l.embed_url} ><img className="rounded-md" src={thumbnails[l.id]} /></a>
                                         </div>
                                         <p title={l.title} className="text-base truncate-text" >{l.title.length > 40
                                             ? `${l.title.substring(0, 24)}...${l.title.slice(-6)}`

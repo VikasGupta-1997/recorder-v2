@@ -148,22 +148,22 @@ function IndexPopup() {
   }, [])
 
   const handleProjectChange = async (project) => {
-    setSelectedProject({ label: project.label, project_id: project.project_id })
+    setSelectedProject({ label: project.label, id: project.id, project_id: project.project_id })
     getMediaFile(projectList, project)
   }
 
   const getMediaFile = async (projectList, selectedProjected) => {
-    const findIfExistsOrNot = projectList.find(project => project.project_id === selectedProjected?.project_id)
+    const findIfExistsOrNot = projectList.find(project => project.id === selectedProjected?.id)
     let tobeQueryProject;
     if (findIfExistsOrNot) {
       tobeQueryProject = findIfExistsOrNot
     } else {
       tobeQueryProject = projectList?.[0]
-      setSelectedProject({ label: projectList?.[0]?.label, project_id: projectList?.[0]?.project_id })
+      setSelectedProject({ label: projectList?.[0]?.label, id: projectList?.[0]?.id, project_id: projectList?.[0]?.project_id })
     }
     setMediaListLoading(true)
     try {
-      const response = await fetch(`${process.env.PLASMO_PUBLIC_ADILO_API}/projects/show?id=${tobeQueryProject.project_id}&v2=true`, {
+      const response = await fetch(`${process.env.PLASMO_PUBLIC_ADILO_API}/projects/show?id=${tobeQueryProject.id}&v2=true`, {
         method: 'GET',
         headers: {
           "Content-Type": "application/json",

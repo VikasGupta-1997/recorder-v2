@@ -22,7 +22,7 @@ const EditingControls = ({
     showGhost,
     usePreview,
     isAudio,
-    getAuphonicData
+    publishBlob
 }) => {
 
     const {
@@ -298,7 +298,8 @@ const EditingControls = ({
         }
         if (action === 'publish') {
             console.log("publish called", blob)
-            getAuphonicData()
+            publishBlob()
+
         }
     };
 

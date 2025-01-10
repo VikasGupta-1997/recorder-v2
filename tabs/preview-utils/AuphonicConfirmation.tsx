@@ -11,7 +11,7 @@ export const getStyle = () => {
 }
 
 
-const ConfirmationModal = ({ onClose, title, body, onSubmit, showActions=true }) => {
+const ConfirmationModal = ({ onClose, title, body, onSubmit, showActions=true, isPublishMode=false }) => {
     const [checked, setChecked] = useState(false)
     return (
         <>
@@ -39,12 +39,12 @@ const ConfirmationModal = ({ onClose, title, body, onSubmit, showActions=true })
                                 No, Cancel
                             </button>
                         </div>
-                        <div>
+                        {isPublishMode ? null : <div>
                             <LabelCheckBox checked={checked} onChange={async e => {
                                 setChecked(e.target.checked)
                                 await chrome.storage.local.set({ "doNotShowConfiramtion": e.target.checked })
                             }} label={"Don't ask me again"} id="confirm-enhance-dont-ask-again" />
-                        </div>
+                        </div>}
                     </div>}
                 </div>
             </div>

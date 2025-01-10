@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'react-toastify';
 import onSubmitAdvanceAuphonic, { fetchMp3File } from '~utils/auphonicProduction';
 import { defaultAdvanceAuphonicState } from '~utils/constants';
 import getAuphonicProcessedData from '~utils/getAuphonicProcessedData';
@@ -29,15 +30,13 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     const originalDuration = useRef(0)
     const plyrRef = useRef(null);
 
-    const [loadingVideo, setLoadingVideo] = useState(true)
     const [blob, setBlob] = useState(null)
     const blobRef = useRef(null)
     const url = useRef('')
     const auphonicPlyrRef = useRef(null)
-
-    const urlParams = new URLSearchParams(window.location.search);
     const hasAudio = useRef(null);
 
+    const [loadingVideo, setLoadingVideo] = useState(true)
     const [showAuphonicAdvanceForm, setShowAuphonicAdvanceForm] = useState(false)
     const [confirmSendToAuphonic, setConfirmSendToAuphonic] = useState(false)
     const [history, setHistory] = useState([])
@@ -54,9 +53,11 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     const [isAuphonicUiMode, setIsAuphonicUiMode] = useState(false)
     const [cutDataState, setCutDataState] = useState([])
     const [auphonicProcessingError, setAuphonicProcessingError] = useState(null)
+    const [confirmPublish, setConfirmPublish] = useState(false)
     const latestAuphonicDataRef = useRef(null)
     const showConfirmation = useRef(true)
     const currentUniqid = useRef(null)
+    const currentConfirmation = useRef(null)
     const audioF = useRef(null)
     const auphonicAlgorithm = useRef(null)
     const switchModeAudios = useRef({
@@ -284,16 +285,16 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
 
                 if (message?.isEdit) {
                     const window10 = navigator.userAgent.match(/Windows NT 10.0/)
-                    if(window10 && hasAudio.current === 'false') {
+                    if (window10 && hasAudio.current === 'false') {
                         const video = document.createElement("video");
                         video.preload = "metadata";
                         video.onloadedmetadata = async () => {
-                          console.log("video.durationvideo.duration", video.duration)
-                          setTimeout(() => {
-                            setTrimState(prev => ({...prev, endTime: video.duration}))
-                          }, 800)
-                          URL.revokeObjectURL(video.src);
-                          video.remove();
+                            console.log("video.durationvideo.duration", video.duration)
+                            setTimeout(() => {
+                                setTrimState(prev => ({ ...prev, endTime: video.duration }))
+                            }, 800)
+                            URL.revokeObjectURL(video.src);
+                            video.remove();
                         };
                         video.src = URL.createObjectURL(message.blob);
                     }
@@ -360,9 +361,9 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                     //     sendData = defaultAdvanceAuphonicState
                     // }
                     console.log("auphonicAlgorithm====>", auphonicAlgorithm.current)
-                    
+
                     try {
-                        if(auphonicAlgorithm.current) {
+                        if (auphonicAlgorithm.current) {
                             sendData = auphonicAlgorithm.current
                         } else {
                             sendData = defaultAdvanceAuphonicState
@@ -370,7 +371,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                         console.log("sendDatasendData==>", sendData)
                         switchModeAudios.current.originalAudio = message.blob;
                         // console.log(latestAuphonicDataRef.current, "latestAuphonicDatalatestAuphonicData 318", latestAuphonicData)
-                        const { file, uuid, fileName } = await onSubmitAdvanceAuphonic(sendData, message.blob, setIspublishing, uuidRef, setUuid, fileNameRef, isAuphonicSubmitted, switchModeAudios.current, latestAuphonicDataRef.current)
+                        const { file, uuid, fileName } = await onSubmitAdvanceAuphonic(sendData, message.blob, setIspublishing, uuidRef, setUuid, fileNameRef, isAuphonicSubmitted, switchModeAudios.current, latestAuphonicDataRef.current, toast)
                         switchModeAudios.current.auphonicAudio = file
                         // console.log(blobRef.current, ":RecoievedFile", file)
                         const sendUniqId = latestAuphonicDataRef.current?.uuid ? latestAuphonicDataRef.current?.id : null
@@ -484,7 +485,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                 setIsFfmpegLoaded(true)
                 console.log("ffmpeg-loaded Call from Demo!!")
                 hasAudio.current = message.hasAudio
-                chrome.runtime.sendMessage({type: "START_UPLOAD_CHUNKS"})
+                chrome.runtime.sendMessage({ type: "START_UPLOAD_CHUNKS" })
             }
             if (message.type === "ffmpeg-load-error") {
                 // console.log("ffmpeg-load-error==>", message)
@@ -669,8 +670,190 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
             sendPostMessage({ type: "replace-videos-audio", uniqid: latestAuphonicDataRef.current?.id, videoBlob: blob, audioBlob: latestAuphonicDataRef.current?.auphonicBlob, auphonicMode: false, isFromSwitch: false })
         }
         setIsAuphonicUiMode(prev => !prev)
-
     }
+
+    const recordingName = useMemo(() => {
+        return `Rec-${getDynamicTimestamp()}-desktop.mp4`
+    }, [])
+
+    const handlePublish = async () => {
+        chrome.storage.local.get(['userInfo', 'selectedProject'], async result => {
+            console.log(blob, "result223", result)
+            const userDetails = result.userInfo;
+            const selectedProject = result.selectedProject
+            const chunk_size = 16242880;
+
+            console.log(chunk_size, "Echunk_sizehandlePublish====>", blob)
+            // const chunk_size =  16 * 1024 * 1024;
+            // const chunk_size = 1 * 1024 * 1024;
+            const totalChunks = Math.ceil(blob.size / chunk_size);
+            let uploadId;
+            let key;
+            const partUrls = [];
+            let ETag = [];
+            console.log(recordingName, "totalChunks==>", totalChunks)
+            // return;
+            setIspublishing(true)
+            setConfirmPublish(false)
+            try {
+                const formData = new FormData();
+                formData.append("type", blob.type); // Update with actual type if dynamic
+                formData.append("filename", recordingName); // Use actual file name
+                // formData.append("metadata", JSON.stringify({
+                //     "type": blob.type,
+                //     "filename": recordingName,
+                //     "drm_protection": false,
+                //     "duration": "0",
+                //     "duration_formatted": "00:00:00",
+                //     "projectId": selectedProject.id,
+                //     "access_token": userDetails.access_token
+                // })); // Add any metadata here
+                formData.append("media_type", blob.type);
+                formData.append("name", recordingName);
+                formData.append("total_bytes", blob.size);
+                formData.append("status", "undefined");
+                console.log("FormData Contents:");
+                for (const [key, value] of formData.entries()) {
+                    console.log(`${key}:`, value);
+                }
+                const initResponse = await fetch(`${process.env.PLASMO_PUBLIC_ADILO_API}/s3/multipart`, {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${userDetails.access_token}`
+                    },
+                    body: formData,
+                });
+                const initData = await initResponse.json();
+                console.log("initDatainitData=>", initData)
+                console.log("Original Blob Type:", blob.type);
+                const promises = [];
+                if (initData?.uploadId) {
+                    uploadId = initData.uploadId;
+                    key = initData.key;
+                    for (let partNumber = 1; partNumber <= totalChunks; partNumber++) {
+                        const start = (partNumber - 1) * chunk_size;
+                        const end = Math.min(start + chunk_size, blob.size);
+                        const chunk = blob.slice(start, end, "video/mp4");
+                        console.log("chunkchunk", chunk)
+                        // Request pre-signed URL for this part
+                        const partResponse = await fetch(
+                            `${process.env.PLASMO_PUBLIC_ADILO_API}/s3/multipart/${uploadId}/${partNumber}?key=${key}`, {
+                            method: 'GET',
+                            headers: {
+                                "Authorization": `Bearer ${userDetails.access_token}`
+                            }
+                        }
+                        );
+                        const partData = await partResponse.json();
+
+                        const uploadUrl = partData.url;
+                        partUrls.push({ partNumber, uploadUrl, chunk });
+                    }
+                    console.log("Received pre-signed URLs for all parts", partUrls);
+                    // Step 3: Upload each chunk to S3
+                    const uploadPromises = [];
+                    // for (let i = 0; i < partUrls.length; i++) {
+                    //     const { partNumber, uploadUrl, chunk } = partUrls[i];
+                    //     const uploadResponse = await fetch(uploadUrl, {
+                    //         method: "PUT",
+                    //         body: chunk
+                    //     });
+
+                    //     if (!uploadResponse.ok) {
+                    //         throw new Error(`Failed to upload part ${partNumber}`);
+                    //     }
+                    //     const eTag = uploadResponse.headers.get('ETag');
+                    //     ETag = eTag
+                    //     console.log(`Uploaded part ${partNumber}, ETag: ${eTag}`);
+                    // }
+                    // Step 4: Complete Multipart Upload
+                    for (let i = 0; i < partUrls.length; i++) {
+                        const { partNumber, uploadUrl, chunk } = partUrls[i];
+
+                        // Create a promise for each upload
+                        const uploadPromise = fetch(uploadUrl, {
+                            method: "PUT",
+                            body: chunk
+                        })
+                            .then(uploadResponse => {
+                                if (!uploadResponse.ok) {
+                                    throw new Error(`Failed to upload part ${partNumber}`);
+                                }
+                                const eTag = uploadResponse.headers.get('ETag');
+                                ETag.push({ PartNumber: partNumber, ETag: eTag })
+                                console.log(`Uploaded part ${partNumber}, ETag: ${eTag}`);
+                                return { PartNumber: partNumber, ETag: eTag }; // Return part number and ETag for further use
+                            })
+                            .catch(error => {
+                                console.error(`Error uploading part ${partNumber}:`, error);
+                                setIspublishing(false)
+                                throw error; // Ensure errors propagate if needed
+                            });
+
+                        uploadPromises.push(uploadPromise); // Add the promise to the array
+                    }
+
+                    // Wait for all uploads to complete
+                    const uploadedParts = await Promise.all(uploadPromises);
+                    console.log(ETag, "Check uploadedPartsuploadedParts", uploadedParts)
+                    const completeResponse = await fetch(
+                        `${process.env.PLASMO_PUBLIC_ADILO_API}/s3/multipart/${uploadId}/complete?key=${key}`,
+                        {
+                            method: "POST",
+                            headers: {
+                                "Authorization": `Bearer ${userDetails.access_token}`
+                            },
+                            body: JSON.stringify({
+                                parts: uploadedParts,
+                            }),
+                        }
+                    );
+
+                    const completeData = await completeResponse.json();
+                    console.log("Upload completed:", completeData);
+                    const savePayload = {
+                        video: {
+                            location: completeData.location,
+                        },
+                        video_id: key.split('/')[0], // Pass your videoId
+                        project_id: selectedProject.id, // Pass your projectId
+                        fileType: blob.type || "video/mp4",
+                        drm_protection: "false",
+                        mediaType: "uploadVideos",
+                        filesize: blob.size,
+                    };
+                    const saveResponse = await fetch(
+                        `${process.env.PLASMO_PUBLIC_ADILO_API}/video-upload/s3-sign/save`,
+                        {
+                            method: "POST",
+                            headers: {
+                                "Authorization": `Bearer ${userDetails.access_token}`,
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify(savePayload),
+                        }
+                    );
+                    const saveData = await saveResponse.json();
+                    console.log("Video saved successfully:", saveData);
+                    setIspublishing(false)
+                    toast.success("Recording succeccfully saved to your adilo account.")
+                }
+            } catch (error) {
+                toast.error("Publishing recording failed, Please contact to Adilo support.")
+                setIspublishing(false)
+                console.error("Error during upload:", error.message);
+            }
+        })
+    }
+
+    useEffect(() => {
+        if (confirmSendToAuphonic) {
+            currentConfirmation.current = 'auphonicConfirmation'
+        }
+        if (confirmPublish) {
+            currentConfirmation.current = 'publishConfirmation'
+        }
+    }, [confirmSendToAuphonic, confirmPublish])
 
     const value = {
         playPartialRecording,
@@ -732,7 +915,12 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         setAuphonicProcessingError,
         cutDataState,
         hasAudio,
-        auphonicAlgorithm
+        auphonicAlgorithm,
+        handlePublish,
+        recordingName,
+        confirmPublish,
+        setConfirmPublish,
+        currentConfirmation
     };
 
     return (

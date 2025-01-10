@@ -62,7 +62,7 @@ const UserInfo = ({
                 </div>
             </div>
             <div className='pt-3 pb-4 py-2 px-6' >
-                <button onClick={() => setInRecordingMode(true)} type="button" className={`tab rounded-[48px] w-full text-base font-semibold active text-white bg-[#0DABD8] text-black"}`}>
+                <button disabled={loading} onClick={() => setInRecordingMode(true)} type="button" className={`tab rounded-[48px] w-full text-base font-semibold active text-white bg-[#0DABD8] text-black"}`}>
                     {"Go to recording session"}
                 </button>
             </div>

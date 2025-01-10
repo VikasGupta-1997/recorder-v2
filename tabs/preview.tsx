@@ -11,6 +11,7 @@ import Plyr from "plyr-react";
 import "plyr-react/plyr.css";
 import AdvanceAuphonicForm from "./preview-utils/AdvanceAuphonicForm";
 import ConfirmationModal from "./preview-utils/AuphonicConfirmation";
+import { ToastContainer } from 'react-toastify';
 
 export const getStyle = () => {
     const style = document.createElement("style")
@@ -79,14 +80,18 @@ function PreviewPage() {
         auphonicProcessingError,
         setAuphonicProcessingError,
         cutDataState,
-        auphonicAlgorithm
+        auphonicAlgorithm,
+        handlePublish,
+        recordingName,
+        confirmPublish,
+        setConfirmPublish,
+        currentConfirmation
     } = usePreview();
     const [showGhost, setShowGhost] = useState(false);
 
-    const recordingName = useMemo(() => {
-        return `Rec-${getDynamicTimestamp()}-desktop.mp4`
-    }, [])
-
+    const confirmPublishing = () => {
+        setConfirmPublish(true)
+    }
 
     if (loadingVideo) {
         return (
@@ -130,12 +135,12 @@ function PreviewPage() {
                             // isVideoEndcoding || 
                             !isFfmpegLoaded ||
                             ffmpegRunning || isPublishing} onClick={changeMode} >Edit Video</button></div>}
-                        {(isPublishing && !auphonicVideoUrlPreview) && <p className={style["publishing-load-text"]} >Publishing content please wait and do not close the window till upload is not complete.</p>}
+                        {(isPublishing && !auphonicVideoUrlPreview) && <p className={style["publishing-load-text"]} >{`${currentConfirmation.current === 'publishConfirmation' ? "Publishing content" : "Cleaning audio with auphonic"} , please wait and do not close the window till upload is not complete.`}</p>}
                         {(!isFfmpegLoaded && !auphonicVideoUrlPreview) && <p>Please wait editing tool is loading...</p>}
                         {(ffmpegLoadError) && <p className={`${style['error']}`}>Cannot edit video, editing tool not supported for your browser !!</p>}
                         {(isEditMode && !auphonicVideoUrlPreview) && <div className={style["editing-control-wrapper"]} >
                             <EditingControls
-                                getAuphonicData={() => {}}
+                                publishBlob={confirmPublishing}
                                 isAudio={false}
                                 usePreview={usePreview}
                                 setShowGhost={setShowGhost}
@@ -148,29 +153,34 @@ function PreviewPage() {
                     </div>}
                 </div>
             </span>
-            {auphonicProcessingError &&  <ConfirmationModal
+            {auphonicProcessingError && <ConfirmationModal
                 body={<div>
                     <p>
                         Audio Enhancement Failed , Please contact support!!
                     </p>
                 </div>}
                 showActions={false}
-                onSubmit={() => {}}
+                onSubmit={() => { }}
                 title="Audio Enhancement Failed."
                 onClose={() => setAuphonicProcessingError(null)} />}
-            {(confirmSendToAuphonic && showConfirmation.current) && <ConfirmationModal
-                body={<div>
+            {((confirmSendToAuphonic && showConfirmation.current) || confirmPublish) && <ConfirmationModal
+                body={confirmPublish ? <p>Are you sure you want to publish this video ?</p> : <div>
                     <p>Enhancing the audio of this recording wil consume 15 minutes from you AI credits.</p>
                     <p>Do you want to continue ?</p>
                 </div>}
-                onSubmit={startAuphonicAudioProcessing}
-                title="Audio Enhancement"
-                onClose={() => setConfirmSendToAuphonic(false)} />}
+                isPublishMode={confirmPublish}
+                onSubmit={confirmPublish ? handlePublish : startAuphonicAudioProcessing}
+                title={confirmPublish ? "Save to Adilo" : "Audio Enhancement"}
+                onClose={() => {
+                    setConfirmPublish(false)
+                    setConfirmSendToAuphonic(false)
+                }} />}
             {showAuphonicAdvanceForm && <AdvanceAuphonicForm auphonicAlgorithm={auphonicAlgorithm} startAuphonicAudioProcessing={startAuphonicAudioProcessing} uuidState={uuidState} setConfirmSendToAuphonic={setConfirmSendToAuphonic} onClose={() => setShowAuphonicAdvanceForm(false)} />}
             {isPublishing && <>
                 <div className={style["full-screen-loader"]} />
                 <div className={style['overlay']} />
             </>}
+            <ToastContainer />
         </div>
     );
 }
