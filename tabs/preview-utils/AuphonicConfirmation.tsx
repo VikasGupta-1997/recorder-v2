@@ -11,16 +11,22 @@ export const getStyle = () => {
 }
 
 
-const ConfirmationModal = ({ onClose, title, body, onSubmit, showActions=true, isPublishMode=false }) => {
+const ConfirmationModal = ({ onClose, title, body, onSubmit, showActions = true, isPublishMode = false, centeredHeading = false }) => {
     const [checked, setChecked] = useState(false)
     return (
         <>
             <div className={style["darkBG"]} />
             <div className={style["centered"]}>
                 <div className={`${style["modal"]} ${style["sm-modal"]}`}>
-                    <div className={style["modalHeader"]}>
+                    <div
+                        style={{
+                            background: centeredHeading ? '#CEEFFC' : 'white',
+                            textAlign: centeredHeading ? 'center' : 'left',
+                            justifyContent: centeredHeading ? "center" : "space-between"
+                        }}
+                        className={style["modalHeader"]}>
                         <h5 className={style["heading"]}>{title}</h5>
-                        <RiCloseLine color="black" cursor={'pointer'} onClick={onClose} fontSize={32} style={{ marginBottom: "-3px" }} />
+                        {centeredHeading ? null : <RiCloseLine color="black" cursor={'pointer'} onClick={onClose} fontSize={32} style={{ marginBottom: "-3px" }} />}
                     </div>
                     <div className={style['modal-body']} >
                         <div>

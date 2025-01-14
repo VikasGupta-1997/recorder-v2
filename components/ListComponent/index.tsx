@@ -9,6 +9,45 @@ import { FaRegTrashAlt } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import fetchImageAsBase64 from "~utils/fetchImageAsBase64";
 import { processingImage } from '~utils/mediaProcessing'
+import { FaPause, FaPlay } from "react-icons/fa6";
+
+const UploadStatus = ({ progressBarRef, progressPercent, progressUploadSize, progressTimeLeft, fileNameref }) => {
+    return <div className="upload-status" >
+        <div className="flex justify-between" >
+            <p className={"name"} ref={fileNameref} >{""}</p>
+            <HiDotsHorizontal size={24} />
+        </div>
+        <div className="flex gap-2 items-center" >
+            <div
+                style={{
+                    width: "100%",
+                    height: "10px",
+                    backgroundColor: "#CEEFFC", // Background color of the progress bar
+                    borderRadius: "8px",
+                    overflow: "hidden",
+                }}
+            >
+                <div
+                    ref={progressBarRef}
+                    style={{
+                        height: "100%",
+                        backgroundColor: "#0DABD8", // Color of the progress
+                        transition: "width 0.2s", // Smooth transition for width change
+                    }}
+                ></div>
+            </div>
+            <div className="flex gap-2 items-center" >
+                <FaPause cursor={'pointer'} size={18} />
+                <FaRegTrashAlt cursor={'pointer'} size={15} color="red" />
+            </div>
+        </div>
+        <div className="data-info flex gap-4" >
+            <p ref={progressPercent} >{""}</p>
+            <p ref={progressUploadSize} >{""}</p>
+            <p ref={progressTimeLeft}>{""}</p>
+        </div>
+    </div>
+}
 
 const ListComponent = ({
     projectList,
@@ -18,7 +57,13 @@ const ListComponent = ({
     selectedProjected,
     projectListLoading,
     mediaListLoading,
-    handleProjectChange
+    handleProjectChange,
+    progressBarRef,
+    progressPercent,
+    progressTimeLeft,
+    fileNameref,
+    uploadStatus,
+    progressUploadSize
 }) => {
     const [thumbnails, setThumbnails] = useState({})
     const handleMenuClick = async (item) => {
@@ -55,6 +100,7 @@ const ListComponent = ({
             <hr />
             <div className='py-2 px-6' >
                 <p className='font-bold' >Recent Files</p>
+                {uploadStatus && <UploadStatus fileNameref={fileNameref} progressTimeLeft={progressTimeLeft} progressUploadSize={progressUploadSize} progressPercent={progressPercent} progressBarRef={progressBarRef} />}
                 <div className="min-h-[100px] max-h-[260px] overflow-auto" >
                     {mediaListLoading ? <div className="flex items-center justify-center" ><div className="loader" ></div></div> : !mediaFiles?.length ? <p className="text-center" > No items to show !</p> :
                         mediaFiles?.map(l => {

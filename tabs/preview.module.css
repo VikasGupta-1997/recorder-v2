@@ -962,3 +962,26 @@ video {
     justify-content: center;
     margin-right: 6px;
 }
+
+.progress-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.progress-body p {
+  color: #21455E;
+  text-align: center;
+  font-size: 14px;
+  white-space: nowrap;
+  margin-left: -16px;
+}
+
+.upload-fail-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: -16px;
+  margin-right: -20px;
+  margin-top: 36px;
+}

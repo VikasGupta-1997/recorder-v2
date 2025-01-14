@@ -18,6 +18,8 @@ function IndexPopup() {
 
   const [userDetails, setUserDetails] = useStorage("userInfo", null)
   const [selectedProjected, setSelectedProject] = useStorage("selectedProject", null)
+  const [uploadStatus] = useStorage("showUploadStatus", false)
+
 
   const [inRecordingMode, setInRecordingMode] = useState(false)
   const [recordingOptions, setRecordingOptions] = useState<recordingOptions>({
@@ -35,6 +37,11 @@ function IndexPopup() {
   const [mediaFiles, setMediaFiles] = useState([])
   const [projectListLoading, setProjectListLoading] = useState(false)
   const [mediaListLoading, setMediaListLoading] = useState(false)
+  const progressBarRef = useRef(null);
+  const progressPercent = useRef(null)
+  const progressUploadSize = useRef(null)
+  const fileNameref =  useRef(null)
+  const progressTimeLeft = useRef(null)
 
   const setCurrentSelection = (selections, micOptions, cameraOptions, newDevices) => {
     let micRecording;
@@ -115,12 +122,67 @@ function IndexPopup() {
     })
   }
 
+  const formatBlobSize = (sizeInBytes) => {
+    if (sizeInBytes >= 1073741824) { // 1 GB = 1024 * 1024 * 1024 bytes
+      return (sizeInBytes / 1073741824).toFixed(2) + ' GB'; // Convert to GB
+    } else if (sizeInBytes >= 1048576) { // 1 MB = 1024 * 1024 bytes
+      return (sizeInBytes / 1048576).toFixed(2) + ' MB'; // Convert to MB
+    } else if (sizeInBytes >= 1024) { // 1 KB = 1024 bytes
+      return (sizeInBytes / 1024).toFixed(2) + ' KB'; // Convert to KB
+    } else {
+      return sizeInBytes + ' bytes'; // If less than 1 KB, show in bytes
+    }
+  };
+
+  function convertTime(seconds) {
+    if (seconds < 60) {
+      return `${seconds} second${seconds > 1 ? 's' : ''}`;
+    }
+  
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+  
+    let timeString = '';
+  
+    if (hours > 0) {
+      timeString += `${hours}h${hours > 1 ? 's' : ''}`;
+    }
+  
+    if (minutes > 0) {
+      if (timeString) timeString += ' ';
+      timeString += `${minutes}min${minutes > 1 ? 's' : ''}`;
+    }
+  
+    return timeString || '0min';
+  }
+
   const onMountListners = () => {
     chrome.runtime.onMessage.addListener(
       async function (message) {
         switch (message.type) {
           case 'CLOSE_POPUP_CALL': {
             window.close();
+          }
+            break;
+          case "upload-status": {
+            const uploadStatus = message.uploadStatus
+            progressBarRef.current.style.width = `${uploadStatus.progress}%`;
+            console.log("progressPercent==>", uploadStatus)
+            if(progressPercent.current){
+              progressPercent.current.innerText = `Uploading ${uploadStatus.progress}%`
+            }
+            if(progressUploadSize.current){
+              progressUploadSize.current.innerText = `${formatBlobSize(uploadStatus.uploadSize)} of ${formatBlobSize(uploadStatus.totalSize)}`
+            }
+            if(progressTimeLeft.current){
+              progressTimeLeft.current.innerText = `${convertTime(uploadStatus.timeLeft)} left`
+            }
+            if(fileNameref.current){
+              fileNameref.current.innerText = message.recordingName
+            }
+            // progressInfo.current.percent.innerText = `Uploading ${uploadStatus.progress}%`
+            // progressInfo.current.uploadSize.innerText = `${formatBlobSize(uploadStatus.uploadSize)} of ${formatBlobSize(uploadStatus.totalSize)}`
+            // progressInfo.current.timeLeft.innerText = `${convertTime(uploadStatus.timeLeft)} left`
           }
             break;
           case "START_RECORDING": {
@@ -230,6 +292,12 @@ function IndexPopup() {
             </> :
               <>
                 <ListComponent
+                  uploadStatus={uploadStatus}
+                  progressBarRef={progressBarRef}
+                  progressPercent={progressPercent}
+                  progressUploadSize={progressUploadSize}
+                  progressTimeLeft={progressTimeLeft}
+                  fileNameref={fileNameref}
                   mediaListLoading={mediaListLoading}
                   handleProjectChange={handleProjectChange}
                   projectList={projectList}

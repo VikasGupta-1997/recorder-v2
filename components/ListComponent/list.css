@@ -3,3 +3,17 @@
     overflow: hidden;     /* Hide overflow text */
     text-overflow: ellipsis; /* Add '...' at the end */
   }
+
+.upload-status {
+  margin-top: 12px;
+  border-bottom: 1px solid lightgray;
+  padding-bottom: 8px;
+}
+
+.upload-status .name {
+  color: #21455E;
+  font-size: 14px;
+}
+.data-info {
+  color: #21455E;
+}

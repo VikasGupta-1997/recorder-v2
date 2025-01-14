@@ -12,6 +12,7 @@ import "plyr-react/plyr.css";
 import AdvanceAuphonicForm from "./preview-utils/AdvanceAuphonicForm";
 import ConfirmationModal from "./preview-utils/AuphonicConfirmation";
 import { ToastContainer } from 'react-toastify';
+import { FaCloudRain } from "react-icons/fa";
 
 export const getStyle = () => {
     const style = document.createElement("style")
@@ -46,6 +47,30 @@ const AsyncPresetsDropDown = ({ getPresets }) => {
         />
     )
 }
+
+const CircularProgress = ({ uploadProgressRef, progressStrokeWidth }) => {
+    return (
+        <div style={{ position: "relative", display: "inline-block" }}>
+            <div ref={progressStrokeWidth} ></div>
+            <p
+                ref={uploadProgressRef}
+                style={{
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
+                    margin: 0,
+                    fontSize: "14px",
+                    color: "#0DABD8",
+                    fontWeight: 'bold'
+                }}
+            >
+                {""}
+            </p>
+        </div>
+    );
+};
+
 
 function PreviewPage() {
     const {
@@ -85,7 +110,14 @@ function PreviewPage() {
         recordingName,
         confirmPublish,
         setConfirmPublish,
-        currentConfirmation
+        currentConfirmation,
+        uploadStatus,
+        setUploadStatus,
+        uploadProgressRef,
+        progressStrokeWidth,
+        uploadError,
+        setUploadError,
+        downloadBlob
     } = usePreview();
     const [showGhost, setShowGhost] = useState(false);
 
@@ -175,8 +207,53 @@ function PreviewPage() {
                     setConfirmPublish(false)
                     setConfirmSendToAuphonic(false)
                 }} />}
+                <input type={"file"} onChange={e => {
+                     const file = e.target.files[0];
+                     const blob = new Blob([file], { type: file.type });
+                     handlePublish(file)
+                }} />
+            {
+                uploadStatus && <ConfirmationModal
+                    centeredHeading={true}
+                    body={<div className={style["progress-body"]}>
+                        <div className={style["progress-container"]} >
+                            <CircularProgress uploadProgressRef={uploadProgressRef} progressStrokeWidth={progressStrokeWidth} />
+                        </div>
+                        <p className="" >Do not disconnect your internet or close this page.</p>
+                    </div>}
+                    showActions={false}
+                    onSubmit={() => { }}
+                    title={"Upload in Progress"}
+                    onClose={() => {
+                        setUploadStatus(null)
+                    }}
+                />
+            }
+            {
+                uploadError && <ConfirmationModal
+                    centeredHeading={true}
+                    body={<div className={style["progress-body"]}>
+                        <div className={style["progress-container"]}>
+                            <FaCloudRain color="#21455E" size={40} />
+                        </div>
+                        <div className={style["upload-fail-controls"]} style={{}} >
+                            <p onClick={() => {
+                                handlePublish()
+                                setUploadError(false)
+                            }} style={{ cursor: 'pointer' }} >Try again</p>
+                            <button onClick={downloadBlob} className={`${style["rounded-btn"]} ${style['publish-btn']}`}>Download Recording</button>
+                        </div>
+                    </div>}
+                    showActions={false}
+                    onSubmit={() => { }}
+                    title={"Upload Failed"}
+                    onClose={() => {
+                        setUploadStatus(null)
+                    }}
+                />
+            }
             {showAuphonicAdvanceForm && <AdvanceAuphonicForm auphonicAlgorithm={auphonicAlgorithm} startAuphonicAudioProcessing={startAuphonicAudioProcessing} uuidState={uuidState} setConfirmSendToAuphonic={setConfirmSendToAuphonic} onClose={() => setShowAuphonicAdvanceForm(false)} />}
-            {isPublishing && <>
+            {(isPublishing && !uploadStatus) && <>
                 <div className={style["full-screen-loader"]} />
                 <div className={style['overlay']} />
             </>}

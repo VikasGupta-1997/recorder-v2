@@ -5,14 +5,16 @@ import { SwitchLogo } from '~utils/Icons'
 import fetchImageAsBase64 from '~utils/fetchImageAsBase64'
 import { useEffect, useState } from 'react'
 
-const UserInfo = ({ 
-    handleProjectChange, 
-    userDetails, 
-    setInRecordingMode, 
-    projectList, 
-    loading, 
+
+
+const UserInfo = ({
+    handleProjectChange,
+    userDetails,
+    setInRecordingMode,
+    projectList,
+    loading,
     selectedProjected
- }) => {
+}) => {
     const [base64Image, setBase64Image] = useState(null);
     const handleMenuClick = item => {
         handleProjectChange(item)
@@ -36,7 +38,6 @@ const UserInfo = ({
 
         loadGravatar();
     }, []);
-    
 
     return (
         <div>
