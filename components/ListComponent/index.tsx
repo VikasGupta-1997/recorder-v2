@@ -6,7 +6,7 @@ import { FaLink } from "react-icons/fa6";
 import { MdAlternateEmail } from "react-icons/md";
 import { CiEdit, CiGlobe } from "react-icons/ci";
 import { FaRegTrashAlt } from "react-icons/fa";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import fetchImageAsBase64 from "~utils/fetchImageAsBase64";
 import { processingImage } from '~utils/mediaProcessing'
 import { FaPause, FaPlay } from "react-icons/fa6";
@@ -51,7 +51,7 @@ const UploadStatus = ({ progressBarRef, progressPercent, progressUploadSize, pro
 
 const ListComponent = ({
     projectList,
-    mediaFiles,
+    // mediaFiles,
     setInRecordingMode,
     userDetails,
     selectedProjected,
@@ -66,12 +66,13 @@ const ListComponent = ({
     progressUploadSize
 }) => {
     const [thumbnails, setThumbnails] = useState({})
+    const [mediaFilesRef, setMediaFilesRef] = useState([])
     const handleMenuClick = async (item) => {
         console.log("Item==>", item)
     }
 
     useEffect(() => {
-        const loadThumbnails = async () => {
+        const loadThumbnails = async (mediaFiles) => {
             const promises = mediaFiles.map(async (l) => {
                 const base64 = l.thumbnail.includes("sunshine.website") ? processingImage : await fetchImageAsBase64(l.thumbnail);
                 return { id: l.id, base64 };
@@ -84,9 +85,34 @@ const ListComponent = ({
             }, {});
             setThumbnails(thumbnailMap);
         };
+        chrome.storage.onChanged.addListener((changes, areaName) => {
+            // Check if the storage area is 'local'
+            if (areaName === 'local') {
+                // Check if the 'mediaFiles' key has been changed
+                if (changes.mediaFiles) {
+                    const { oldValue, newValue } = changes.mediaFiles;
+                    console.log(`"mediaFiles" key changed in storage.local.`);
+                    console.log(`Old value:`, oldValue);
+                    console.log(`New value:`, newValue);
+                    // mediaFilesRef.current = newValue
+                    setMediaFilesRef(newValue)
+                    loadThumbnails(newValue);
+                    // Perform additional actions if needed
+                }
+            }
+        });
 
-        loadThumbnails();
-    }, [mediaFiles]);
+       
+        chrome.storage.local.get(["mediaFiles"], result => {
+            const mediaFiles = result.mediaFiles
+            console.log("In Lisrt Pagw!!", mediaFiles)
+            // mediaFilesRef.current = mediaFiles
+            setMediaFilesRef(mediaFiles)
+            loadThumbnails(mediaFiles);
+        })
+       
+
+    }, []);
 
     return (
         <div className="" >
@@ -102,8 +128,8 @@ const ListComponent = ({
                 <p className='font-bold' >Recent Files</p>
                 {uploadStatus && <UploadStatus fileNameref={fileNameref} progressTimeLeft={progressTimeLeft} progressUploadSize={progressUploadSize} progressPercent={progressPercent} progressBarRef={progressBarRef} />}
                 <div className="min-h-[100px] max-h-[260px] overflow-auto" >
-                    {mediaListLoading ? <div className="flex items-center justify-center" ><div className="loader" ></div></div> : !mediaFiles?.length ? <p className="text-center" > No items to show !</p> :
-                        mediaFiles?.map(l => {
+                    {mediaListLoading ? <div className="flex items-center justify-center" ><div className="loader" ></div></div> : !mediaFilesRef?.length ? <p className="text-center" > No items to show !</p> :
+                        mediaFilesRef?.map(l => {
                             return (
                                 <div className=" flex justify-between items-center" key={l.id} >
                                     <div className="flex items-center gap-2" >
@@ -120,7 +146,7 @@ const ListComponent = ({
                                                 className="cursor-pointer"
                                                 size={20}
                                             />}
-                                            direction={mediaFiles?.length < 3 ? "top" : "bottom"}
+                                            direction={mediaFilesRef?.length < 3 ? "top" : "bottom"}
                                             menuList={[{ id: 1, icon: <FaLink />, label: 'Copy link', item: l },
                                             { id: 2, icon: <MdAlternateEmail />, label: 'Share Via email', item: l },
                                             { id: 3, icon: <CiEdit />, label: 'Open in editor', item: l },

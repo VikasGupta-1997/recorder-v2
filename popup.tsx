@@ -34,7 +34,7 @@ function IndexPopup() {
   })
   const [isRecordingInProgress, setIsRecordingInProgress] = useState(false)
   const [projectList, setProjectList] = useState([])
-  const [mediaFiles, setMediaFiles] = useState([])
+  // const [mediaFiles, setMediaFiles] = useStorage("mediaFiles",[])
   const [projectListLoading, setProjectListLoading] = useState(false)
   const [mediaListLoading, setMediaListLoading] = useState(false)
   const progressBarRef = useRef(null);
@@ -211,10 +211,10 @@ function IndexPopup() {
 
   const handleProjectChange = async (project) => {
     setSelectedProject({ label: project.label, id: project.id, project_id: project.project_id })
-    getMediaFile(projectList, project)
+    getMediaFile(projectList, project, true)
   }
 
-  const getMediaFile = async (projectList, selectedProjected) => {
+  const getMediaFile = async (projectList, selectedProjected, hasLoading) => {
     const findIfExistsOrNot = projectList.find(project => project.id === selectedProjected?.id)
     let tobeQueryProject;
     if (findIfExistsOrNot) {
@@ -223,7 +223,9 @@ function IndexPopup() {
       tobeQueryProject = projectList?.[0]
       setSelectedProject({ label: projectList?.[0]?.label, id: projectList?.[0]?.id, project_id: projectList?.[0]?.project_id })
     }
-    setMediaListLoading(true)
+    if(hasLoading) {
+      setMediaListLoading(true)
+    }
     try {
       const response = await fetch(`${process.env.PLASMO_PUBLIC_ADILO_API}/projects/show?id=${tobeQueryProject.id}&v2=true`, {
         method: 'GET',
@@ -233,17 +235,29 @@ function IndexPopup() {
         },
       })
       const mediaFiles = await response.json();
-      setMediaFiles(mediaFiles?.videos || [])
-      setMediaListLoading(false)
+      const procesedMediaFiles = mediaFiles.videos.map(file => ({
+        id: file.id, 
+        thumbnail: file.thumbnail,
+        title: file.title,
+        embed_url: file.embed_url
+      }))
+      console.log("procesedMediaFilesprocesedMediaFiles", procesedMediaFiles)
+      // setMediaFiles(procesedMediaFiles || [])
+      await chrome.storage.local.set({"mediaFiles": procesedMediaFiles})
+      if(hasLoading) {
+        setMediaListLoading(false)
+      }
     } catch (error) {
-      setMediaListLoading(false)
+      if(hasLoading) {
+        setMediaListLoading(false)
+      }
       console.log("Error", error)
     }
   }
 
   const getProjectList = async () => {
-    setProjectListLoading(true)
-    setMediaListLoading(true)
+    // setProjectListLoading(true)
+    // setMediaListLoading(true)
     try {
       const response = await fetch(`${process.env.PLASMO_PUBLIC_ADILO_API}/projects`, {
         method: 'GET',
@@ -255,10 +269,10 @@ function IndexPopup() {
       const projectlist = await response.json();
       const listItems = projectlist.map(item => ({ ...item, label: item?.title }))
       setProjectList([...listItems])
-      setProjectListLoading(false)
-      await getMediaFile([...listItems], selectedProjected)
+      // setProjectListLoading(false)
+      await getMediaFile([...listItems], selectedProjected, false)
     } catch (error) {
-      setProjectListLoading(false)
+      // setProjectListLoading(false)
       console.log("Error", error)
     }
   }
@@ -301,7 +315,7 @@ function IndexPopup() {
                   mediaListLoading={mediaListLoading}
                   handleProjectChange={handleProjectChange}
                   projectList={projectList}
-                  mediaFiles={mediaFiles}
+                  // mediaFiles={mediaFiles}
                   projectListLoading={projectListLoading}
                   selectedProjected={selectedProjected}
                   userDetails={userDetails}

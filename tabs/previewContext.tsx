@@ -682,7 +682,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     }, [])
 
 
-    const handlePublish = async (blob) => {
+    const handlePublish = async () => {
         chrome.storage.local.get(['userInfo', 'selectedProject'], async result => {
             console.log(blob, "result223", result)
             const userDetails = result.userInfo;
