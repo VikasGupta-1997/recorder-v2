@@ -48,7 +48,7 @@ const AsyncPresetsDropDown = ({ getPresets }) => {
     )
 }
 
-const CircularProgress = ({ uploadProgressRef, progressStrokeWidth }) => {
+export const CircularProgress = ({ uploadProgressRef, progressStrokeWidth }) => {
     return (
         <div style={{ position: "relative", display: "inline-block" }}>
             <div ref={progressStrokeWidth} ></div>
@@ -207,11 +207,11 @@ function PreviewPage() {
                     setConfirmPublish(false)
                     setConfirmSendToAuphonic(false)
                 }} />}
-                <input type={"file"} onChange={e => {
+                {/* <input type={"file"} onChange={e => {
                      const file = e.target.files[0];
                      const blob = new Blob([file], { type: file.type });
                      handlePublish(file)
-                }} />
+                }} /> */}
             {
                 uploadStatus && <ConfirmationModal
                     centeredHeading={true}

@@ -10,6 +10,8 @@ import NewAudioPlayer from "./preview-utils/NewAudioPlayer";
 import AdvanceAuphonicForm from "./preview-utils/AdvanceAuphonicForm";
 import ConfirmationModal from "./preview-utils/AuphonicConfirmation";
 import { ToastContainer } from 'react-toastify';
+import { CircularProgress } from "./preview";
+import { FaCloudRain } from "react-icons/fa";
 
 export const getStyle = () => {
     const style = document.createElement("style")
@@ -82,7 +84,14 @@ function PreviewPage() {
         handlePublish,
         currentConfirmation,
         confirmPublish,
-        setConfirmPublish
+        setConfirmPublish,
+        uploadProgressRef,
+        uploadStatus,
+        setUploadStatus,
+        progressStrokeWidth,
+        uploadError,
+        setUploadError,
+        downloadBlob
     } = useAudioOnlyPreview();
     const [showGhost, setShowGhost] = useState(false);
     const containerRef = useRef(null)
@@ -126,6 +135,11 @@ function PreviewPage() {
                         <AudioPreview blobUrl={"http://localhost:8080/stream?url=https://auphonic.com/api/download/audio-result/beS6vmTQNGqr6M4Yo5neaV/audio_1733314734721_5kzbwl0u.mp3"} blob={blob} audioRef={auphonicAudioRef} containerRef={containerRef} />
                     </div>}
                 </div>
+                {/* <input type={"file"} onChange={e => {
+                     const file = e.target.files[0];
+                     const blob = new Blob([file], { type: file.type });
+                     handlePublish(file)
+                }} /> */}
                 {(!isEditMode && !showAuphonicWrap) && <div className={`${style['edit-mode-btn-audio']}`} > <button className={`${style["rounded-btn"]} ${style['publish-btn']}`} disabled={!isFfmpegLoaded || ffmpegRunning || isPublishing || isVideoEndcoding} onClick={changeMode} >Edit Video</button></div>}
                 {(isPublishing && !showAuphonicWrap) && <p className={style["publishing-load-text"]} >{`${currentConfirmation.current === 'publishConfirmation' ? "Publishing content" : "Cleaning audio with auphonic"} , please wait and do not close the window till upload is not complete.`}</p>}
                 {!isFfmpegLoaded && <p>Please wait editing tool is loading...</p>}
@@ -162,6 +176,46 @@ function PreviewPage() {
                     setConfirmPublish(false)
                     setConfirmSendToAuphonic(false)
                 }} />}
+            {
+                uploadStatus && <ConfirmationModal
+                    centeredHeading={true}
+                    body={<div className={style["progress-body"]}>
+                        <div className={style["progress-container"]} >
+                            <CircularProgress uploadProgressRef={uploadProgressRef} progressStrokeWidth={progressStrokeWidth} />
+                        </div>
+                        <p className="" >Do not disconnect your internet or close this page.</p>
+                    </div>}
+                    showActions={false}
+                    onSubmit={() => { }}
+                    title={"Upload in Progress"}
+                    onClose={() => {
+                        setUploadStatus(null)
+                    }}
+                />
+            }
+            {
+                uploadError && <ConfirmationModal
+                    centeredHeading={true}
+                    body={<div className={style["progress-body"]}>
+                        <div className={style["progress-container"]}>
+                            <FaCloudRain color="#21455E" size={40} />
+                        </div>
+                        <div className={style["upload-fail-controls"]} style={{}} >
+                            <p onClick={() => {
+                                handlePublish()
+                                setUploadError(false)
+                            }} style={{ cursor: 'pointer' }} >Try again</p>
+                            <button onClick={downloadBlob} className={`${style["rounded-btn"]} ${style['publish-btn']}`}>Download Recording</button>
+                        </div>
+                    </div>}
+                    showActions={false}
+                    onSubmit={() => { }}
+                    title={"Upload Failed"}
+                    onClose={() => {
+                        setUploadStatus(null)
+                    }}
+                />
+            }
             {showAuphonicAdvanceForm && <AdvanceAuphonicForm auphonicAlgorithm={auphonicAlgorithm} startAuphonicAudioProcessing={startAuphonicAudioProcessing} uuidState={null} setConfirmSendToAuphonic={setConfirmSendToAuphonic} onClose={() => setShowAuphonicAdvanceForm(false)} />}
             {(isPublishing || isStreamLoading) && <>
                 <div className={style["full-screen-loader"]} />
