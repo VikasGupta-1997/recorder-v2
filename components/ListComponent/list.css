@@ -19,3 +19,22 @@
 .data-info {
   color: #21455E;
 }
+
+/* Chrome, Edge, Safari */
+::-webkit-scrollbar {
+  width: 8px; /* Thin scrollbar */
+  height: 4px; /* Thin scrollbar for horizontal scroll */
+}
+
+::-webkit-scrollbar-track {
+  background: transparent; /* Fully transparent track */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #E2E5ED; /* Semi-transparent thumb */
+  border-radius: 10px; /* Rounded thumb */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #E2E5ED; /* Slightly darker on hover */
+}
