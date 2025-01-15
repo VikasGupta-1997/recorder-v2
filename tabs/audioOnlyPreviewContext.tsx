@@ -59,6 +59,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
     const uploadProgressRef = useRef(null)
     const progressStrokeWidth = useRef(null)
     const [uploadError, setUploadError] = useState(null)
+    const [publishedData, setPublishedData] = useState(null)
 
     const currentConfirmation = useRef(null)
     const switchModeAudios = useRef({
@@ -276,6 +277,10 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
     useEffect(() => {
         window.addEventListener("message", async (event) => {
             const message = event.data;
+            if(message.type === "download-blob-file"){
+                console.log("download-blob-file", message)
+                downloadFile(message.blob)
+            }
             if (message.type === "updated-blob") {
                 if (message.isMergedTrack) {
                     if (message?.uuid) {
@@ -856,6 +861,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
                     );
                     const saveData = await saveResponse.json();
                     console.log("Video saved successfully:", saveData);
+                    setPublishedData(saveData)
                     setIspublishing(false)
                     toast.success("Recording succeccfully saved to your adilo account.")
                 }
@@ -1035,19 +1041,22 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
     //     setConfirmSendToAuphonic(true)
     // }
 
-    const downloadBlob = () => {
+    const downloadFile = blob => {
         const url = window.URL.createObjectURL(blob);
         chrome.downloads.download(
             {
                 url: url,
-                filename: "raw-recording.webm",
+                filename: recordingName,
             },
             () => {
                 window.URL.revokeObjectURL(url);
             }
         );
+    }
 
-        console.log(chrome, "chrome.downloads", chrome?.downloads)
+
+    const downloadBlob = () => {
+        sendPostMessage({ type: "download-playable-file", blob: blob})
     };
 
     const value = {
@@ -1124,7 +1133,8 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
         progressStrokeWidth,
         uploadError,
         setUploadError,
-        downloadBlob
+        downloadBlob,
+        publishedData
     };
 
     return (

@@ -9,9 +9,11 @@ import AsyncSelect from 'react-select/async';
 import NewAudioPlayer from "./preview-utils/NewAudioPlayer";
 import AdvanceAuphonicForm from "./preview-utils/AdvanceAuphonicForm";
 import ConfirmationModal from "./preview-utils/AuphonicConfirmation";
-import { ToastContainer } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 import { CircularProgress } from "./preview";
 import { FaCloudRain } from "react-icons/fa";
+import { UploadFailRainIcon } from "~utils/Icons";
+import { FiLink2 } from "react-icons/fi";
 
 export const getStyle = () => {
     const style = document.createElement("style")
@@ -91,8 +93,10 @@ function PreviewPage() {
         progressStrokeWidth,
         uploadError,
         setUploadError,
-        downloadBlob
+        downloadBlob,
+        publishedData
     } = useAudioOnlyPreview();
+
     const [showGhost, setShowGhost] = useState(false);
     const containerRef = useRef(null)
 
@@ -121,7 +125,7 @@ function PreviewPage() {
                             <FaRegEdit color={'white'} size={10} />
                         </span>
                     </span>
-                    {isEditMode && <span>
+                    {(isEditMode && !publishedData) && <span>
                         <button onClick={handleCancelEditing} disabled={ffmpegRunning || isPublishing} className={style["rounded-btn"]}>cancel</button>
                     </span>}
                 </h1>
@@ -140,11 +144,11 @@ function PreviewPage() {
                      const blob = new Blob([file], { type: file.type });
                      handlePublish(file)
                 }} /> */}
-                {(!isEditMode && !showAuphonicWrap) && <div className={`${style['edit-mode-btn-audio']}`} > <button className={`${style["rounded-btn"]} ${style['publish-btn']}`} disabled={!isFfmpegLoaded || ffmpegRunning || isPublishing || isVideoEndcoding} onClick={changeMode} >Edit Video</button></div>}
+                {(!isEditMode && !showAuphonicWrap && !publishedData) && <div className={`${style['edit-mode-btn-audio']}`} > <button className={`${style["rounded-btn"]} ${style['publish-btn']}`} disabled={!isFfmpegLoaded || ffmpegRunning || isPublishing || isVideoEndcoding} onClick={changeMode} >Edit Video</button></div>}
                 {(isPublishing && !showAuphonicWrap) && <p className={style["publishing-load-text"]} >{`${currentConfirmation.current === 'publishConfirmation' ? "Publishing content" : "Cleaning audio with auphonic"} , please wait and do not close the window till upload is not complete.`}</p>}
                 {!isFfmpegLoaded && <p>Please wait editing tool is loading...</p>}
                 {ffmpegLoadError && <p className={`${style['error']}`}>Cannot edit video, editing tool not supported for your browser !!</p>}
-                {(isEditMode && !showAuphonicWrap) && <div className={style["editing-control-wrapper"]} >
+                {(isEditMode && !showAuphonicWrap && !publishedData) && <div className={style["editing-control-wrapper"]} >
                     <EditingControls
                         publishBlob={confirmPublishing}
                         isAudio={true}
@@ -153,6 +157,23 @@ function PreviewPage() {
                         showGhost={showGhost}
                     />
                 </div>}
+                {
+                    publishedData && <div className={style["copy-link-div"]} >
+                        <input type="text" disabled value={publishedData.video.location} />
+                        <button onClick={e => {
+                            const linkValue = publishedData.video.location;
+                            if (linkValue) {
+                                navigator.clipboard.writeText(linkValue).then(() => {
+                                    toast.success("copied to clipboard!")
+                                }).catch((err) => {
+                                    console.error("Failed to copy text: ", err);
+                                });
+                            }
+                        }} type="button" >
+                            <FiLink2 /> Copy link
+                        </button>
+                    </div>
+                }
             </span>
             {auphonicProcessingError && <ConfirmationModal
                 body={<div>
@@ -198,7 +219,8 @@ function PreviewPage() {
                     centeredHeading={true}
                     body={<div className={style["progress-body"]}>
                         <div className={style["progress-container"]}>
-                            <FaCloudRain color="#21455E" size={40} />
+                            <UploadFailRainIcon />
+                            {/* <FaCloudRain color="#21455E" size={40} /> */}
                         </div>
                         <div className={style["upload-fail-controls"]} style={{}} >
                             <p onClick={() => {

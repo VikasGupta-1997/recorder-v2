@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import styleText from "data-text:../tabs/preview.module.css"
-import cutVideo, { extractAudio, fixMetadata, replaceVideoAudio, toBase64 } from "~utils/cutVideo";
+import cutVideo, { convertAudioToMp3, extractAudio, fixMetadata, replaceVideoAudio, toBase64 } from "~utils/cutVideo";
 
 export const getStyle = () => {
   const style = document.createElement("style")
@@ -89,6 +89,16 @@ const DemoSand = () => {
           type: "extracted-audio-blob",
           blob: message.blob
         });
+      }
+
+      if(message.type === 'download-playable-file'){
+        const blob = await convertAudioToMp3(ffmpegInstance.current, message.blob)
+        console.log("downloadAbleBlob", blob)
+        const sendMessageData = {
+          type: "download-blob-file",
+          blob: blob
+        } 
+        sendMessage(sendMessageData);
       }
 
       if (message.type === "cut-video") {
@@ -190,6 +200,7 @@ const DemoSand = () => {
           ref={iframeRef}
           src="/tabs/audioOnlyPreview.html"
           allowFullScreen={true}
+          allow="clipboard-read; clipboard-write"
           // sandbox="allow-scripts allow-same-origin allow-file-access-from-files allow-storage-access-by-user-activation"
           style={{
             width: "100%",

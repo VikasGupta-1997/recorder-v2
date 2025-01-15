@@ -11,8 +11,10 @@ import Plyr from "plyr-react";
 import "plyr-react/plyr.css";
 import AdvanceAuphonicForm from "./preview-utils/AdvanceAuphonicForm";
 import ConfirmationModal from "./preview-utils/AuphonicConfirmation";
-import { ToastContainer } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 import { FaCloudRain } from "react-icons/fa";
+import { UploadFailRainIcon } from "~utils/Icons";
+import { FiLink2 } from "react-icons/fi";
 
 export const getStyle = () => {
     const style = document.createElement("style")
@@ -51,7 +53,24 @@ const AsyncPresetsDropDown = ({ getPresets }) => {
 export const CircularProgress = ({ uploadProgressRef, progressStrokeWidth }) => {
     return (
         <div style={{ position: "relative", display: "inline-block" }}>
-            <div ref={progressStrokeWidth} ></div>
+            <div ref={progressStrokeWidth} >
+                <svg
+                    height={5 * 2}
+                    width={5 * 2}
+                    style={{
+                        transform: "rotate(-90deg)"
+                    }}
+                >
+                    <circle
+                        stroke="#CEEFFC"
+                        fill="transparent"
+                        strokeWidth="${strokeWidth}"
+                        r={42.5}
+                        cx={45}
+                        cy={45}
+                    />
+                </svg>
+            </div>
             <p
                 ref={uploadProgressRef}
                 style={{
@@ -117,7 +136,8 @@ function PreviewPage() {
         progressStrokeWidth,
         uploadError,
         setUploadError,
-        downloadBlob
+        downloadBlob,
+        publishedData
     } = usePreview();
     const [showGhost, setShowGhost] = useState(false);
 
@@ -154,7 +174,7 @@ function PreviewPage() {
                             <FaRegEdit color={'white'} size={10} />
                         </span>
                     </span>
-                    {isEditMode && <span>
+                    {(isEditMode && !publishedData) && <span>
                         <button onClick={handleCancelEditing} disabled={ffmpegRunning || isPublishing} className={style["rounded-btn"]}>cancel</button>
                     </span>}
                 </h1>
@@ -163,14 +183,14 @@ function PreviewPage() {
                         <div className={`${style["ref-wrapper-video"]} ${auphonicVideoUrlPreview ? style['auphonic-video'] : ''}`}>
                             <VideoPreview blobUrl={blobUrl} />
                         </div>
-                        {(!isEditMode && !auphonicVideoUrlPreview) && <div className={`${style['edit-mode-btn']}`} > <button className={`${style["rounded-btn"]} ${style['publish-btn']}`} disabled={
+                        {(!isEditMode && !auphonicVideoUrlPreview && !publishedData) && <div className={`${style['edit-mode-btn']}`} > <button className={`${style["rounded-btn"]} ${style['publish-btn']}`} disabled={
                             // isVideoEndcoding || 
                             !isFfmpegLoaded ||
                             ffmpegRunning || isPublishing} onClick={changeMode} >Edit Video</button></div>}
                         {(isPublishing && !auphonicVideoUrlPreview) && <p className={style["publishing-load-text"]} >{`${currentConfirmation.current === 'publishConfirmation' ? "Publishing content" : "Cleaning audio with auphonic"} , please wait and do not close the window till upload is not complete.`}</p>}
                         {(!isFfmpegLoaded && !auphonicVideoUrlPreview) && <p>Please wait editing tool is loading...</p>}
                         {(ffmpegLoadError) && <p className={`${style['error']}`}>Cannot edit video, editing tool not supported for your browser !!</p>}
-                        {(isEditMode && !auphonicVideoUrlPreview) && <div className={style["editing-control-wrapper"]} >
+                        {(isEditMode && !auphonicVideoUrlPreview && !publishedData) && <div className={style["editing-control-wrapper"]} >
                             <EditingControls
                                 publishBlob={confirmPublishing}
                                 isAudio={false}
@@ -179,6 +199,23 @@ function PreviewPage() {
                                 showGhost={showGhost}
                             />
                         </div>}
+                        {
+                            publishedData && <div className={style["copy-link-div"]} >
+                                <input type="text" disabled value={publishedData.video.location} />
+                                <button onClick={e => {
+                                    const linkValue = publishedData.video.location;
+                                    if (linkValue) {
+                                        navigator.clipboard.writeText(linkValue).then(() => {
+                                            toast.success("copied to clipboard!")
+                                        }).catch((err) => {
+                                            console.error("Failed to copy text: ", err);
+                                        });
+                                    }
+                                }} type="button" >
+                                    <FiLink2 /> Copy link
+                                </button>
+                            </div>
+                        }
                     </div>
                     {auphonicVideoUrlPreview && <div className={`${style["ref-wrapper-video"]} ${auphonicVideoUrlPreview ? style['auphonic-video'] : ''}`}>
                         <AuphonicVideoPreview auphonicVideoUrlPreview={auphonicVideoUrlPreview} auphonicPlyrRef={auphonicPlyrRef} />
@@ -207,7 +244,7 @@ function PreviewPage() {
                     setConfirmPublish(false)
                     setConfirmSendToAuphonic(false)
                 }} />}
-                {/* <input type={"file"} onChange={e => {
+            {/* <input type={"file"} onChange={e => {
                      const file = e.target.files[0];
                      const blob = new Blob([file], { type: file.type });
                      handlePublish(file)
@@ -234,7 +271,8 @@ function PreviewPage() {
                     centeredHeading={true}
                     body={<div className={style["progress-body"]}>
                         <div className={style["progress-container"]}>
-                            <FaCloudRain color="#21455E" size={40} />
+                            <UploadFailRainIcon />
+                            {/* <FaCloudRain color="#21455E" size={40} /> */}
                         </div>
                         <div className={style["upload-fail-controls"]} style={{}} >
                             <p onClick={() => {

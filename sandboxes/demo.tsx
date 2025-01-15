@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import styleText from "data-text:../tabs/preview.module.css"
-import cutVideo, { toBase64, reencodeVideo, replaceVideoAudio, fixMetadata, extractAudio } from "~utils/cutVideo";
+import cutVideo, { toBase64, reencodeVideo, replaceVideoAudio, fixMetadata, extractAudio, fixVideoAudioCompatibility } from "~utils/cutVideo";
 import cutVideoWindow10, { toBase64Window10, reencodeVideoWindow10, replaceVideoAudioWindow10, fixMetadataWindow10, extractAudioWindow10 } from "~utils/cutVideoWindow10";
 
 export const getStyle = () => {
@@ -55,6 +55,16 @@ const DemoSand = () => {
           type: "extracted-audio-blob",
           blob
         });
+      }
+
+      if(message.type === 'download-playable-file'){
+        const blob = await fixVideoAudioCompatibility(ffmpegInstance.current, message.blob)
+        console.log("downloadAbleBlob", blob)
+        const sendMessageData = {
+          type: "download-blob-file",
+          blob: blob
+        } 
+        sendMessage(sendMessageData);
       }
 
       if (message.type === 'replace-videos-audio') {
@@ -401,6 +411,7 @@ const DemoSand = () => {
           ref={iframeRef}
           src="/tabs/preview.html"
           allowFullScreen={true}
+          allow="clipboard-read; clipboard-write"
           // sandbox="allow-scripts allow-same-origin allow-file-access-from-files allow-storage-access-by-user-activation"
           style={{
             width: "100%",

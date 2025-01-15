@@ -290,4 +290,80 @@ export async function replaceVideoAudio(ffmpeg, videoBlob, audioBlob) {
   return outputBlob;
 }
 
+export async function fixVideoAudioCompatibility(ffmpeg, videoBlob) {
+  // Step 1: Validate input
+  if (!videoBlob || !(videoBlob instanceof Blob)) {
+    throw new Error("Invalid videoBlob. It must be a valid Blob object.");
+  }
+
+  // Step 2: Convert the Blob into Uint8Array
+  const videoData = new Uint8Array(await videoBlob.arrayBuffer());
+
+  // Step 3: Write the video file to FFmpeg's virtual file system
+  ffmpeg.FS("writeFile", "input-video.mp4", videoData);
+
+  // Step 4: Reprocess the video with a compatible audio codec
+  const outputFileName = "output-video-compatible.mp4";
+  try {
+    await ffmpeg.run(
+      "-i", "input-video.mp4",   // Input video file
+      "-c:v", "copy",            // Copy video without re-encoding
+      "-c:a", "aac",             // Convert audio to AAC codec
+      "-b:a", "128k",            // Set audio bitrate (optional)
+      "-movflags", "+faststart", // Optimize for web playback
+      outputFileName             // Output file name
+    );
+  } catch (err) {
+    console.error("FFmpeg run failed:", err);
+    throw new Error("FFmpeg command failed. Ensure no concurrent operations are running.");
+  }
+
+  // Step 5: Retrieve the processed video file
+  const outputData = ffmpeg.FS("readFile", outputFileName);
+
+  // Step 6: Convert Uint8Array to Blob
+  const outputBlob = new Blob([outputData.buffer], { type: "video/mp4" });
+
+  console.log("Processed video created successfully.");
+  return outputBlob;
+}
+
+export async function convertAudioToMp3(ffmpeg, audioBlob) {
+  // Step 1: Validate input
+  if (!audioBlob || !(audioBlob instanceof Blob)) {
+    throw new Error("Invalid audioBlob. It must be a valid Blob object.");
+  }
+
+  // Step 2: Convert the Blob into Uint8Array
+  const audioData = new Uint8Array(await audioBlob.arrayBuffer());
+
+  // Step 3: Write the audio file to FFmpeg's virtual file system
+  ffmpeg.FS("writeFile", "input-audio.webm", audioData);
+
+  // Step 4: Convert the audio to MP3 format
+  const outputFileName = "output-audio.mp3";
+  try {
+    await ffmpeg.run(
+      "-i", "input-audio.webm", // Input audio file
+      "-c:a", "libmp3lame",     // Encode audio using MP3 codec
+      "-b:a", "128k",           // Set audio bitrate
+      outputFileName            // Output file name
+    );
+  } catch (err) {
+    console.error("FFmpeg run failed:", err);
+    throw new Error("FFmpeg command failed. Ensure no concurrent operations are running.");
+  }
+
+  // Step 5: Retrieve the processed audio file
+  const outputData = ffmpeg.FS("readFile", outputFileName);
+
+  // Step 6: Convert Uint8Array to Blob
+  const outputBlob = new Blob([outputData.buffer], { type: "audio/mpeg" });
+
+  console.log("Audio converted to MP3 successfully.");
+  return outputBlob;
+}
+
+
+
 export default cutVideo;
