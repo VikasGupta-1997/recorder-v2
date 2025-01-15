@@ -15,6 +15,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import { FaCloudRain } from "react-icons/fa";
 import { UploadFailRainIcon } from "~utils/Icons";
 import { FiLink2 } from "react-icons/fi";
+import convertTime from "~utils/convertTime";
 
 export const getStyle = () => {
     const style = document.createElement("style")
@@ -217,9 +218,9 @@ function PreviewPage() {
                             </div>
                         }
                     </div>
-                    {auphonicVideoUrlPreview && <div className={`${style["ref-wrapper-video"]} ${auphonicVideoUrlPreview ? style['auphonic-video'] : ''}`}>
+                    {/* {auphonicVideoUrlPreview && <div className={`${style["ref-wrapper-video"]} ${auphonicVideoUrlPreview ? style['auphonic-video'] : ''}`}>
                         <AuphonicVideoPreview auphonicVideoUrlPreview={auphonicVideoUrlPreview} auphonicPlyrRef={auphonicPlyrRef} />
-                    </div>}
+                    </div>} */}
                 </div>
             </span>
             {auphonicProcessingError && <ConfirmationModal
@@ -234,7 +235,7 @@ function PreviewPage() {
                 onClose={() => setAuphonicProcessingError(null)} />}
             {((confirmSendToAuphonic && showConfirmation.current) || confirmPublish) && <ConfirmationModal
                 body={confirmPublish ? <p>Are you sure you want to publish this video ?</p> : <div>
-                    <p>Enhancing the audio of this recording wil consume 15 minutes from you AI credits.</p>
+                    <p>Enhancing the audio of this recording wil consume {convertTime(Math.ceil(blob.size / (1024 * 1024)))} minutes from you AI credits.</p>
                     <p>Do you want to continue ?</p>
                 </div>}
                 isPublishMode={confirmPublish}

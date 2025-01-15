@@ -10,6 +10,8 @@ import { defaultRecordingOptions, screenRecordingOptions } from '~utils/constant
 import formatTime from '~utils/formatTime'
 import useStorage from '~useStorageCustom'
 import ListComponent from '~components/ListComponent'
+import convertTime from '~utils/convertTime'
+import formatBlobSize from '~utils/formatBlobSize'
 
 let tabId;
 function IndexPopup() {
@@ -120,40 +122,6 @@ function IndexPopup() {
       });
       setCurrentSelection(result, micOptions, cameraOptions, devices)
     })
-  }
-
-  const formatBlobSize = (sizeInBytes) => {
-    if (sizeInBytes >= 1073741824) { // 1 GB = 1024 * 1024 * 1024 bytes
-      return (sizeInBytes / 1073741824).toFixed(2) + ' GB'; // Convert to GB
-    } else if (sizeInBytes >= 1048576) { // 1 MB = 1024 * 1024 bytes
-      return (sizeInBytes / 1048576).toFixed(2) + ' MB'; // Convert to MB
-    } else if (sizeInBytes >= 1024) { // 1 KB = 1024 bytes
-      return (sizeInBytes / 1024).toFixed(2) + ' KB'; // Convert to KB
-    } else {
-      return sizeInBytes + ' bytes'; // If less than 1 KB, show in bytes
-    }
-  };
-
-  function convertTime(seconds) {
-    if (seconds < 60) {
-      return `${seconds} second${seconds > 1 ? 's' : ''}`;
-    }
-  
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-  
-    let timeString = '';
-  
-    if (hours > 0) {
-      timeString += `${hours}h${hours > 1 ? 's' : ''}`;
-    }
-  
-    if (minutes > 0) {
-      if (timeString) timeString += ' ';
-      timeString += `${minutes}min${minutes > 1 ? 's' : ''}`;
-    }
-  
-    return timeString || '0min';
   }
 
   const onMountListners = () => {
