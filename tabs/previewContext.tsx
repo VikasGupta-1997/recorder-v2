@@ -247,6 +247,11 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         document.body.style.margin = "0px";
         document.body.style.padding = "0px";
+        if (navigator.platform.indexOf('Mac') !== -1) {
+            document.body.classList.add('mac');
+        } else {
+            document.body.classList.add('windows');
+        }
         sendPostMessage({ type: "load-ffmpeg" });
 
         // window.onbeforeunload = async function () {
@@ -271,7 +276,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         window.addEventListener("message", async (event) => {
             const message = event.data;
-            if(message.type === "download-blob-file"){
+            if (message.type === "download-blob-file") {
                 downloadFile(message.blob)
             }
             if (message.type === "updated-blob") {
@@ -922,7 +927,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     }
 
     const downloadBlob = () => {
-        sendPostMessage({ type: "download-playable-file", blob: blob})
+        sendPostMessage({ type: "download-playable-file", blob: blob })
     };
 
 

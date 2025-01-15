@@ -1018,20 +1018,20 @@ video {
 }
 
 /* Chrome, Edge, Safari */
-::-webkit-scrollbar {
+.windows ::-webkit-scrollbar {
   width: 8px; /* Thin scrollbar */
   height: 4px; /* Thin scrollbar for horizontal scroll */
 }
 
-::-webkit-scrollbar-track {
+.windows ::-webkit-scrollbar-track {
   background: transparent; /* Fully transparent track */
 }
 
-::-webkit-scrollbar-thumb {
+.windows ::-webkit-scrollbar-thumb {
   background: #E2E5ED; /* Semi-transparent thumb */
   border-radius: 10px; /* Rounded thumb */
 }
 
-::-webkit-scrollbar-thumb:hover {
+.windows ::-webkit-scrollbar-thumb:hover {
   background: #E2E5ED; /* Slightly darker on hover */
 }

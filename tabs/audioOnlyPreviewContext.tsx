@@ -232,6 +232,11 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
     useEffect(() => {
         document.body.style.margin = "0px";
         document.body.style.padding = "0px";
+        if (navigator.platform.indexOf('Mac') !== -1) {
+            document.body.classList.add('mac');
+          } else {
+            document.body.classList.add('windows');
+          }
         sendPostMessage({ type: "load-ffmpeg" });
         // window.onbeforeunload = function () {
         //     return true;

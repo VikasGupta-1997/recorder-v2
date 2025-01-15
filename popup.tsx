@@ -42,7 +42,7 @@ function IndexPopup() {
   const progressBarRef = useRef(null);
   const progressPercent = useRef(null)
   const progressUploadSize = useRef(null)
-  const fileNameref =  useRef(null)
+  const fileNameref = useRef(null)
   const progressTimeLeft = useRef(null)
 
   const setCurrentSelection = (selections, micOptions, cameraOptions, newDevices) => {
@@ -136,16 +136,16 @@ function IndexPopup() {
             const uploadStatus = message.uploadStatus
             progressBarRef.current.style.width = `${uploadStatus.progress}%`;
             console.log("progressPercent==>", uploadStatus)
-            if(progressPercent.current){
+            if (progressPercent.current) {
               progressPercent.current.innerText = `Uploading ${uploadStatus.progress}%`
             }
-            if(progressUploadSize.current){
+            if (progressUploadSize.current) {
               progressUploadSize.current.innerText = `${formatBlobSize(uploadStatus.uploadSize)} of ${formatBlobSize(uploadStatus.totalSize)}`
             }
-            if(progressTimeLeft.current){
+            if (progressTimeLeft.current) {
               progressTimeLeft.current.innerText = `${convertTime(uploadStatus.timeLeft)} left`
             }
-            if(fileNameref.current){
+            if (fileNameref.current) {
               fileNameref.current.innerText = message.recordingName
             }
             // progressInfo.current.percent.innerText = `Uploading ${uploadStatus.progress}%`
@@ -171,6 +171,12 @@ function IndexPopup() {
   }
 
   useEffect(() => {
+    // Detect OS and add class to body
+    if (navigator.platform.indexOf('Mac') !== -1) {
+      document.body.classList.add('mac');
+    } else {
+      document.body.classList.add('windows');
+    }
     onMountListners()
     getDeviceLists()
     return () => {
@@ -191,7 +197,7 @@ function IndexPopup() {
       tobeQueryProject = projectList?.[0]
       setSelectedProject({ label: projectList?.[0]?.label, id: projectList?.[0]?.id, project_id: projectList?.[0]?.project_id })
     }
-    if(hasLoading) {
+    if (hasLoading) {
       setMediaListLoading(true)
     }
     try {
@@ -204,19 +210,19 @@ function IndexPopup() {
       })
       const mediaFiles = await response.json();
       const procesedMediaFiles = mediaFiles.videos.map(file => ({
-        id: file.id, 
+        id: file.id,
         thumbnail: file.thumbnail,
         title: file.title,
         embed_url: file.embed_url
       }))
       console.log("procesedMediaFilesprocesedMediaFiles", procesedMediaFiles)
       // setMediaFiles(procesedMediaFiles || [])
-      await chrome.storage.local.set({"mediaFiles": procesedMediaFiles})
-      if(hasLoading) {
+      await chrome.storage.local.set({ "mediaFiles": procesedMediaFiles })
+      if (hasLoading) {
         setMediaListLoading(false)
       }
     } catch (error) {
-      if(hasLoading) {
+      if (hasLoading) {
         setMediaListLoading(false)
       }
       console.log("Error", error)
