@@ -1,8 +1,10 @@
 .truncate-text {
-    white-space: nowrap;  /* Prevent text wrapping */
-    overflow: hidden;     /* Hide overflow text */
-    text-overflow: ellipsis; /* Add '...' at the end */
-  }
+  white-space: nowrap;         /* Prevent text from wrapping to the next line */
+  overflow: hidden;            /* Hide the overflowed text */
+  text-overflow: ellipsis;     /* Show an ellipsis when text overflows */
+  width: 260px;                 /* Ensure it takes the full width available */
+  display: inline-block;       /* Ensure the element behaves like a block but doesn't break the line */
+}
 
 .upload-status {
   margin-top: 12px;
