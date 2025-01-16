@@ -910,6 +910,14 @@ const OffScreen = () => {
     navigator.storage.persist();
     // Create the media stream with or without audio based on microphone selection
     let mediaStream;
+    let mimeType = mimeTypes.find((mimeType) =>
+      MediaRecorder.isTypeSupported(mimeType)
+    );
+    console.log("mimeType", mimeType)
+    if (!mimeType) {
+      console.error("No supported MIME type found");
+      return;
+    }
     if (selections?.micRecording?.value !== "mic_off") {
       // If mic is selected, get audio from the selected mic device
       mediaStream = await navigator.mediaDevices.getUserMedia({
@@ -948,7 +956,11 @@ const OffScreen = () => {
     }
 
     // Initialize the MediaRecorder with the combined stream
-    camOnlyRecorder = new MediaRecorder(mediaStream);
+    camOnlyRecorder = new MediaRecorder(mediaStream, {
+      mimeType: mimeType,
+      audioBitsPerSecond: audioBitsPerSecond,
+      videoBitsPerSecond: videoBitsPerSecond,
+    });
     camOnlyRecorder.ondataavailable = (event) => {
       if (event.data.size > 0) {
         camOnlyChunks.push(event.data);
