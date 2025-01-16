@@ -265,24 +265,33 @@ const EditingControls = ({
             const message = {
                 type: "cut-video",
                 blob: blob,
-                startTime: parseFloat(trimState.startTime?.toFixed(2)),
-                endTime: parseFloat(trimState.endTime?.toFixed(2)),
+                // startTime: parseFloat(trimState.startTime?.toFixed(2)),
+                startTime: trimState.startTime,
+                // endTime: parseFloat(trimState.endTime?.toFixed(2)),
+                endTime: trimState.endTime,
                 cut: cut,
-                duration: parseFloat(trimState.duration?.toFixed(2)),
+                // duration: parseFloat(trimState.duration?.toFixed(2)),
+                duration: trimState.duration,
                 encode: false,
             };
             undoRedoClick.current = null
             switchModeAudios.current.trimState = {
-                startTime: parseFloat(trimState.startTime?.toFixed(2)),
-                endTime: parseFloat(trimState.endTime?.toFixed(2)),
-                duration: parseFloat(trimState.duration?.toFixed(2)),
+                // startTime: parseFloat(trimState.startTime?.toFixed(2)),
+                startTime: trimState.startTime,
+                // endTime: parseFloat(trimState.endTime?.toFixed(2)),
+                endTime: trimState.endTime,
+                // duration: parseFloat(trimState.duration?.toFixed(2)),
+                duration: trimState.duration,
             }
 
 
             console.log("Sending trim message:", {
-                startTime: parseFloat(trimState.startTime?.toFixed(2)),
-                endTime: parseFloat(trimState.endTime?.toFixed(2)),
-                duration: parseFloat(trimState.duration?.toFixed(2))
+                // startTime: parseFloat(trimState.startTime?.toFixed(2)),
+                startTime: trimState.startTime,
+                // endTime: parseFloat(trimState.endTime?.toFixed(2)),
+                endTime: trimState.endTime,
+                // duration: parseFloat(trimState.duration?.toFixed(2))
+                duration: trimState.duration
             });
 
             // Send the message to process the trim
