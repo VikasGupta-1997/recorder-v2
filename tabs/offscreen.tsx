@@ -367,6 +367,7 @@ const OffScreen = () => {
 
   const windowOnlyOption = async (screenStream, backgroundUrl) => {
     // Get the webcam stream
+    navigator.storage.persist();
     userMediaStream = await navigator.mediaDevices.getUserMedia({
       video: {
         deviceId: recordSelections?.cameraRecording?.value
@@ -443,7 +444,16 @@ const OffScreen = () => {
       ...(windowOnlyAudioRecord ? [windowOnlyAudioRecord] : []) // Only add audio track if it exists
     ]);
 
-    const mediaRecorder = new MediaRecorder(combinedStream, { mimeType: 'video/mp4' });
+    let mimeType = mimeTypes.find((mimeType) =>
+      MediaRecorder.isTypeSupported(mimeType)
+    );
+    console.log("mimeType", mimeType)
+
+    const mediaRecorder = new MediaRecorder(combinedStream, {
+      mimeType: mimeType,
+      audioBitsPerSecond: audioBitsPerSecond,
+      videoBitsPerSecond: videoBitsPerSecond,
+    });
 
     mediaRecorder.ondataavailable = (event) => {
       if (event.data.size > 0) {
@@ -800,6 +810,7 @@ const OffScreen = () => {
   };
 
   const recordMicOnly = async selections => {
+    navigator.storage.persist();
     console.log("recordMicOnly121", selections)
     const stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: selections?.micRecording?.value } });
     micOnlyRecorder = new MediaRecorder(stream);
@@ -823,6 +834,7 @@ const OffScreen = () => {
   }
 
   const recordCameraOnly = async (selections) => {
+    navigator.storage.persist();
     const mediaStream = await navigator.mediaDevices.getUserMedia({
       audio: selections?.micRecording.value !== "mic_off" ? { deviceId: selections?.micRecording?.value } : false,
       video: { deviceId: selections?.cameraRecording?.value }
@@ -895,6 +907,7 @@ const OffScreen = () => {
   }
 
   const recordCameraOnlyWindow10 = async (selections) => {
+    navigator.storage.persist();
     // Create the media stream with or without audio based on microphone selection
     let mediaStream;
     if (selections?.micRecording?.value !== "mic_off") {
