@@ -152,6 +152,7 @@ async function cutVideoWindow10(ffmpeg, videoBlob, start, end, cut, duration, en
   };
   
   export async function fixMetadataWindow10(ffmpeg, blob, hasAudio) {
+    return blob
     const data = new Uint8Array(await blob.arrayBuffer());
     ffmpeg.FS('writeFile', 'input.webm', data);
   

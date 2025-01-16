@@ -189,7 +189,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
 
                         if (message.isLastChunk) {
                             console.log("All chunks received. Reassembling...");
-                            const isWindows10 = navigator.userAgent.match(/Windows NT 10.0/);
+                            // const isWindows10 = navigator.userAgent.match(/Windows NT 10.0/);
                             const { newBlob, newBlobUrl } = await playPartialRecording(receivedChunks); // Play the complete recording
                             sendPostMessage({ type: "fixMetadata", blob: newBlob })
                             // if (!isWindows10) {
