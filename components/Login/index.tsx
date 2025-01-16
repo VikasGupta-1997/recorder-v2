@@ -91,7 +91,6 @@ const LoginForm = ({setUserDetails }) => {
 
     const handleLoginSubmit = async (e) => {
         e.preventDefault()
-        console.log("State", state)
         setLoading(true)
         try {
             const data = await authenticateEmail(state.userName)
@@ -132,10 +131,11 @@ const LoginForm = ({setUserDetails }) => {
                 }
             } else {
                 setLoading(false)
-                throw new Error(data?.result || "Invalid username Or password")
+                throw new Error(data?.message || "Invalid username Or password")
             }
         } catch (error) {
             setLoading(false)
+            setError(error?.message || "Invalid username Or password")
             console.log("Error", error)
         }
         // await chrome.storage.local.set({ "isLoggedIn": true })
