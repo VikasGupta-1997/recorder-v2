@@ -17,6 +17,7 @@ const DemoSand = () => {
   const triggerLoad = useRef(false)
   const urlParams = new URLSearchParams(window.location.search);
   const hasAudio = urlParams.get('hasAudio');
+  const durationTillNow = urlParams.get('duration');
   const sendMessage = (message) => {
     iframeRef.current.contentWindow.postMessage(message, "*");
   };
@@ -376,7 +377,7 @@ const DemoSand = () => {
       console.log("Loading FFmpeg...");
       await ffmpegInstance.current.load();
       console.log("FFmpeg Loaded!", ffmpegInstance.current?.isLoaded());
-      sendMessage({ type: "ffmpeg-loaded", hasAudio });
+      sendMessage({ type: "ffmpeg-loaded", hasAudio , durationTillNow: durationTillNow});
       // Notify the parent (background or popup script) that FFmpeg is ready
       // window.parent.postMessage({ type: "ready" }, "*");
     } catch (error) {

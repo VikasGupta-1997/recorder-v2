@@ -4,6 +4,9 @@ import onSubmitAdvanceAuphonic, { fetchMp3File } from '~utils/auphonicProduction
 import { defaultAdvanceAuphonicState } from '~utils/constants';
 import getAuphonicProcessedData from '~utils/getAuphonicProcessedData';
 
+import fixWebmDuration from "fix-webm-duration";
+import { default as fixWebmDurationFallback } from "webm-duration-fix";
+
 const PreviewContext = createContext<any>(undefined);
 
 const receivedChunks = [];
@@ -35,6 +38,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     const url = useRef('')
     const auphonicPlyrRef = useRef(null)
     const hasAudio = useRef(null);
+    const durationTillNow = useRef(0)
 
     const [loadingVideo, setLoadingVideo] = useState(true)
     const [showAuphonicAdvanceForm, setShowAuphonicAdvanceForm] = useState(false)
@@ -135,6 +139,29 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
+    async function getVideoDuration(blob) {
+        return new Promise((resolve, reject) => {
+          const videoElement = document.createElement("video");
+          const url = URL.createObjectURL(blob);
+      
+          // Set up the video element
+          videoElement.preload = "metadata";
+          videoElement.src = url;
+      
+          // Event to handle when metadata is loaded
+          videoElement.onloadedmetadata = () => {
+            URL.revokeObjectURL(url); // Clean up the object URL
+            resolve(videoElement.duration); // Duration in seconds
+          };
+      
+          // Error handling
+          videoElement.onerror = (err) => {
+            URL.revokeObjectURL(url); // Clean up on error
+            reject("Error loading video metadata.");
+          };
+        });
+      }
+
     const onMountListeners = () => {
         chrome.runtime.onMessage.addListener(
             async function async(message) {
@@ -162,9 +189,30 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
 
                         if (message.isLastChunk) {
                             console.log("All chunks received. Reassembling...");
-
+                            const isWindows10 = navigator.userAgent.match(/Windows NT 10.0/);
                             const { newBlob, newBlobUrl } = await playPartialRecording(receivedChunks); // Play the complete recording
-                            sendPostMessage({ type: "fixMetadata", blob: newBlob })
+
+                            if (!isWindows10) {
+                                // const duration = await getVideoDuration(newBlob) as number;
+                                console.log("duration", durationTillNow.current)
+                                fixWebmDuration(
+                                  blob,
+                                  durationTillNow.current,
+                                  async (fixedWebm) => {
+                                    console.log("fixedWebm1212", fixedWebm)
+                                    sendPostMessage({ type: "fixMetadata", blob: fixedWebm })
+                                  },
+                                  { logger: false }
+                                );
+                              } else {
+                                const fixedWebm = await (fixWebmDurationFallback as any)(blob, {
+                                  type: "video/webm; codecs=vp8, opus",
+                                });
+                                console.log("fixedWebm==>", fixedWebm)
+                                sendPostMessage({ type: "fixMetadata", blob: fixedWebm })
+                              }
+
+                           
                             // setOriginalVideo({
                             //     blob: newBlob,
                             //     url: URL.createObjectURL(newBlob)
@@ -504,8 +552,9 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
             }
             if (message.type === "ffmpeg-loaded") {
                 setIsFfmpegLoaded(true)
-                console.log("ffmpeg-loaded Call from Demo!!")
+                console.log("ffmpeg-loaded Call from Demo!!", message)
                 hasAudio.current = message.hasAudio
+                durationTillNow.current = +message.durationTillNow
                 chrome.runtime.sendMessage({ type: "START_UPLOAD_CHUNKS" })
             }
             if (message.type === "ffmpeg-load-error") {
