@@ -244,18 +244,18 @@ const DemoSand = () => {
         let blob;
         try {
           console.log("cut-video-message", message)
-          if (window10) {
-            console.log("IN Window")
-            blob = await cutVideoWindow10(
-              ffmpegInstance.current,
-              message.blob,
-              message.startTime,
-              message.endTime,
-              message.cut,
-              message.duration,
-              message.encode
-            );
-          } else {
+          // if (window10) {
+          //   console.log("IN Window")
+          //   blob = await cutVideoWindow10(
+          //     ffmpegInstance.current,
+          //     message.blob,
+          //     message.startTime,
+          //     message.endTime,
+          //     message.cut,
+          //     message.duration,
+          //     message.encode
+          //   );
+          // } else {
             console.log("IN Mac")
             blob = await cutVideo(
               ffmpegInstance.current,
@@ -266,7 +266,7 @@ const DemoSand = () => {
               message.duration,
               message.encode
             );
-          }
+          // }
 
           let fixedBlob;
           if (window10) {

@@ -152,6 +152,7 @@ export function toBase64(blob) {
 };
 
 export async function fixMetadata(ffmpeg, blob, hasAudio) {
+  return blob
   const data = new Uint8Array(await blob.arrayBuffer());
   ffmpeg.FS('writeFile', 'input.mp4', data);
 

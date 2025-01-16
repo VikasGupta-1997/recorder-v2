@@ -49,8 +49,8 @@ const OffScreen = () => {
         //   console.log("Is window 10 call")
         //   windowOnlyOptionWindow10(newStream, "./giphy.gif")
         // }else {
-          console.log("Is normal  call")
-          windowOnlyOption(newStream, "./giphy.gif")
+        console.log("Is normal  call")
+        windowOnlyOption(newStream, "./giphy.gif")
         // }
         chrome.runtime.sendMessage({ type: "SCREEN_SHARE_WINDOW_SELECTED", selections: recordSelections })
       } else {
@@ -87,7 +87,7 @@ const OffScreen = () => {
     if (isPreviewOpened) {
       if (base64Data) {
         console.log("base64Data1121", base64Data)
-        if(uploadChunksCall){
+        if (uploadChunksCall) {
           uploadChunks()
           setIsPreviewOpened(false)
           setUploadChunksCall(false)
@@ -202,13 +202,13 @@ const OffScreen = () => {
     userMediaStream = await navigator.mediaDevices.getUserMedia({
       video: {
         deviceId: recordSelections?.cameraRecording?.value
-      }, 
+      },
       audio: false
     });
-  
+
     const audioDevice = recordSelections?.micRecording?.value;
     const isAudioDeviceSelected = recordSelections?.micRecording && audioDevice !== "mic_off";
-    
+
     // Create audio track based on mic selection (use silent audio if no mic)
     let windowOnlyAudioRecord;
     if (isAudioDeviceSelected) {
@@ -231,24 +231,24 @@ const OffScreen = () => {
       // oscillator.start();
       // oscillator.stop(audioContext.currentTime + 1); // Create a short silent sound
       // const silentAudioTrack = destination.stream.getAudioTracks()[0];
-  
+
       // Merge the silent audio with the webcam stream (we don't want to capture actual audio if mic is off)
       windowOnlyAudioRecord = silentAudioTrack;
     }
-  
+
     // Create video elements for screen and webcam
     const screenVideo = document.createElement("video");
     screenVideo.srcObject = screenStream;
-  
+
     const webcamVideo = document.createElement("video");
     webcamVideo.srcObject = userMediaStream;
-  
+
     // Function to ensure both videos are playing
     await Promise.all([
       screenVideo.play(),
       webcamVideo.play()
     ]);
-  
+
     // Create a parent canvas for the combined view
     const recordingCanvas = document.createElement("canvas");
     recordingCanvas.width = 1280; // Set width (or use screenVideo.videoWidth if known)
@@ -256,65 +256,65 @@ const OffScreen = () => {
     const recordingContext = recordingCanvas.getContext("2d");
     const offscreenCanvas = new OffscreenCanvas(180, 180); // Adjusted size for the circular webcam view
     const offscreenContext = offscreenCanvas.getContext("2d");
-  
+
     const drawFrame = () => {
       // Fill the background with black
       recordingContext.fillStyle = "black";
       recordingContext.fillRect(0, 0, recordingCanvas.width, recordingCanvas.height);
-  
+
       // Define the circular area for the webcam display
       const radius = offscreenCanvas.width / 2; // Use half the width/height for the radius
       const centerX = offscreenCanvas.width / 2; // Center horizontally
       const centerY = offscreenCanvas.height / 2; // Center vertically
-  
+
       // Clear the offscreen canvas before drawing
       offscreenContext.clearRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
-  
+
       // Clip the offscreen context to a circular path
       offscreenContext.beginPath();
       offscreenContext.arc(centerX, centerY, radius, 0, Math.PI * 2);
       offscreenContext.closePath();
       offscreenContext.clip();
-  
+
       // Draw the webcam video within the clipped circular area
       offscreenContext.drawImage(webcamVideo, 0, 0, offscreenCanvas.width, offscreenCanvas.height);
-  
+
       // Calculate dimensions and position for screen recording
       const screenX = offscreenCanvas.width + 8; // Align with 8 pixels padding from the webcam
       const screenWidth = recordingCanvas.width - screenX; // Calculate remaining width
       const screenHeight = screenVideo.videoHeight * (screenWidth / screenVideo.videoWidth); // Maintain aspect ratio
       const screenY = (recordingCanvas.height - screenHeight) / 2; // Center vertically
-  
+
       // Calculate the webcam position to align with the bottom of the screen recording view
       const webcamX = 4; // 4 pixels padding from the left
       const webcamY = screenY + screenHeight - offscreenCanvas.height; // Align webcam to the bottom of screen recording
-  
+
       // Draw the circular webcam view onto the recording canvas
       recordingContext.drawImage(offscreenCanvas, webcamX, webcamY);
-  
+
       // Draw the screen video
       recordingContext.drawImage(screenVideo, screenX, screenY, screenWidth, screenHeight);
     };
-  
+
     const drawInterval = setInterval(drawFrame, 1000 / 30); // 30 fps
-  
+
     const combinedStream = new MediaStream([
       ...recordingCanvas.captureStream(30).getTracks(), // Capture video from the canvas
       ...(windowOnlyAudioRecord ? [windowOnlyAudioRecord] : []) // Only add audio track if it exists
     ]);
-  
+
     const mediaRecorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm; codecs=vp9' });
-  
+
     mediaRecorder.ondataavailable = (event) => {
       if (event.data.size > 0) {
         chunks.push(event.data);
       }
     };
-  
+
     setTimeout(() => {
       mediaRecorder.start();
     }, 250)
-  
+
     mediaRecorder.onstop = async () => {
       setRecorderState('ideal');
       if (!isRecordingDiscarded) {
@@ -343,16 +343,16 @@ const OffScreen = () => {
       if (userMediaStream) {
         userMediaStream.getTracks().forEach(track => track.stop());
       }
-  
+
       if (windowOnlyAudioRecord) {
         windowOnlyAudioRecord?.stop();
       }
-  
+
       chrome.runtime.sendMessage({ type: "RECORDING_IN_PROGRESS_END" });
     };
     recorder = mediaRecorder;
   };
-  
+
 
   const windowOnlyOption = async (screenStream, backgroundUrl) => {
     // Get the webcam stream
@@ -599,7 +599,8 @@ const OffScreen = () => {
   };
 
   const streamRef = useRef({ videoTrack: null, audioTrack: null })
-  const recordStream = () => {
+  const recordStream = async () => {
+    navigator.storage.persist();
     const { videoTrack, audioTrack } = audioVideoStreams
     const tracks = [];
     if (videoTrack instanceof MediaStreamTrack) {
@@ -613,8 +614,8 @@ const OffScreen = () => {
     }
     if (audioTrack instanceof MediaStreamTrack) {
       tracks.push(audioTrack);
-    }else {
-      if(window10){
+    } else {
+      if (window10) {
 
         console.log('No audio track found. Adding a silent small wave audio track...');
         const audioContext = new AudioContext();
@@ -640,8 +641,51 @@ const OffScreen = () => {
     }
     let mediaRecorder
     if (tracks.length > 0) {
+      // const { qualityValue } = await chrome.storage.local.get(["qualityValue"]);
+
+      let audioBitsPerSecond = 128000;
+      let videoBitsPerSecond = 5000000;
+
+      // if (qualityValue === "4k") {
+      //   audioBitsPerSecond = 192000;
+      //   videoBitsPerSecond = 40000000;
+      // } else if (qualityValue === "1080p") {
+      //   audioBitsPerSecond = 192000;
+      //   videoBitsPerSecond = 8000000;
+      // } else if (qualityValue === "720p") {
+      //   audioBitsPerSecond = 128000;
+      //   videoBitsPerSecond = 5000000;
+      // } else if (qualityValue === "480p") {
+      //   audioBitsPerSecond = 96000;
+      //   videoBitsPerSecond = 2500000;
+      // } else if (qualityValue === "360p") {
+      //   audioBitsPerSecond = 96000;
+      //   videoBitsPerSecond = 1000000;
+      // } else if (qualityValue === "240p") {
+      //   audioBitsPerSecond = 64000;
+      //   videoBitsPerSecond = 500000;
+      // }
+      // List all mimeTypes
+      const mimeTypes = [
+        "video/webm;codecs=avc1",
+        "video/webm;codecs=vp8,opus",
+        "video/webm;codecs=vp9,opus",
+        "video/webm;codecs=vp9",
+        "video/webm;codecs=vp8",
+        "video/webm;codecs=h264",
+        "video/webm",
+      ];
+      // Check if the browser supports any of the mimeTypes, make sure to select the first one that is supported from the list
+      let mimeType = mimeTypes.find((mimeType) =>
+        MediaRecorder.isTypeSupported(mimeType)
+      );
+      console.log("mimeType", mimeType)
       const mediaStream = new MediaStream(tracks);
-      mediaRecorder = new MediaRecorder(mediaStream);
+      mediaRecorder = new MediaRecorder(mediaStream, {
+        mimeType: mimeType,
+        audioBitsPerSecond: audioBitsPerSecond,
+        videoBitsPerSecond: videoBitsPerSecond,
+      });
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           recordingChunks.push(event.data)
@@ -800,7 +844,7 @@ const OffScreen = () => {
       function onComplete() {
         console.log("Recording saved to IndexedDB", isCamOnlyRecordingDiscarded)
         const url = (URL as any).createObjectURL(blob);
-       
+
         if (!isCamOnlyRecordingDiscarded) {
           chrome.runtime.sendMessage({
             type: 'OPEN_PREVIEW_TAB',
@@ -867,16 +911,16 @@ const OffScreen = () => {
       // oscillator.start();
       // oscillator.stop(audioContext.currentTime + 1); // Create a short silent sound
       // const silentAudioTrack = destination.stream.getAudioTracks()[0];
-  
+
       // Get video stream as usual
       const videoStream = await navigator.mediaDevices.getUserMedia({
         video: { deviceId: selections?.cameraRecording?.value }
       });
-  
+
       // Combine the silent audio track with the video stream
       mediaStream = new MediaStream([silentAudioTrack, ...videoStream.getTracks()]);
     }
-  
+
     // Initialize the MediaRecorder with the combined stream
     camOnlyRecorder = new MediaRecorder(mediaStream);
     camOnlyRecorder.ondataavailable = (event) => {
@@ -886,9 +930,9 @@ const OffScreen = () => {
         console.log('Recorded data available:', event.data);
       }
     };
-  
+
     camOnlyRecorder.start();
-  
+
     camOnlyRecorder.onstop = async () => {
       const blob = new Blob(camOnlyChunks, { type: 'video/webm' });
       // Convert Blob to Base64
@@ -896,7 +940,7 @@ const OffScreen = () => {
       function onComplete() {
         console.log("Recording saved to IndexedDB", isCamOnlyRecordingDiscarded);
         const url = (URL as any).createObjectURL(blob);
-  
+
         if (!isCamOnlyRecordingDiscarded) {
           chrome.runtime.sendMessage({
             type: 'OPEN_PREVIEW_TAB',
@@ -909,10 +953,10 @@ const OffScreen = () => {
         camOnlyChunks = [];
         resetAll();
       }
-  
+
       console.log("SHould Not call", isCamOnlyRecordingDiscarded);
       onComplete();
-  
+
       if (!isCamOnlyRecordingDiscarded) {
         console.log("CAM RECORDING ENDED!!!!");
         const base64Data = await saveRecordingToIndexedDB(blob);
@@ -920,11 +964,11 @@ const OffScreen = () => {
         setBase64Data(base64Data);
       }
     };
-  
+
     camOnlyRecorder.onended = () => {
       camOnlyRecorder.onstop();
     };
-  
+
     camOnlyRecorder.onstart = () => {
       console.log("STARTED HERE!!");
       chrome.runtime.sendMessage({ type: 'startTimer' });
@@ -932,7 +976,7 @@ const OffScreen = () => {
       isRecordingStarted = true;
     };
   };
-  
+
 
   const onMountListners = () => {
     chrome.runtime.onMessage.addListener(
@@ -969,10 +1013,10 @@ const OffScreen = () => {
           case "START_CAM_ONLY_RECORDING": {
             console.log("START_CAM_ONLY_RECORDING", message)
             camOnlyChunks = []
-            if(window10){
+            if (window10) {
               console.log("YEAH WINDOW 10")
               recordCameraOnlyWindow10(message?.data)
-            }else {
+            } else {
               console.log("YEAH Mormal callww")
               recordCameraOnly(message?.data)
             }
@@ -1018,7 +1062,7 @@ const OffScreen = () => {
           case "START_UPLOAD_CHUNKS": {
             setUploadChunksCall(true)
           }
-          break;
+            break;
           case "RESTART_MICONLY_RECORDING": {
             // camOnlyChunks = []
             isMicOnlyRecordingDiscarded = true

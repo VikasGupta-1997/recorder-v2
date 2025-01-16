@@ -105,7 +105,10 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
-                    const newBlob = await response.blob();
+                    const recievedBlob = await response.blob();
+                    const newBlob = new Blob([recievedBlob], {
+                        type: "video/webm; codecs=vp8, opus",
+                    });
                     // console.log("newBlob1121", newBlob)
                     const newBlobUrl = URL.createObjectURL(newBlob);
                     // console.log("newBlobUrl11221", newBlobUrl)
@@ -139,7 +142,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                     case "PAUSE_UPLOAD": {
                         console.log("Pause upload here!")
                     }
-                    break;
+                        break;
                     case "RECORDING_CHUNK_PREVIEW": {
                         // Debug log to see chunk format
                         // console.log('Received chunk format:', {
