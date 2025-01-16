@@ -28,14 +28,14 @@ chrome.runtime.onInstalled.addListener(async (details) => {
     // This is the first time the extension is installed
     await createOffscreenDocument()
     await chrome.storage.local.set({ firstTimeLaunch: true });
-    chrome.tabs.query({}, function(tabs) {
-      // Reload each tab
-      tabs.forEach(tab => {
-          if (tab.id) {
-              chrome.tabs.reload(tab.id)
-          }
-      });
-    });
+    // chrome.tabs.query({}, function(tabs) {
+    //   // Reload each tab
+    //   tabs.forEach(tab => {
+    //       if (tab.id) {
+    //           chrome.tabs.reload(tab.id)
+    //       }
+    //   });
+    // });
   }
 });
 
@@ -329,6 +329,9 @@ function startBadgeCountdown() {
 }
 
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+  if(message.type === 'PAUSE_UPLOAD'){
+    chrome.tabs.sendMessage(previewTabId, { type: "PAUSE_UPLOAD" })
+  }
   if (message.type === 'CHECK_FOR_SYSTEM_SCREEN') {
     chrome.storage.local.set({ "screenShareSelection": message.screenShareSelection })
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {

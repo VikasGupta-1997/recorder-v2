@@ -37,7 +37,9 @@ const UploadStatus = ({ progressBarRef, progressPercent, progressUploadSize, pro
                 ></div>
             </div>
             <div className="flex gap-2 items-center" >
-                <FaPause cursor={'pointer'} size={18} />
+                <FaPause onClick={() => {
+                    chrome.runtime.sendMessage({type: "PAUSE_UPLOAD"})
+                }} cursor={'pointer'} size={18} />
                 <FaRegTrashAlt cursor={'pointer'} size={15} color="red" />
             </div>
         </div>
@@ -126,7 +128,7 @@ const ListComponent = ({
             <hr />
             <div className='py-2 px-6' >
                 <p className='font-bold' >Recent Files</p>
-                {uploadStatus && <UploadStatus fileNameref={fileNameref} progressTimeLeft={progressTimeLeft} progressUploadSize={progressUploadSize} progressPercent={progressPercent} progressBarRef={progressBarRef} />}
+                {true && <UploadStatus fileNameref={fileNameref} progressTimeLeft={progressTimeLeft} progressUploadSize={progressUploadSize} progressPercent={progressPercent} progressBarRef={progressBarRef} />}
                 <div className="min-h-[100px] max-h-[260px] overflow-auto" >
                     {mediaListLoading ? <div className="flex items-center justify-center" ><div className="loader" ></div></div> : !mediaFilesRef?.length ? <p className="text-center" > No items to show !</p> :
                         mediaFilesRef?.map(l => {

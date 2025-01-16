@@ -134,8 +134,11 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     const onMountListeners = () => {
         chrome.runtime.onMessage.addListener(
             async function async(message) {
-                // console.log("MESSAAGE", message)
                 switch (message.type) {
+                    case "PAUSE_UPLOAD": {
+                        console.log("Pause upload here!")
+                    }
+                    break;
                     case "RECORDING_CHUNK_PREVIEW": {
                         // Debug log to see chunk format
                         // console.log('Received chunk format:', {
@@ -507,7 +510,6 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                 setFfmpegLoadError(true)
             }
         });
-
         onMountListeners()
     }, [history, trimState])
 
