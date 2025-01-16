@@ -129,7 +129,7 @@ const ListComponent = ({
             <div className='py-2 px-6' >
                 <p className='font-bold' >Recent Files</p>
                 {true && <UploadStatus fileNameref={fileNameref} progressTimeLeft={progressTimeLeft} progressUploadSize={progressUploadSize} progressPercent={progressPercent} progressBarRef={progressBarRef} />}
-                <div className="min-h-[100px] max-h-[260px] overflow-auto" >
+                <div className="min-h-[100px] max-h-[250px] overflow-auto" >
                     {mediaListLoading ? <div className="flex items-center justify-center" ><div className="loader" ></div></div> : !mediaFilesRef?.length ? <p className="text-center" > No items to show !</p> :
                         mediaFilesRef?.map(l => {
                             return (
