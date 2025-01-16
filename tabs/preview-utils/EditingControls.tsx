@@ -52,7 +52,8 @@ const EditingControls = ({
         showRevertButton,
         startAuphonicAudioProcessing,
         cutDataState,
-        hasAudio = { current: 'true' }
+        hasAudio = { current: 'true' },
+        undoRedoClick
     } = usePreview();
 
     const waveContainerRef = useRef<HTMLDivElement>(null);
@@ -197,11 +198,18 @@ const EditingControls = ({
                 if (!originalDuration.current) {
                     originalDuration.current = videoDuration
                 }
-                setTrimState(prev => ({
-                    ...prev,
-                    endTime: videoDuration,
-                    duration: videoDuration
-                }));
+                if(undoRedoClick.current?.type){
+                    setTrimState(prev => ({
+                        ...prev,
+                        duration: videoDuration
+                    }));
+                } else {
+                    setTrimState(prev => ({
+                        ...prev,
+                        endTime: videoDuration,
+                        duration: videoDuration
+                    }));
+                }
             });
 
             if (blobUrl) {
@@ -263,7 +271,7 @@ const EditingControls = ({
                 duration: parseFloat(trimState.duration?.toFixed(2)),
                 encode: false,
             };
-
+            undoRedoClick.current = null
             switchModeAudios.current.trimState = {
                 startTime: parseFloat(trimState.startTime?.toFixed(2)),
                 endTime: parseFloat(trimState.endTime?.toFixed(2)),

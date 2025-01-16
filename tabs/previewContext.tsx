@@ -63,6 +63,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     const currentUniqid = useRef(null)
     const currentConfirmation = useRef(null)
     const audioF = useRef(null)
+    const undoRedoClick = useRef(null)
     const auphonicAlgorithm = useRef(null)
     const [publishedData, setPublishedData] = useState(null)
     const switchModeAudios = useRef({
@@ -523,6 +524,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         // setIsEditMode(false)
         // console.log("originalVideooriginalVideo", originalVideo)
         const newBlobUrl = URL.createObjectURL(originalVideo?.blob);
+        undoRedoClick.current = null
         // setBlob(originalVideo?.blob);
         setBlobUrl(newBlobUrl);
         setIsEditMode(false)
@@ -593,9 +595,8 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                 }
                 url.current = newBlobUrl;
             }
-            setTimeout(() => {
-                setTrimState(lastState.trimState);
-            }, 500)
+            undoRedoClick.current = { type: "undo", lastTrimState: lastState.trimState }
+            setTrimState(lastState.trimState);
             setIsAuphonicUiMode(lastState.isAuphonicMode);
 
             // Remove the last state from history
@@ -637,9 +638,8 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                 }
                 url.current = newBlobUrl;
             }
-            setTimeout(() => {
-                setTrimState(redoState.trimState);
-            }, 500)
+            undoRedoClick.current = { type: "undo", lastTrimState: redoState.trimState }
+            setTrimState(redoState.trimState);
             setIsAuphonicUiMode(redoState.isAuphonicMode);
 
             // Remove the used redo state
@@ -1015,7 +1015,8 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         uploadError,
         setUploadError,
         downloadBlob,
-        publishedData
+        publishedData,
+        undoRedoClick
     };
 
     return (

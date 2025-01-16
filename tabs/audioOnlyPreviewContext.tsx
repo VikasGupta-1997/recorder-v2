@@ -61,6 +61,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
     const [uploadError, setUploadError] = useState(null)
     const [publishedData, setPublishedData] = useState(null)
 
+    const undoRedoClick = useRef(null)
     const currentConfirmation = useRef(null)
     const switchModeAudios = useRef({
         auphonicAudio: null,
@@ -450,6 +451,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
         // console.log("originalVideooriginalVideo", originalVideo)
         const newBlobUrl = URL.createObjectURL(originalVideo?.blob);
         // setBlob(originalVideo?.blob);
+        undoRedoClick.current = null
         setBlobUrl(newBlobUrl);
         setSource(newBlobUrl)
         setIsEditMode(false)
@@ -913,9 +915,8 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
                 url.current = newBlobUrl;
             }
 
-            setTimeout(() => {
-                setTrimState(lastState.trimState);
-            }, 500)
+            undoRedoClick.current = { type: "undo", lastTrimState: lastState.trimState }
+            setTrimState(lastState.trimState);
 
             setIsAuphonicUiMode(lastState.isAuphonicMode);
             // Remove the last state from history
@@ -954,10 +955,8 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
                 }
                 url.current = newBlobUrl;
             }
-
-            setTimeout(() => {
-                setTrimState(redoState.trimState);
-            }, 500)
+            undoRedoClick.current = { type: "undo", lastTrimState: redoState.trimState }
+            setTrimState(redoState.trimState);
             setIsAuphonicUiMode(redoState.isAuphonicMode);
             // Remove the used redo state
             setRedoHistory(redoHistory.slice(0, -1));
@@ -1139,7 +1138,8 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
         uploadError,
         setUploadError,
         downloadBlob,
-        publishedData
+        publishedData,
+        undoRedoClick
     };
 
     return (
