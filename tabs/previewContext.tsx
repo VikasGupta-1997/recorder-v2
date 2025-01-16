@@ -191,26 +191,26 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                             console.log("All chunks received. Reassembling...");
                             const isWindows10 = navigator.userAgent.match(/Windows NT 10.0/);
                             const { newBlob, newBlobUrl } = await playPartialRecording(receivedChunks); // Play the complete recording
-
-                            if (!isWindows10) {
-                                // const duration = await getVideoDuration(newBlob) as number;
-                                console.log("duration", durationTillNow.current)
-                                fixWebmDuration(
-                                  blob,
-                                  durationTillNow.current,
-                                  async (fixedWebm) => {
-                                    console.log("fixedWebm1212", fixedWebm)
-                                    sendPostMessage({ type: "fixMetadata", blob: fixedWebm })
-                                  },
-                                  { logger: false }
-                                );
-                              } else {
-                                const fixedWebm = await (fixWebmDurationFallback as any)(blob, {
-                                  type: "video/webm; codecs=vp8, opus",
-                                });
-                                console.log("fixedWebm==>", fixedWebm)
-                                sendPostMessage({ type: "fixMetadata", blob: fixedWebm })
-                              }
+                            sendPostMessage({ type: "fixMetadata", blob: newBlob })
+                            // if (!isWindows10) {
+                            //     // const duration = await getVideoDuration(newBlob) as number;
+                            //     console.log("duration", durationTillNow.current)
+                            //     fixWebmDuration(
+                            //       blob,
+                            //       durationTillNow.current,
+                            //       async (fixedWebm) => {
+                            //         console.log("fixedWebm1212", fixedWebm)
+                            //         sendPostMessage({ type: "fixMetadata", blob: fixedWebm })
+                            //       },
+                            //       { logger: false }
+                            //     );
+                            //   } else {
+                            //     const fixedWebm = await (fixWebmDurationFallback as any)(blob, {
+                            //       type: "video/webm; codecs=vp8, opus",
+                            //     });
+                            //     console.log("fixedWebm==>", fixedWebm)
+                            //     sendPostMessage({ type: "fixMetadata", blob: fixedWebm })
+                            //   }
 
                            
                             // setOriginalVideo({

@@ -13,10 +13,21 @@ let camOnlyChunks = [];
 let isCamOnlyRecordingDiscarded = false
 let isMicOnlyRecordingDiscarded = false
 let recordedStreamBase64 = null
+let audioBitsPerSecond = 128000;
+let videoBitsPerSecond = 5000000;
 
 let micOnlyRecorder = null;
 let micOnlyChunks = []
 let vidStream;
+const mimeTypes = [
+  "video/webm;codecs=avc1",
+  "video/webm;codecs=vp8,opus",
+  "video/webm;codecs=vp9,opus",
+  "video/webm;codecs=vp9",
+  "video/webm;codecs=vp8",
+  "video/webm;codecs=h264",
+  "video/webm",
+];
 
 const OffScreen = () => {
   const [audioVideoStreams, setAudioVideoStreams] = useState({ audioTrack: null, videoTrack: null })
@@ -643,8 +654,6 @@ const OffScreen = () => {
     if (tracks.length > 0) {
       // const { qualityValue } = await chrome.storage.local.get(["qualityValue"]);
 
-      let audioBitsPerSecond = 128000;
-      let videoBitsPerSecond = 5000000;
 
       // if (qualityValue === "4k") {
       //   audioBitsPerSecond = 192000;
@@ -666,15 +675,7 @@ const OffScreen = () => {
       //   videoBitsPerSecond = 500000;
       // }
       // List all mimeTypes
-      const mimeTypes = [
-        "video/webm;codecs=avc1",
-        "video/webm;codecs=vp8,opus",
-        "video/webm;codecs=vp9,opus",
-        "video/webm;codecs=vp9",
-        "video/webm;codecs=vp8",
-        "video/webm;codecs=h264",
-        "video/webm",
-      ];
+
       // Check if the browser supports any of the mimeTypes, make sure to select the first one that is supported from the list
       let mimeType = mimeTypes.find((mimeType) =>
         MediaRecorder.isTypeSupported(mimeType)
@@ -826,7 +827,19 @@ const OffScreen = () => {
       audio: selections?.micRecording.value !== "mic_off" ? { deviceId: selections?.micRecording?.value } : false,
       video: { deviceId: selections?.cameraRecording?.value }
     });
-    camOnlyRecorder = new MediaRecorder(mediaStream);
+    let mimeType = mimeTypes.find((mimeType) =>
+      MediaRecorder.isTypeSupported(mimeType)
+    );
+    console.log("mimeType", mimeType)
+    if (!mimeType) {
+      console.error("No supported MIME type found");
+      return;
+    }
+    camOnlyRecorder = new MediaRecorder(mediaStream, {
+      mimeType: mimeType,
+      audioBitsPerSecond: audioBitsPerSecond,
+      videoBitsPerSecond: videoBitsPerSecond,
+    });
     camOnlyRecorder.ondataavailable = (event) => {
       if (event.data.size > 0) {
         camOnlyChunks.push(event.data)

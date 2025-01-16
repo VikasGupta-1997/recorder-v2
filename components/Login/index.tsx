@@ -13,13 +13,13 @@ const Form = ({ onSubmit, setState, state, loading }) => {
                     <div className="absolute inset-y-0 start-0 flex items-center ps-1 pointer-events-none">
                         <RoundedUser />
                     </div>
-                    <input disabled={loading} onChange={e => setState(prev => ({ ...prev, userName: e.target.value }))} type="email" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$" id="default-search" className="input" placeholder="Enter your email" required />
+                    <input  value={state.userName} disabled={loading} onChange={e => setState(prev => ({ ...prev, userName: e.target.value }))} type="email" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$" id="default-search" className="input" placeholder="Enter your email" required />
                 </div>
             </div>
             <div>
                 <label htmlFor="default-search" className="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white">Search</label>
                 <div className="relative">
-                    <input onChange={e => setState(prev => ({ ...prev, password: e.target.value }))} type={state?.showPassword ? "text" : "password"} id="default-search" className="input prefix rounded-md" placeholder="Password" required />
+                    <input value={state.password} onChange={e => setState(prev => ({ ...prev, password: e.target.value }))} type={state?.showPassword ? "text" : "password"} id="default-search" className="input prefix rounded-md" placeholder="Password" required />
                     <div className="text-white absolute end-2.5 bottom-2.5 focus:ring-4 focus:outline-none  font-medium rounded-lg text-sm">
                         {state?.showPassword ? <IoEyeOutline onClick={() => setState(prev => ({ ...prev, showPassword: false }))} color="black" size={20} /> : <IoEyeOffOutline onClick={() => setState(prev => ({ ...prev, showPassword: true }))} color="black" size={20} />}
                     </div>
@@ -27,7 +27,7 @@ const Form = ({ onSubmit, setState, state, loading }) => {
             </div>
             <div className="flex justify-between pt-3 px-2" >
                 <div className="checkbox flex gap-1" >
-                    <input disabled={loading}  id="remember-me" type="checkbox" />
+                    <input  disabled={loading}  id="remember-me" type="checkbox" />
                     <label htmlFor="remember-me" >Remember Me</label>
                 </div>
                 <div className="forgot-pass text-blue-500" >
@@ -48,9 +48,9 @@ const Form = ({ onSubmit, setState, state, loading }) => {
 
 const LoginForm = ({setUserDetails }) => {
     const [state, setState] = useState({
-        userName: '',
+        userName: 'softwaredev@zestgeek.com',
         forgetEmail: '',
-        password: '',
+        password: 'Adilo@0987',
         showPassword: false,
     })
     const [loading, setLoading] = useState(false)
