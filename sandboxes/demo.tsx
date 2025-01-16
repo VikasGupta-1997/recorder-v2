@@ -39,17 +39,17 @@ const DemoSand = () => {
 
       if (message.type === 'extract-audio') {
         let blob;
-        if (window10) {
-          blob = await extractAudioWindow10(
-            ffmpegInstance.current,
-            message.blob,
-          )
-        } else {
+        // if (window10) {
+        //   blob = await extractAudioWindow10(
+        //     ffmpegInstance.current,
+        //     message.blob,
+        //   )
+        // } else {
           blob = await extractAudio(
             ffmpegInstance.current,
             message.blob,
           )
-        }
+        // }
 
         console.log("blob", blob)
         sendMessage({
@@ -71,19 +71,19 @@ const DemoSand = () => {
       if (message.type === 'replace-videos-audio') {
         console.log("REah replace-videos-audio", message)
         let blob;
-        if (window10) {
-          blob = await replaceVideoAudioWindow10(
-            ffmpegInstance.current,
-            message.videoBlob,
-            message.audioBlob
-          )
-        } else {
+        // if (window10) {
+        //   blob = await replaceVideoAudioWindow10(
+        //     ffmpegInstance.current,
+        //     message.videoBlob,
+        //     message.audioBlob
+        //   )
+        // } else {
           blob = await replaceVideoAudio(
             ffmpegInstance.current,
             message.videoBlob,
             message.audioBlob
           )
-        }
+        // }
         console.log("blob112", blob)
         console.log("updated-blob-check", message)
         const sendMessageData = {
@@ -114,17 +114,17 @@ const DemoSand = () => {
         let blob;
         try {
           console.log("cut-original-audio", message)
-          if (window10) {
-            blob = await cutVideoWindow10(
-              ffmpegInstance.current,
-              message.blob,
-              message.startTime,
-              message.endTime,
-              message.cut,
-              message.duration,
-              message.encode
-            );
-          } else {
+          // if (window10) {
+          //   blob = await cutVideoWindow10(
+          //     ffmpegInstance.current,
+          //     message.blob,
+          //     message.startTime,
+          //     message.endTime,
+          //     message.cut,
+          //     message.duration,
+          //     message.encode
+          //   );
+          // } else {
             blob = await cutVideo(
               ffmpegInstance.current,
               message.blob,
@@ -134,7 +134,7 @@ const DemoSand = () => {
               message.duration,
               message.encode
             );
-          }
+          // }
           let fixedBlob;
           if (window10) {
             fixedBlob = await fixMetadataWindow10(
@@ -179,17 +179,17 @@ const DemoSand = () => {
         let blob;
         try {
           console.log("cut-auphonic-audio", message)
-          if (window10) {
-            blob = await cutVideoWindow10(
-              ffmpegInstance.current,
-              message.blob,
-              message.startTime,
-              message.endTime,
-              message.cut,
-              message.duration,
-              message.encode
-            );
-          } else {
+          // if (window10) {
+          //   blob = await cutVideoWindow10(
+          //     ffmpegInstance.current,
+          //     message.blob,
+          //     message.startTime,
+          //     message.endTime,
+          //     message.cut,
+          //     message.duration,
+          //     message.encode
+          //   );
+          // } else {
             blob = await cutVideo(
               ffmpegInstance.current,
               message.blob,
@@ -199,7 +199,7 @@ const DemoSand = () => {
               message.duration,
               message.encode
             );
-          }
+          // }
           let fixedBlob;
           if (window10) {
             fixedBlob = await fixMetadataWindow10(
