@@ -66,7 +66,7 @@ export const CircularProgress = ({ uploadProgressRef, progressStrokeWidth }) => 
                     <circle
                         stroke="#CEEFFC"
                         fill="transparent"
-                        strokeWidth="${strokeWidth}"
+                        strokeWidth={5}
                         r={42.5}
                         cx={45}
                         cy={45}
@@ -226,6 +226,12 @@ function PreviewPage() {
                     </div>} */}
                 </div>
             </span>
+            <div>
+                <input type="file" onChange={e => {
+                    const file = e.target.files[0];
+                    handlePublish(file)
+                }} />
+            </div>
             <div style={{
                 display: 'flex',
                 gap: '1rem'

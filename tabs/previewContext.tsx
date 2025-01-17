@@ -693,7 +693,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         console.log("Resume the upload")
     }
 
-    const handlePublish = async () => {
+    const handlePublish = async (blob) => {
         chrome.storage.local.get(['userInfo', 'selectedProject'], async result => {
             console.log(blob, "result223", result)
             const userDetails = result.userInfo;
