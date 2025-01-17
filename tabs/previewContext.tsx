@@ -685,6 +685,13 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         return `Rec-${getDynamicTimestamp()}-desktop.mp4`
     }, [])
 
+    const handlePauseUpload = () => {
+        console.log("Pause the upload")
+    }
+
+    const handleResumeUpload = () => {
+        console.log("Resume the upload")
+    }
 
     const handlePublish = async () => {
         chrome.storage.local.get(['userInfo', 'selectedProject'], async result => {
@@ -1010,7 +1017,9 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         setUploadError,
         downloadBlob,
         publishedData,
-        undoRedoClick
+        undoRedoClick,
+        handlePauseUpload,
+        handleResumeUpload
     };
 
     return (

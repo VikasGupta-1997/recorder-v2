@@ -139,7 +139,9 @@ function PreviewPage() {
         uploadError,
         setUploadError,
         downloadBlob,
-        publishedData
+        publishedData,
+        handlePauseUpload,
+        handleResumeUpload
     } = usePreview();
     const [showGhost, setShowGhost] = useState(false);
 
@@ -224,6 +226,13 @@ function PreviewPage() {
                     </div>} */}
                 </div>
             </span>
+            <div style={{
+                display: 'flex',
+                gap: '1rem'
+            }} >
+                <button type="button" style={{cursor: 'pointer'}} onClick={handlePauseUpload}>Pause</button>
+                <button type="button" style={{cursor: 'pointer'}} onClick={handleResumeUpload}>Resume</button>
+            </div>
             {auphonicProcessingError && <ConfirmationModal
                 body={<div>
                     <p>
