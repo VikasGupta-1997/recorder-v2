@@ -299,7 +299,7 @@ const DemoSand = () => {
           src="/tabs/preview.html"
           allowFullScreen={true}
           allow="clipboard-read; clipboard-write"
-          // sandbox="allow-scripts allow-same-origin allow-file-access-from-files allow-storage-access-by-user-activation"
+          sandbox="allow-scripts allow-modals allow-popups allow-clipboard-write"
           style={{
             width: "100%",
             border: "none",

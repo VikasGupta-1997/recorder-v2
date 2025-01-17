@@ -19,7 +19,7 @@ const DemoSand = () => {
     iframeRef.current.contentWindow.postMessage(message, "*");
   };
 
-  const returnRandomUniqId = () =>  (String.fromCharCode(65 + Math.floor(Math.random() * 26)) +  Date.now());
+  const returnRandomUniqId = () => (String.fromCharCode(65 + Math.floor(Math.random() * 26)) + Date.now());
 
   useEffect(() => {
     const handleIframeMessage = async (event) => {
@@ -34,7 +34,7 @@ const DemoSand = () => {
       }
 
       if (message.type === 'fixMetadata') {
-        console.log(message, " ffmpegInstance.current",   ffmpegInstance.current)
+        console.log(message, " ffmpegInstance.current", ffmpegInstance.current)
         const fixedBlob = await fixMetadata(
           ffmpegInstance.current,
           message.blob,
@@ -54,19 +54,19 @@ const DemoSand = () => {
         console.log("REah replace-videos-audio", message)
         console.log("blob112", message.blob)
         const sendMessageData = {
-            type: "updated-blob",
-            // base64: base64,
-            // addToHistory: message?.isFromSwitch ? false : true,
-            addToHistory: message.isFromSwitch,
-            // blob: message?.isFromSwitch ? message.audioBlob : message.auphonicBlob,
-            blob: message.audioBlob,
-            isMergedTrack: true,
-            auphonicMode: message?.auphonicMode,
-            uniqid: message?.uniqid || returnRandomUniqId(),
-            fileName: message?.fileName,
-            uuid: message?.uuid
+          type: "updated-blob",
+          // base64: base64,
+          // addToHistory: message?.isFromSwitch ? false : true,
+          addToHistory: message.isFromSwitch,
+          // blob: message?.isFromSwitch ? message.audioBlob : message.auphonicBlob,
+          blob: message.audioBlob,
+          isMergedTrack: true,
+          auphonicMode: message?.auphonicMode,
+          uniqid: message?.uniqid || returnRandomUniqId(),
+          fileName: message?.fileName,
+          uuid: message?.uuid
         }
-        if(message.auphonicBlob){
+        if (message.auphonicBlob) {
           sendMessageData['auphonicBlob'] = message.auphonicBlob
           sendMessageData['originalAudioBlob'] = message.originalAudioBlob
         }
@@ -91,13 +91,13 @@ const DemoSand = () => {
         });
       }
 
-      if(message.type === 'download-playable-file'){
+      if (message.type === 'download-playable-file') {
         const blob = await convertAudioToMp3(ffmpegInstance.current, message.blob)
         console.log("downloadAbleBlob", blob)
         const sendMessageData = {
           type: "download-blob-file",
           blob: blob
-        } 
+        }
         sendMessage(sendMessageData);
       }
 
@@ -113,7 +113,7 @@ const DemoSand = () => {
             message.encode
           );
           console.log("blob11312", blob)
-         
+
           const base64 = await toBase64(blob);
           sendMessage({
             type: "updated-blob",
@@ -128,7 +128,7 @@ const DemoSand = () => {
         }
       }
 
-      if(message.type === "load-ffmpeg") {
+      if (message.type === "load-ffmpeg") {
         triggerLoad.current = true;
         loadFfmpeg()
       }
@@ -188,7 +188,7 @@ const DemoSand = () => {
     script.onload = () => {
       scriptLoaded.current = true;
       loadFfmpeg();
-    } 
+    }
 
     document.body.appendChild(script);
   }, []);
@@ -201,6 +201,7 @@ const DemoSand = () => {
           src="/tabs/audioOnlyPreview.html"
           allowFullScreen={true}
           allow="clipboard-read; clipboard-write"
+          sandbox="allow-scripts allow-modals allow-popups allow-clipboard-write"
           // sandbox="allow-scripts allow-same-origin allow-file-access-from-files allow-storage-access-by-user-activation"
           style={{
             width: "100%",

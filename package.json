@@ -62,8 +62,7 @@
       "system.display",
       "unlimitedStorage",
       "webRequest",
-      "commands",
-      "clipboardWrite"
+      "commands"
     ],
     "commands": {
       "_execute_action": {
