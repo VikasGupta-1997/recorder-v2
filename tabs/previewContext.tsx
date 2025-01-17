@@ -139,29 +139,6 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
-    async function getVideoDuration(blob) {
-        return new Promise((resolve, reject) => {
-          const videoElement = document.createElement("video");
-          const url = URL.createObjectURL(blob);
-      
-          // Set up the video element
-          videoElement.preload = "metadata";
-          videoElement.src = url;
-      
-          // Event to handle when metadata is loaded
-          videoElement.onloadedmetadata = () => {
-            URL.revokeObjectURL(url); // Clean up the object URL
-            resolve(videoElement.duration); // Duration in seconds
-          };
-      
-          // Error handling
-          videoElement.onerror = (err) => {
-            URL.revokeObjectURL(url); // Clean up on error
-            reject("Error loading video metadata.");
-          };
-        });
-      }
-
     const onMountListeners = () => {
         chrome.runtime.onMessage.addListener(
             async function async(message) {
@@ -189,34 +166,8 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
 
                         if (message.isLastChunk) {
                             console.log("All chunks received. Reassembling...");
-                            // const isWindows10 = navigator.userAgent.match(/Windows NT 10.0/);
                             const { newBlob, newBlobUrl } = await playPartialRecording(receivedChunks); // Play the complete recording
                             sendPostMessage({ type: "fixMetadata", blob: newBlob })
-                            // if (!isWindows10) {
-                            //     // const duration = await getVideoDuration(newBlob) as number;
-                            //     console.log("duration", durationTillNow.current)
-                            //     fixWebmDuration(
-                            //       blob,
-                            //       durationTillNow.current,
-                            //       async (fixedWebm) => {
-                            //         console.log("fixedWebm1212", fixedWebm)
-                            //         sendPostMessage({ type: "fixMetadata", blob: fixedWebm })
-                            //       },
-                            //       { logger: false }
-                            //     );
-                            //   } else {
-                            //     const fixedWebm = await (fixWebmDurationFallback as any)(blob, {
-                            //       type: "video/webm; codecs=vp8, opus",
-                            //     });
-                            //     console.log("fixedWebm==>", fixedWebm)
-                            //     sendPostMessage({ type: "fixMetadata", blob: fixedWebm })
-                            //   }
-
-                           
-                            // setOriginalVideo({
-                            //     blob: newBlob,
-                            //     url: URL.createObjectURL(newBlob)
-                            // })
                         }
                     }
                         break;
@@ -224,16 +175,6 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
             }
         )
     }
-
-    // const updateCursorPosition = (currentTime) => {
-    //     if (!customCursorRef.current) return;
-    //     // Get the parent container's width (where the waveform is rendered)
-    //     const containerRect = customCursorRef.current.parentElement.getBoundingClientRect();
-    //     const containerWidth = containerRect.width;
-
-    //     const position = (currentTime / duration) * containerWidth;
-    //     customCursorRef.current.style.left = `${position}px`;
-    // };
 
     const updateCursorPosition = (currentTime) => {
         if (!customCursorRef.current || !duration) return;

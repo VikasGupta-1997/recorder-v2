@@ -26,38 +26,8 @@ function VideoPreview({
         setTrimState
     } = usePreview();
 
-
-    const bl = async (url) => {
-        // let blob = await fetch(url).then(r => r.blob());
-        // console.log("blobblob Preivew", blob)
-        const video = document.createElement('video');
-        video.src = blobUrl;
-
-        video.onloadedmetadata = () => {
-            const newDuration = video.duration;
-            setDuration(newDuration);
-
-            // Update player source with new duration
-            plyrRef.current.plyr.source = {
-                type: "video",
-                sources: [{
-                    src: blobUrl,
-                    type: "video/mp4",
-                }],
-                duration: newDuration
-            };
-
-            // Cleanup
-            video.remove();
-        };
-    }
-
     useEffect(() => {
         if (blobUrl) {
-            bl(blobUrl)
-
-
-
             setVideoSource({
                 type: "video",
                 sources: [
