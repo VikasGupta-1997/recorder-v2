@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import styleText from "data-text:../tabs/preview.module.css"
 import cutVideo, { toBase64, reencodeVideo, replaceVideoAudio, fixMetadata, extractAudio, fixVideoAudioCompatibility } from "~utils/cutVideo";
-import cutVideoWindow10, { toBase64Window10, reencodeVideoWindow10, replaceVideoAudioWindow10, fixMetadataWindow10, extractAudioWindow10 } from "~utils/cutVideoWindow10";
 
 export const getStyle = () => {
   const style = document.createElement("style")
@@ -39,17 +38,10 @@ const DemoSand = () => {
 
       if (message.type === 'extract-audio') {
         let blob;
-        // if (window10) {
-        //   blob = await extractAudioWindow10(
-        //     ffmpegInstance.current,
-        //     message.blob,
-        //   )
-        // } else {
-          blob = await extractAudio(
-            ffmpegInstance.current,
-            message.blob,
-          )
-        // }
+        blob = await extractAudio(
+          ffmpegInstance.current,
+          message.blob,
+        )
 
         console.log("blob", blob)
         sendMessage({
@@ -58,32 +50,24 @@ const DemoSand = () => {
         });
       }
 
-      if(message.type === 'download-playable-file'){
+      if (message.type === 'download-playable-file') {
         const blob = await fixVideoAudioCompatibility(ffmpegInstance.current, message.blob)
         console.log("downloadAbleBlob", blob)
         const sendMessageData = {
           type: "download-blob-file",
           blob: blob
-        } 
+        }
         sendMessage(sendMessageData);
       }
 
       if (message.type === 'replace-videos-audio') {
         console.log("REah replace-videos-audio", message)
         let blob;
-        // if (window10) {
-        //   blob = await replaceVideoAudioWindow10(
-        //     ffmpegInstance.current,
-        //     message.videoBlob,
-        //     message.audioBlob
-        //   )
-        // } else {
-          blob = await replaceVideoAudio(
-            ffmpegInstance.current,
-            message.videoBlob,
-            message.audioBlob
-          )
-        // }
+        blob = await replaceVideoAudio(
+          ffmpegInstance.current,
+          message.videoBlob,
+          message.audioBlob
+        )
         console.log("blob112", blob)
         console.log("updated-blob-check", message)
         const sendMessageData = {
@@ -114,41 +98,21 @@ const DemoSand = () => {
         let blob;
         try {
           console.log("cut-original-audio", message)
-          // if (window10) {
-          //   blob = await cutVideoWindow10(
-          //     ffmpegInstance.current,
-          //     message.blob,
-          //     message.startTime,
-          //     message.endTime,
-          //     message.cut,
-          //     message.duration,
-          //     message.encode
-          //   );
-          // } else {
-            blob = await cutVideo(
-              ffmpegInstance.current,
-              message.blob,
-              message.startTime,
-              message.endTime,
-              message.cut,
-              message.duration,
-              message.encode
-            );
-          // }
+          blob = await cutVideo(
+            ffmpegInstance.current,
+            message.blob,
+            message.startTime,
+            message.endTime,
+            message.cut,
+            message.duration,
+            message.encode
+          );
           let fixedBlob;
-          if (window10) {
-            fixedBlob = await fixMetadataWindow10(
-              ffmpegInstance.current,
-              blob,
-              hasAudio
-            );
-          } else {
-            fixedBlob = await fixMetadata(
-              ffmpegInstance.current,
-              blob,
-              hasAudio
-            );
-          }
+          fixedBlob = await fixMetadata(
+            ffmpegInstance.current,
+            blob,
+            hasAudio
+          );
 
           console.log("blob11312 original", blob)
 
@@ -160,15 +124,6 @@ const DemoSand = () => {
             blob: fixedBlob,
             cut: message.cut
           });
-          // console.log(fixedBlob, "original NEW BVLOBBB", blob)
-          // const video = document.createElement("audio");
-          // video.preload = "metadata";
-          // video.onloadedmetadata = async () => {
-          //   console.log("original video.durationvideo.duration", video.duration)
-          //   URL.revokeObjectURL(video.src);
-          //   video.remove();
-          // };
-          // video.src = URL.createObjectURL(fixedBlob);
         } catch (error) {
           console.log("Error In original", error)
           sendMessage({ type: "ffmpeg-error", error: JSON.stringify(error) });
@@ -179,43 +134,21 @@ const DemoSand = () => {
         let blob;
         try {
           console.log("cut-auphonic-audio", message)
-          // if (window10) {
-          //   blob = await cutVideoWindow10(
-          //     ffmpegInstance.current,
-          //     message.blob,
-          //     message.startTime,
-          //     message.endTime,
-          //     message.cut,
-          //     message.duration,
-          //     message.encode
-          //   );
-          // } else {
-            blob = await cutVideo(
-              ffmpegInstance.current,
-              message.blob,
-              message.startTime,
-              message.endTime,
-              message.cut,
-              message.duration,
-              message.encode
-            );
-          // }
+          blob = await cutVideo(
+            ffmpegInstance.current,
+            message.blob,
+            message.startTime,
+            message.endTime,
+            message.cut,
+            message.duration,
+            message.encode
+          );
           let fixedBlob;
-          if (window10) {
-            fixedBlob = await fixMetadataWindow10(
-              ffmpegInstance.current,
-              blob,
-              hasAudio
-            );
-          } else {
-            fixedBlob = await fixMetadata(
-              ffmpegInstance.current,
-              blob,
-              hasAudio
-            );
-          }
-
-
+          fixedBlob = await fixMetadata(
+            ffmpegInstance.current,
+            blob,
+            hasAudio
+          );
           console.log("blob11312 auphonic", blob)
 
           // const base64 = await toBase64(blob);
@@ -227,14 +160,6 @@ const DemoSand = () => {
             cut: message.cut
           });
           console.log(fixedBlob, "NEW auphonic BVLOBBB", blob)
-          // const video = document.createElement("audio");
-          // video.preload = "metadata";
-          // video.onloadedmetadata = async () => {
-          //   console.log("auphonic video.durationvideo.duration", video.duration)
-          //   URL.revokeObjectURL(video.src);
-          //   video.remove();
-          // };
-          // video.src = URL.createObjectURL(fixedBlob);
         } catch (error) {
           console.log("Error In auphonic", error)
           sendMessage({ type: "ffmpeg-error", error: JSON.stringify(error) });
@@ -245,46 +170,25 @@ const DemoSand = () => {
         let blob;
         try {
           console.log("cut-video-message", message)
-          // if (window10) {
-          //   console.log("IN Window")
-          //   blob = await cutVideoWindow10(
-          //     ffmpegInstance.current,
-          //     message.blob,
-          //     message.startTime,
-          //     message.endTime,
-          //     message.cut,
-          //     message.duration,
-          //     message.encode
-          //   );
-          // } else {
-            console.log("IN Mac")
-            blob = await cutVideo(
-              ffmpegInstance.current,
-              message.blob,
-              message.startTime,
-              message.endTime,
-              message.cut,
-              message.duration,
-              message.encode
-            );
-          // }
+          console.log("IN Mac")
+          blob = await cutVideo(
+            ffmpegInstance.current,
+            message.blob,
+            message.startTime,
+            message.endTime,
+            message.cut,
+            message.duration,
+            message.encode
+          );
 
           let fixedBlob;
-          if (window10) {
-          console.log("IN Window")
-            fixedBlob = await fixMetadataWindow10(
-              ffmpegInstance.current,
-              blob,
-              hasAudio
-            );
-          } else {
-            console.log("IN Mac")
-            fixedBlob = await fixMetadata(
-              ffmpegInstance.current,
-              blob,
-              hasAudio
-            );
-          }
+
+          console.log("IN Mac")
+          fixedBlob = await fixMetadata(
+            ffmpegInstance.current,
+            blob,
+            hasAudio
+          );
 
           console.log("blob11312", blob)
 
@@ -298,15 +202,6 @@ const DemoSand = () => {
             isEdit: true,
             uniqid: returnRandomUniqId()
           });
-          // console.log(fixedBlob, "NEW BVLOBBB", blob)
-          // const video = document.createElement("video");
-          // video.preload = "metadata";
-          // video.onloadedmetadata = async () => {
-          //   console.log("video.durationvideo.duration", video.duration)
-          //   URL.revokeObjectURL(video.src);
-          //   video.remove();
-          // };
-          // video.src = URL.createObjectURL(fixedBlob);
         } catch (error) {
           sendMessage({ type: "ffmpeg-error", error: JSON.stringify(error) });
         }
@@ -315,21 +210,12 @@ const DemoSand = () => {
       if (message.type === 'fixMetadata') {
         console.log(hasAudio, message, " ffmpegInstance.current", ffmpegInstance.current)
         let fixedBlob;
-        if (window10) {
-          console.log("IN Window")
-          fixedBlob = await fixMetadataWindow10(
-            ffmpegInstance.current,
-            message.blob,
-            hasAudio
-          );
-        } else {
-          console.log("IN MAC")
-          fixedBlob = await fixMetadata(
-            ffmpegInstance.current,
-            message.blob,
-            hasAudio
-          );
-        }
+        console.log("IN MAC")
+        fixedBlob = await fixMetadata(
+          ffmpegInstance.current,
+          message.blob,
+          hasAudio
+        );
 
         console.log("fixedBlob121", fixedBlob)
         sendMessage({
@@ -377,7 +263,7 @@ const DemoSand = () => {
       console.log("Loading FFmpeg...");
       await ffmpegInstance.current.load();
       console.log("FFmpeg Loaded!", ffmpegInstance.current?.isLoaded());
-      sendMessage({ type: "ffmpeg-loaded", hasAudio , durationTillNow: durationTillNow});
+      sendMessage({ type: "ffmpeg-loaded", hasAudio, durationTillNow: durationTillNow });
       // Notify the parent (background or popup script) that FFmpeg is ready
       // window.parent.postMessage({ type: "ready" }, "*");
     } catch (error) {
