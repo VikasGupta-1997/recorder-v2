@@ -895,6 +895,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                     console.log("Video saved successfully:", saveData);
                     setIspublishing(false)
                     setPublishedData(saveData)
+                    chrome.runtime.sendMessage({ type: "REFETCH_MEDIA_LIST", project: selectedProject, userDetails  })
                     toast.success("Recording succeccfully saved to your adilo account.")
                 }
             } catch (error) {

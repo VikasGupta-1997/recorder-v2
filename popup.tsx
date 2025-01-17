@@ -36,8 +36,9 @@ function IndexPopup() {
   })
   const [isRecordingInProgress, setIsRecordingInProgress] = useState(false)
   const [projectList, setProjectList] = useState([])
+  const projectListRef = useRef([])
   // const [mediaFiles, setMediaFiles] = useStorage("mediaFiles",[])
-  const [projectListLoading, setProjectListLoading] = useState(false)
+  const [projectListLoading] = useState(false)
   const [mediaListLoading, setMediaListLoading] = useState(false)
   const progressBarRef = useRef(null);
   const progressPercent = useRef(null)
@@ -158,18 +159,25 @@ function IndexPopup() {
             console.log("DRTT", message)
           }
             break;
-
+          case "REFETCH_MEDIA_LIST": {
+            const project = message.project
+            const userDetails = message.userDetails
+            chrome.runtime.sendMessage({type: "GET_MEDIA_FILES", projectList: projectListRef.current, project, userDetails})
+          }
+          break;
           case "updateTimer": {
             formatTime(message.time, formattedTimeRef)
           }
             break;
           case "SET_PROJECT_LIST":{
             setProjectList([...message.list])
+            projectListRef.current = [...message.list]
           }
           break;
           case "media_loading": {
             setMediaListLoading(message.state)
           }
+          break;
         }
       })
   }

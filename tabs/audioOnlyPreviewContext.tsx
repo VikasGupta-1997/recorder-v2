@@ -870,6 +870,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
                     console.log("Video saved successfully:", saveData);
                     setPublishedData(saveData)
                     setIspublishing(false)
+                    chrome.runtime.sendMessage({ type: "REFETCH_MEDIA_LIST", project: selectedProject, userDetails  })
                     toast.success("Recording succeccfully saved to your adilo account.")
                 }
             } catch (error) {

@@ -414,7 +414,7 @@ const handleLogin = async (state) => {
 }
 
 const getMediaFile = async (projectList, selectedProjected, hasLoading, userDetails) => {
-  if(hasLoading) {
+  if (hasLoading) {
     await chrome.storage.local.set({ "selectedProject": { label: selectedProjected?.label, id: selectedProjected?.id, project_id: selectedProjected?.project_id } })
   }
   const findIfExistsOrNot = projectList.find(project => project.id === selectedProjected?.id)
@@ -427,11 +427,12 @@ const getMediaFile = async (projectList, selectedProjected, hasLoading, userDeta
     // setSelectedProject({ label: projectList?.[0]?.label, id: projectList?.[0]?.id, project_id: projectList?.[0]?.project_id })
   }
   if (hasLoading) {
+    console.log("STARTED LOADING")
     chrome.runtime.sendMessage({ type: "media_loading", state: true })
     // setMediaListLoading(true)
   }
   try {
-    const response = await fetch(`${process.env.PLASMO_PUBLIC_ADILO_API}/projects/show?id=${tobeQueryProject.id}&v2=true`, {
+    const response = await fetch(`${process.env.PLASMO_PUBLIC_ADILO_API}/projects/videos?begin=0&limit=20&page=1&project_id=${tobeQueryProject.id}&view=20&sort_by=date`, {
       method: 'GET',
       headers: {
         "Content-Type": "application/json",
@@ -439,13 +440,12 @@ const getMediaFile = async (projectList, selectedProjected, hasLoading, userDeta
       },
     })
     const mediaFiles = await response.json();
-    const procesedMediaFiles = mediaFiles.videos.map(file => ({
+    const procesedMediaFiles = mediaFiles.map(file => ({
       id: file.id,
       thumbnail: file.thumbnail,
       title: file.title,
       embed_url: file.embed_url
     }))
-    console.log("procesedMediaFilesprocesedMediaFiles", procesedMediaFiles)
     await chrome.storage.local.set({ "mediaFiles": procesedMediaFiles })
     if (hasLoading) {
       // setMediaListLoading(false)
