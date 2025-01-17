@@ -13,7 +13,7 @@ const Form = ({ onSubmit, setState, state, loading }) => {
                     <div className="absolute inset-y-0 start-0 flex items-center ps-1 pointer-events-none">
                         <RoundedUser />
                     </div>
-                    <input  value={state.userName} disabled={loading} onChange={e => setState(prev => ({ ...prev, userName: e.target.value }))} type="email" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$" id="default-search" className="input" placeholder="Enter your email" required />
+                    <input value={state.userName} disabled={loading} onChange={e => setState(prev => ({ ...prev, userName: e.target.value }))} type="email" id="default-search" className="input" placeholder="Enter your email" required />
                 </div>
             </div>
             <div>
@@ -27,7 +27,7 @@ const Form = ({ onSubmit, setState, state, loading }) => {
             </div>
             <div className="flex justify-between pt-3 px-2" >
                 <div className="checkbox flex gap-1" >
-                    <input  disabled={loading}  id="remember-me" type="checkbox" />
+                    <input disabled={loading} id="remember-me" type="checkbox" />
                     <label htmlFor="remember-me" >Remember Me</label>
                 </div>
                 <div className="forgot-pass text-blue-500" >
@@ -46,7 +46,7 @@ const Form = ({ onSubmit, setState, state, loading }) => {
     )
 }
 
-const LoginForm = ({setUserDetails }) => {
+const LoginForm = () => {
     const [state, setState] = useState({
         userName: 'softwaredev@zestgeek.com',
         forgetEmail: '',
@@ -56,89 +56,27 @@ const LoginForm = ({setUserDetails }) => {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
 
-    const authenticateEmail = async (email) => {
-        try {
-            const response = await fetch(`${process.env.PLASMO_PUBLIC_ADILO_API}/check-email`, {
-                method: 'POST',
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ email })
-            })
-            const data = await response.json()
-            return data
-        } catch (error) {
-            throw new Error(error)
-        }
-    }
-
-    const fetchUser = async user => {
-        try {
-            const response = await fetch(`${process.env.PLASMO_PUBLIC_ADILO_API}/user`, {
-                method: 'GET',
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${user.access_token}`
+    useEffect(() => {
+        chrome.runtime.onMessage.addListener(
+            async function (message) {
+                console.log("Login", message)
+                switch (message.type) {
+                    case 'login_loading': {
+                        setLoading(message.state)
+                    }
+                        break;
+                    case 'login_error': {
+                        setError(message.error)
+                    }
+                        break;
                 }
-            })
-            const data = await response.json()
-            console.log("data user", data)
-            return data
-        }catch(error){
-            throw new Error(error.message || "User is invalid")
-        }
-    }
+            }
+        )
+    }, [])
 
     const handleLoginSubmit = async (e) => {
         e.preventDefault()
-        setLoading(true)
-        try {
-            const data = await authenticateEmail(state.userName)
-            if (data.result === 'success') {
-                try {
-                    const response = await fetch(`${process.env.PLASMO_PUBLIC_ADILO_API}/login`, {
-                        method: 'POST',
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify({ email: state.userName, password: state.password })
-                    })
-                    const data = await response.json()
-                    if (data.user_id) {
-                        const userData = await fetchUser(data)
-                        const userDetails = {
-                            access_token: data.access_token,
-                            current_plan: data.current_plan,
-                            user_id: data.user_id,
-                            first_name: userData.first_name,
-                            last_name: userData.last_name,
-                            plan_name: userData.plan_name,
-                            name: userData.name,
-                            email: userData.email,
-                            billing_status: userData.billing_status,
-                            avtar: userData.photo_url
-                        }
-                        setUserDetails(userDetails)
-                        // await chrome.storage.local.set({  "isLoggedIn": true })
-                        setLoading(false)
-                    } else {
-                        setLoading(false)
-                        setError(data?.message || "Invalid username Or password")
-                    }
-                } catch (error) {
-                    setLoading(false)
-                    throw new Error(error)
-                }
-            } else {
-                setLoading(false)
-                throw new Error(data?.message || "Invalid username Or password")
-            }
-        } catch (error) {
-            setLoading(false)
-            setError(error?.message || "Invalid username Or password")
-            console.log("Error", error)
-        }
-        // await chrome.storage.local.set({ "isLoggedIn": true })
+        chrome.runtime.sendMessage({ type: "START_LOGIN", state })
     }
 
     return (

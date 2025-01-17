@@ -103,8 +103,7 @@ const ListComponent = ({
                 }
             }
         });
-
-       
+    
         chrome.storage.local.get(["mediaFiles"], result => {
             const mediaFiles = result.mediaFiles
             console.log("In Lisrt Pagw!!", mediaFiles)

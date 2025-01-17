@@ -18,8 +18,8 @@ function IndexPopup() {
   const formattedTimeRef = useRef(null)
   const mainDivRef = useRef(null)
 
-  const [userDetails, setUserDetails] = useStorage("userInfo", null)
-  const [selectedProjected, setSelectedProject] = useStorage("selectedProject", null)
+  const [userDetails] = useStorage("userInfo", null)
+  const [selectedProjected] = useStorage("selectedProject", null)
   const [uploadStatus] = useStorage("showUploadStatus", false)
 
 
@@ -148,9 +148,6 @@ function IndexPopup() {
             if (fileNameref.current) {
               fileNameref.current.innerText = message.recordingName
             }
-            // progressInfo.current.percent.innerText = `Uploading ${uploadStatus.progress}%`
-            // progressInfo.current.uploadSize.innerText = `${formatBlobSize(uploadStatus.uploadSize)} of ${formatBlobSize(uploadStatus.totalSize)}`
-            // progressInfo.current.timeLeft.innerText = `${convertTime(uploadStatus.timeLeft)} left`
           }
             break;
           case "START_RECORDING": {
@@ -166,6 +163,13 @@ function IndexPopup() {
             formatTime(message.time, formattedTimeRef)
           }
             break;
+          case "SET_PROJECT_LIST":{
+            setProjectList([...message.list])
+          }
+          break;
+          case "media_loading": {
+            setMediaListLoading(message.state)
+          }
         }
       })
   }
@@ -184,76 +188,12 @@ function IndexPopup() {
   }, [])
 
   const handleProjectChange = async (project) => {
-    setSelectedProject({ label: project.label, id: project.id, project_id: project.project_id })
-    getMediaFile(projectList, project, true)
-  }
-
-  const getMediaFile = async (projectList, selectedProjected, hasLoading) => {
-    const findIfExistsOrNot = projectList.find(project => project.id === selectedProjected?.id)
-    let tobeQueryProject;
-    if (findIfExistsOrNot) {
-      tobeQueryProject = findIfExistsOrNot
-    } else {
-      tobeQueryProject = projectList?.[0]
-      setSelectedProject({ label: projectList?.[0]?.label, id: projectList?.[0]?.id, project_id: projectList?.[0]?.project_id })
-    }
-    if (hasLoading) {
-      setMediaListLoading(true)
-    }
-    try {
-      const response = await fetch(`${process.env.PLASMO_PUBLIC_ADILO_API}/projects/show?id=${tobeQueryProject.id}&v2=true`, {
-        method: 'GET',
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${userDetails.access_token}`
-        },
-      })
-      const mediaFiles = await response.json();
-      const procesedMediaFiles = mediaFiles.videos.map(file => ({
-        id: file.id,
-        thumbnail: file.thumbnail,
-        title: file.title,
-        embed_url: file.embed_url
-      }))
-      console.log("procesedMediaFilesprocesedMediaFiles", procesedMediaFiles)
-      // setMediaFiles(procesedMediaFiles || [])
-      await chrome.storage.local.set({ "mediaFiles": procesedMediaFiles })
-      if (hasLoading) {
-        setMediaListLoading(false)
-      }
-    } catch (error) {
-      if (hasLoading) {
-        setMediaListLoading(false)
-      }
-      console.log("Error", error)
-    }
-  }
-
-  const getProjectList = async () => {
-    // setProjectListLoading(true)
-    // setMediaListLoading(true)
-    try {
-      const response = await fetch(`${process.env.PLASMO_PUBLIC_ADILO_API}/projects`, {
-        method: 'GET',
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${userDetails.access_token}`
-        },
-      })
-      const projectlist = await response.json();
-      const listItems = projectlist.map(item => ({ ...item, label: item?.title }))
-      setProjectList([...listItems])
-      // setProjectListLoading(false)
-      await getMediaFile([...listItems], selectedProjected, false)
-    } catch (error) {
-      // setProjectListLoading(false)
-      console.log("Error", error)
-    }
+    chrome.runtime.sendMessage({type: "GET_MEDIA_FILES", projectList, project, userDetails})
   }
 
   useEffect(() => {
     if (userDetails?.user_id) {
-      getProjectList()
+      chrome.runtime.sendMessage({type: "GET_PROJECT_LIST", userDetails})
     }
   }, [userDetails])
 
@@ -297,7 +237,7 @@ function IndexPopup() {
               </>
           }
         </> : <>
-          <LoginForm setUserDetails={setUserDetails} />
+          <LoginForm />
         </>
       }
     </main>

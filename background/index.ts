@@ -1,5 +1,5 @@
 
-import {sendToContentScript} from '@plasmohq/messaging'
+import { sendToContentScript } from '@plasmohq/messaging'
 
 const OFFSCREEN_URL = chrome.runtime.getURL('tabs/offscreen.html');
 const createOffscreenDocument = async () => {
@@ -201,7 +201,7 @@ function startTimer(tabType?: string | undefined) {
       });
     });
   }
-  console.log(elapsedTime, saveCounter,"Broadcast!!", isRunning, isPaused)
+  console.log(elapsedTime, saveCounter, "Broadcast!!", isRunning, isPaused)
   if (!isRunning && !isPaused) {
     isRunning = true;
 
@@ -309,7 +309,7 @@ function resetTimer() {
 function startBadgeCountdown() {
   let countdown = 5;
   chrome.storage.local.get(["screenShareSelection"], result => {
-    const intervalId = setInterval(async() => {
+    const intervalId = setInterval(async () => {
       if (countdown > 0) {
         chrome.action.setBadgeText({ text: countdown.toString() })
         chrome.action.setBadgeBackgroundColor({ color: '#FF0000' });
@@ -321,7 +321,7 @@ function startBadgeCountdown() {
         console.log("resultresult", result)
         // startTimer(result?.screenShareSelection)
         console.log("STARTED RECORDING!!!!")
-        await chrome.storage.local.set({"showToolBar": true})
+        await chrome.storage.local.set({ "showToolBar": true })
         chrome.runtime.sendMessage({ type: "NEW_RECORDING_STARTED_OFFSCREEN" }, () => {
           startTimer();
         });
@@ -331,8 +331,172 @@ function startBadgeCountdown() {
 
 }
 
+const authenticateEmail = async (email) => {
+  try {
+    const response = await fetch(`${process.env.PLASMO_PUBLIC_ADILO_API}/check-email`, {
+      method: 'POST',
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email })
+    })
+    const data = await response.json()
+    return data
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
+const fetchUser = async user => {
+  try {
+    const response = await fetch(`${process.env.PLASMO_PUBLIC_ADILO_API}/user`, {
+      method: 'GET',
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${user.access_token}`
+      }
+    })
+    const data = await response.json()
+    console.log("data user", data)
+    return data
+  } catch (error) {
+    throw new Error(error.message || "User is invalid")
+  }
+}
+
+const handleLogin = async (state) => {
+  chrome.runtime.sendMessage({ type: 'login_loading', state: true })
+  try {
+    const data = await authenticateEmail(state.userName)
+    if (data.result === 'success') {
+      try {
+        const response = await fetch(`${process.env.PLASMO_PUBLIC_ADILO_API}/login`, {
+          method: 'POST',
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email: state.userName, password: state.password })
+        })
+        const data = await response.json()
+        if (data.user_id) {
+          const userData = await fetchUser(data)
+          const userDetails = {
+            access_token: data.access_token,
+            current_plan: data.current_plan,
+            user_id: data.user_id,
+            first_name: userData.first_name,
+            last_name: userData.last_name,
+            plan_name: userData.plan_name,
+            name: userData.name,
+            email: userData.email,
+            billing_status: userData.billing_status,
+            avtar: userData.photo_url
+          }
+          await chrome.storage.local.set({ "userInfo": userDetails })
+          chrome.runtime.sendMessage({ type: 'login_loading', state: false })
+        } else {
+          chrome.runtime.sendMessage({ type: 'login_loading', state: false })
+          chrome.runtime.sendMessage({ type: 'login_error', error: data?.message || "Invalid username Or password" })
+        }
+      } catch (error) {
+        chrome.runtime.sendMessage({ type: 'login_loading', state: false })
+        throw new Error(error)
+      }
+    } else {
+      chrome.runtime.sendMessage({ type: 'login_loading', state: false })
+      throw new Error(data?.message || "Invalid username Or password")
+    }
+  } catch (error) {
+    chrome.runtime.sendMessage({ type: 'login_loading', state: false })
+    chrome.runtime.sendMessage({ type: 'login_error', error: error?.message || "Invalid username Or password" })
+    console.log("Error", error)
+  }
+}
+
+const getMediaFile = async (projectList, selectedProjected, hasLoading, userDetails) => {
+  if(hasLoading) {
+    await chrome.storage.local.set({ "selectedProject": { label: selectedProjected?.label, id: selectedProjected?.id, project_id: selectedProjected?.project_id } })
+  }
+  const findIfExistsOrNot = projectList.find(project => project.id === selectedProjected?.id)
+  let tobeQueryProject;
+  if (findIfExistsOrNot) {
+    tobeQueryProject = findIfExistsOrNot
+  } else {
+    tobeQueryProject = projectList?.[0]
+    await chrome.storage.local.set({ "selectedProject": { label: projectList?.[0]?.label, id: projectList?.[0]?.id, project_id: projectList?.[0]?.project_id } })
+    // setSelectedProject({ label: projectList?.[0]?.label, id: projectList?.[0]?.id, project_id: projectList?.[0]?.project_id })
+  }
+  if (hasLoading) {
+    chrome.runtime.sendMessage({ type: "media_loading", state: true })
+    // setMediaListLoading(true)
+  }
+  try {
+    const response = await fetch(`${process.env.PLASMO_PUBLIC_ADILO_API}/projects/show?id=${tobeQueryProject.id}&v2=true`, {
+      method: 'GET',
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${userDetails.access_token}`
+      },
+    })
+    const mediaFiles = await response.json();
+    const procesedMediaFiles = mediaFiles.videos.map(file => ({
+      id: file.id,
+      thumbnail: file.thumbnail,
+      title: file.title,
+      embed_url: file.embed_url
+    }))
+    console.log("procesedMediaFilesprocesedMediaFiles", procesedMediaFiles)
+    await chrome.storage.local.set({ "mediaFiles": procesedMediaFiles })
+    if (hasLoading) {
+      // setMediaListLoading(false)
+      chrome.runtime.sendMessage({ type: "media_loading", state: false })
+    }
+  } catch (error) {
+    if (hasLoading) {
+      // setMediaListLoading(false)
+      chrome.runtime.sendMessage({ type: "media_loading", state: false })
+    }
+    console.log("Error", error)
+  }
+}
+
+const getProjectList = async (userDetails) => {
+  // setProjectListLoading(true)
+  // setMediaListLoading(true)
+  try {
+    const response = await fetch(`${process.env.PLASMO_PUBLIC_ADILO_API}/projects`, {
+      method: 'GET',
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${userDetails.access_token}`
+      },
+    })
+    const projectlist = await response.json();
+    const listItems = projectlist.map(item => ({ ...item, label: item?.title }))
+    // setProjectList([...listItems])
+    chrome.runtime.sendMessage({ type: 'SET_PROJECT_LIST', list: listItems })
+    // setProjectListLoading(false)
+    chrome.storage.local.get(['selectedProject'], async result => {
+      const selectedProjected = result?.selectedProject
+      await getMediaFile([...listItems], selectedProjected, false, userDetails)
+    })
+  } catch (error) {
+    // setProjectListLoading(false)
+    console.log("Error", error)
+  }
+}
+
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
-  if(message.type === 'PAUSE_UPLOAD'){
+  if (message.type === 'START_LOGIN') {
+    handleLogin(message.state)
+  }
+  if (message.type === 'GET_PROJECT_LIST') {
+    getProjectList(message.userDetails)
+  }
+  if (message.type === 'GET_MEDIA_FILES') {
+    getMediaFile(message.projectList, message.project, true, message.userDetails)
+  }
+  if (message.type === 'PAUSE_UPLOAD') {
     chrome.tabs.sendMessage(previewTabId, { type: "PAUSE_UPLOAD" })
   }
   if (message.type === 'CHECK_FOR_SYSTEM_SCREEN') {
@@ -389,24 +553,24 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     }
   }
 
-  if(message.type === 'RECORDING_CHUNK'){
-    console.log(previewTabId,"RECORDING_CHUNKRECORDING_CHUNK", message )
-    setTimeout(() => { 
+  if (message.type === 'RECORDING_CHUNK') {
+    console.log(previewTabId, "RECORDING_CHUNKRECORDING_CHUNK", message)
+    setTimeout(() => {
       chrome.tabs.sendMessage(previewTabId, {
-         type: "RECORDING_CHUNK_PREVIEW", 
-         data: message.data ,
-         index: message.index,
-         isLastChunk:  message.isLastChunk
-        }, function () { })
+        type: "RECORDING_CHUNK_PREVIEW",
+        data: message.data,
+        index: message.index,
+        isLastChunk: message.isLastChunk
+      }, function () { })
     }, 2000)
   }
 
-  if(message.type === 'RECORDING_CHUNK_UPLOAD_COMPLETE'){
+  if (message.type === 'RECORDING_CHUNK_UPLOAD_COMPLETE') {
     console.log("RECORDING_CHUNK_UPLOAD_COMPLETE", message)
   }
 
   if (message.type === 'GET_INDEXDB_RECORDING') {
-    setTimeout(() => { 
+    setTimeout(() => {
       console.log("GET_INDEXDB_RECORDINGGET_INDEXDB_RECORDING", previewTabId)
       // chrome.tabs.sendMessage(previewTabId, { type: "DATA_FOR_SANDBOX", data: message.data }, function () { })
     }, 3000)
@@ -705,19 +869,19 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
             // })
             chrome.tabs.create({ url: chrome.runtime.getURL(message?.isAudioOnly ? 'sandboxes/audioDemo.html' : `sandboxes/demo.html?hasAudio=${message?.hasAudio}&duration=${tillDuration}`) }, async (tab) => {
               // chrome.tabs.create({ url: chrome.runtime.getURL('tabs/sandbox-container.html') }, async (tab) => {
-                // const port = chrome.tabs.connect(tab.id, { name: 'sandbox-bridge' });
+              // const port = chrome.tabs.connect(tab.id, { name: 'sandbox-bridge' });
 
-                // // Listen for messages from the content script
-                // port.onMessage.addListener((message) => {
-                //   console.log('Message from sandbox:', message);
-          
-                //   // Send a reply back to the content script
-                //   port.postMessage({ type: 'response', text: 'Hello from background!' });
-                // });
-          
-                // // Send an initialization message to the content script
-                // port.postMessage({ type: 'init', text: 'Connection established!', base64: 'base64StringHere' });
-                // console.log('Port initialized:', port);
+              // // Listen for messages from the content script
+              // port.onMessage.addListener((message) => {
+              //   console.log('Message from sandbox:', message);
+
+              //   // Send a reply back to the content script
+              //   port.postMessage({ type: 'response', text: 'Hello from background!' });
+              // });
+
+              // // Send an initialization message to the content script
+              // port.postMessage({ type: 'init', text: 'Connection established!', base64: 'base64StringHere' });
+              // console.log('Port initialized:', port);
               previewTabId = tab.id
               // chrome.tabs.query({}, (tabs) => {
               //   tabs.forEach((tab) => {
@@ -733,7 +897,7 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
               chrome.tabs.onUpdated.addListener(function listener(tabId, info) {
                 if (tabId === tab.id && info.status === 'complete') {
                   chrome.tabs.onUpdated.removeListener(listener);
-                  chrome.runtime.sendMessage({type: "PREVIEW_OPENED_SUCCESSFULY"})
+                  chrome.runtime.sendMessage({ type: "PREVIEW_OPENED_SUCCESSFULY" })
                 }
               });
             });
@@ -785,7 +949,7 @@ chrome.commands.onCommand.addListener(async (command) => {
           tabId: tab.id
         } as any)
         break
-      
+
       case "toggle-pause":
         // Send message to content script to toggle pause
         // await sendToContentScript({
