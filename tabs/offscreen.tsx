@@ -196,17 +196,58 @@ const OffScreen = () => {
   }
 
   const mergeAudioWithStream = async (isAudioDeviceSelected, audioDevice) => {
-    let audioTrack = null
+    let audioTrack = null;
+
+    const context = new AudioContext(); // Create an audio context
+    const destination = context.createMediaStreamDestination(); // Create a destination
+
     if (isAudioDeviceSelected) {
       let audStream = await navigator.mediaDevices.getUserMedia({
-        audio: { deviceId: audioDevice }
+        audio: { deviceId: audioDevice },
       });
-      audioTrack = audStream.getAudioTracks()[0];
+
+      if (audStream.getAudioTracks().length > 0) {
+        const audioInputSource = context.createMediaStreamSource(audStream);
+        const audioInputGain = context.createGain();
+
+        // Connect source to gain node and then to destination
+        audioInputSource.connect(audioInputGain).connect(destination);
+
+        // Set gain to 1 for normal volume
+        audioInputGain.gain.value = 1;
+
+        audioTrack = destination.stream.getAudioTracks()[0];
+      }
     } else {
-      console.log("NOT! AUDIO SELECTED")
+      console.log("No audio selected, muting the audio track");
+
+      // Create a silent stream and set its volume to 0
+      const oscillator = context.createOscillator(); // Generate a constant tone
+      const audioInputGain = context.createGain();
+      oscillator.connect(audioInputGain).connect(destination);
+
+      // Mute the silent track by setting gain to 0
+      audioInputGain.gain.value = 0;
+      oscillator.start();
+
+      audioTrack = destination.stream.getAudioTracks()[0];
     }
-    return audioTrack
-  }
+
+    return audioTrack;
+  };
+
+  // const mergeAudioWithStream = async (isAudioDeviceSelected, audioDevice) => {
+  //   let audioTrack = null
+  //   if (isAudioDeviceSelected) {
+  //     let audStream = await navigator.mediaDevices.getUserMedia({
+  //       audio: { deviceId: audioDevice }
+  //     });
+  //     audioTrack = audStream.getAudioTracks()[0];
+  //   } else {
+  //     console.log("NOT! AUDIO SELECTED")
+  //   }
+  //   return audioTrack
+  // }
 
   const windowOnlyOptionWindow10 = async (screenStream, backgroundUrl) => {
     // Get the webcam stream
@@ -623,6 +664,8 @@ const OffScreen = () => {
   const recordStream = async () => {
     navigator.storage.persist();
     const { videoTrack, audioTrack } = audioVideoStreams
+    console.log("videoTrack==>", videoTrack)
+    console.log("audioTrack==>", audioTrack)
     const tracks = [];
     if (videoTrack instanceof MediaStreamTrack) {
       tracks.push(videoTrack);
@@ -636,29 +679,7 @@ const OffScreen = () => {
     if (audioTrack instanceof MediaStreamTrack) {
       tracks.push(audioTrack);
     } else {
-      if (window10) {
 
-        console.log('No audio track found. Adding a silent small wave audio track...');
-        const audioContext = new AudioContext();
-        const silentSource = audioContext.createBufferSource(); // Create a silent audio source
-        const emptyBuffer = audioContext.createBuffer(2, audioContext.sampleRate, audioContext.sampleRate); // Stereo buffer
-        silentSource.buffer = emptyBuffer; // Assign the empty buffer to the source
-        const destination = audioContext.createMediaStreamDestination();
-        silentSource.connect(destination); // Connect the source to the destination
-        silentSource.start(); // Start the silent source
-        const silentAudioTrack = destination.stream.getAudioTracks()[0];
-        tracks.push(silentAudioTrack); // Add the silent audio track
-
-        // console.log('No audio track found. Adding a silent audio track...');
-        // const audioContext = new AudioContext();
-        // const oscillator = audioContext.createOscillator();
-        // const destination = audioContext.createMediaStreamDestination();
-        // oscillator.connect(destination);
-        // oscillator.start();
-        // oscillator.stop(audioContext.currentTime + 1); // Short duration to create silence
-        // const silentAudioTrack = destination.stream.getAudioTracks()[0];
-        // tracks.push(silentAudioTrack);
-      }
     }
     let mediaRecorder
     if (tracks.length > 0) {
@@ -836,18 +857,41 @@ const OffScreen = () => {
   const recordCameraOnly = async (selections) => {
     navigator.storage.persist();
     const mediaStream = await navigator.mediaDevices.getUserMedia({
-      audio: selections?.micRecording.value !== "mic_off" ? { deviceId: selections?.micRecording?.value } : false,
+      audio: { deviceId: selections?.micRecording?.value },
       video: { deviceId: selections?.cameraRecording?.value }
     });
+    let finalStream = mediaStream;
     let mimeType = mimeTypes.find((mimeType) =>
       MediaRecorder.isTypeSupported(mimeType)
     );
+    console.log("selections?.micRecording==>", selections?.micRecording)
+    if (selections?.micRecording?.value === "mic_off") {
+      console.log("Yes is there No sound!")
+      console.log("No audio Track==>")
+      const audioContext = new AudioContext();
+      const audioSource = audioContext.createMediaStreamSource(mediaStream);
+      const gainNode = audioContext.createGain();
+      const destination = audioContext.createMediaStreamDestination();
+
+      // Set volume to 0
+      gainNode.gain.value = 0;
+
+      // Connect the source, gain node, and destination
+      audioSource.connect(gainNode).connect(destination);
+
+      // Replace the original audio track with the processed track
+      const newAudioTrack = destination.stream.getAudioTracks()[0];
+      finalStream = new MediaStream([
+        ...mediaStream.getVideoTracks(),
+        newAudioTrack,
+      ]);
+    }
     console.log("mimeType", mimeType)
     if (!mimeType) {
       console.error("No supported MIME type found");
       return;
     }
-    camOnlyRecorder = new MediaRecorder(mediaStream, {
+    camOnlyRecorder = new MediaRecorder(finalStream, {
       mimeType: mimeType,
       audioBitsPerSecond: audioBitsPerSecond,
       videoBitsPerSecond: videoBitsPerSecond,
@@ -1051,13 +1095,13 @@ const OffScreen = () => {
           case "START_CAM_ONLY_RECORDING": {
             console.log("START_CAM_ONLY_RECORDING", message)
             camOnlyChunks = []
-            if (window10) {
-              console.log("YEAH WINDOW 10")
-              recordCameraOnlyWindow10(message?.data)
-            } else {
+            // if (window10) {
+            //   console.log("YEAH WINDOW 10")
+            //   recordCameraOnlyWindow10(message?.data)
+            // } else {
               console.log("YEAH Mormal callww")
               recordCameraOnly(message?.data)
-            }
+            // }
           }
             break;
           case "START_MIC_ONLY_RECORDING": {
