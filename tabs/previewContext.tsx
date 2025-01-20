@@ -69,6 +69,20 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     const audioF = useRef(null)
     const undoRedoClick = useRef(null)
     const auphonicAlgorithm = useRef(null)
+    const controllersRef = useRef([]); // This will hold the AbortController for each chunk
+    let isPausedref = useRef(false); // Flag to track if upload is paused
+    let currentPartIndexRef = useRef(0);
+    let totalUploadedRef = useRef(0);
+    let lastUpdateTimeRef = useRef(0);
+    let ETagRef = useRef([]);
+    const tabsInfo = useRef({tabId: null, tabIds: null})
+    const partsUrlsRef = useRef([])
+    const keyRef = useRef(null)
+    const userDetailRef = useRef(null)
+    const uploadIdRef = useRef(null)
+    const newBlobRef = useRef(null)
+    const selectedProjectRef = useRef(null)
+    const showUploadStatusRef = useRef(null)
     const [publishedData, setPublishedData] = useState(null)
     const switchModeAudios = useRef({
         auphonicAudio: null,
@@ -142,22 +156,25 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     const onMountListeners = () => {
         chrome.runtime.onMessage.addListener(
             async function async(message) {
+                console.log("OonMountListenersonMountListenersn", message)
                 switch (message.type) {
+                    case "PREVIEW_TAB_INFO_PREVIEW": {
+                        console.log("Message===>", message)
+                        tabsInfo.current = {tabId: message.tabId, tabIds: message.tabIds}
+                    }
+                    break;
                     case "PAUSE_UPLOAD": {
                         console.log("Pause upload here!")
+                        handlePauseUpload()
+                    }
+                        break;
+                    case "RESUME_UPLOAD": {
+                        console.log("resume upload here!")
+                        handleResumeUpload()
                     }
                         break;
                     case "RECORDING_CHUNK_PREVIEW": {
-                        // Debug log to see chunk format
-                        // console.log('Received chunk format:', {
-                        //     index: message.index,
-                        //     dataStart: message.data.substring(0, 50) + '...',
-                        //     dataLength: message.data.length
-                        // });
-
                         receivedChunks[message.index] = message.data;
-                        // console.log(`Received chunk ${message.index}`);
-
                         // Try to start playing the video when enough data is received
                         if (!isPlaying && receivedChunks.length >= 5) { // Assuming 5 chunks are sufficient to start
                             isPlaying = true;
@@ -249,7 +266,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
             document.body.classList.add('windows');
         }
         sendPostMessage({ type: "load-ffmpeg" });
-
+        onMountListeners()
         // window.onbeforeunload = async function () {
         // await chrome.storage.local.set({"showUploadStatus": false})
         //     return true;
@@ -497,6 +514,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                 hasAudio.current = message.hasAudio
                 durationTillNow.current = +message.durationTillNow
                 chrome.runtime.sendMessage({ type: "START_UPLOAD_CHUNKS" })
+                chrome.runtime.sendMessage({ type: "PREVIEW_TAB_INFO" })
             }
             if (message.type === "ffmpeg-load-error") {
                 // console.log("ffmpeg-load-error==>", message)
@@ -504,7 +522,6 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                 setFfmpegLoadError(true)
             }
         });
-        onMountListeners()
     }, [history, trimState])
 
 
@@ -685,21 +702,229 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         return `Rec-${getDynamicTimestamp()}-desktop.mp4`
     }, [])
 
+
     const handlePauseUpload = () => {
         console.log("Pause the upload")
+        isPausedref.current = true; // Set the flag to true
+        if (controllersRef.current[currentPartIndexRef.current]) {
+            controllersRef.current[currentPartIndexRef.current].abort(); // Abort the current chunk upload
+            console.log("Upload paused at part", currentPartIndexRef.current + 1);
+        }
     }
 
     const handleResumeUpload = () => {
         console.log("Resume the upload")
+        isPausedref.current = false; // Set the flag to false
+        console.log("Resuming upload...");
+        // partUrls, uploadId, key, userDetails, blob, selectedProject
+        handleUpload(partsUrlsRef.current, uploadIdRef.current, keyRef.current, userDetailRef.current, newBlobRef.current, selectedProjectRef.current, showUploadStatusRef.current);
     }
 
+    const resetUploadRefs = () => {
+        controllersRef.current = []
+        isPausedref.current = false
+        currentPartIndexRef.current = 0
+        totalUploadedRef.current = 0
+        lastUpdateTimeRef.current = 0
+        ETagRef.current = []
+        partsUrlsRef.current = []
+        keyRef.current = null
+        userDetailRef.current = null
+        uploadIdRef.current = null
+        newBlobRef.current = null
+        selectedProjectRef.current = null
+    }
+
+    const handleUpload = async (partUrls, uploadId, key, userDetails, newBlob, selectedProject, showUploadStatus = {}) => {
+        const startTime = Date.now();
+        const throttleInterval = 500
+        for (let i = currentPartIndexRef.current; i < partUrls.length; i++) {
+            const { partNumber, uploadUrl, chunk } = partUrls[i];
+
+            // Create a new AbortController for each chunk upload
+            const controller = new AbortController();
+            controllersRef.current.push(controller);
+
+            // Check if upload is paused, if so, exit loop
+            if (isPausedref.current) {
+                currentPartIndexRef.current = i; // Save the current index for resuming
+                console.log("Upload paused at part", partNumber);
+                return; // Exit the loop if paused
+            }
+
+            try {
+                await new Promise(async(resolve, reject) => {
+                    const xhr = new XMLHttpRequest();
+                    xhr.open("PUT", uploadUrl, true);
+                    // await chrome.storage.local.set({ "showUploadStatus": {
+                    //     ...showUploadStatus,
+                    //     [tabsInfo.current.tabId]: true,
+                    //     tabIds: tabsInfo.current.tabIds
+                    // }})
+                    xhr.upload.onprogress = async (event) => {
+                        if (event.lengthComputable) {
+                            const chunkProgress = (event.loaded / chunk.size) * 100;
+                            const overallProgress = Math.min(
+                                100,
+                                Math.round(((totalUploadedRef.current + event.loaded) / newBlob.size) * 100)
+                            );
+                            const elapsedTime = (Date.now() - startTime) / 1000; // Seconds
+                            const uploadSpeed = (totalUploadedRef.current + event.loaded) / elapsedTime; // Bytes per second
+                            const timeLeft = Math.round((newBlob.size - (totalUploadedRef.current + event.loaded)) / uploadSpeed); // Seconds
+                            const uploadStatus = {
+                                progress: overallProgress,
+                                uploadSize: totalUploadedRef.current + event.loaded,
+                                timeLeft: timeLeft,
+                                totalSize: newBlob.size
+                            }
+
+                            const radius = 45; // Radius of the circle
+                            const strokeWidth = 5; // Thickness of the circle
+                            const normalizedRadius = radius - strokeWidth / 2;
+                            const circumference = 2 * Math.PI * normalizedRadius;
+                            const strokeDashoffset = circumference - (overallProgress / 100) * circumference;
+                            // console.log("progressStrokeWidth==>", progressStrokeWidth)
+                            // console.log("uploadProgressRef==>", uploadProgressRef)
+                            if (progressStrokeWidth.current) {
+                                progressStrokeWidth.current.innerHTML = `
+                                    <svg
+                                        height="${radius * 2}"
+                                        width="${radius * 2}"
+                                        style="transform: rotate(-90deg);"
+                                    >
+                                        <circle
+                                            stroke="#CEEFFC"
+                                            fill="transparent"
+                                            stroke-width="${strokeWidth}"
+                                            r="${normalizedRadius}"
+                                            cx="${radius}"
+                                            cy="${radius}"
+                                        />
+                                        <circle
+                                            stroke="#0DABD8"
+                                            fill="transparent"
+                                            stroke-width="${strokeWidth}"
+                                            stroke-dasharray="${circumference} ${circumference}"
+                                            stroke-linecap="round"
+                                            stroke-dashoffset="${strokeDashoffset}"
+                                            r="${normalizedRadius}"
+                                            cx="${radius}"
+                                            cy="${radius}"
+                                        />
+                                    </svg>
+                                `;
+                            }
+
+                            if (uploadProgressRef.current) {
+                                uploadProgressRef.current.innerText = `${overallProgress}%`
+                            }
+
+                            const currentTime = Date.now();
+                            if (currentTime - lastUpdateTimeRef.current > throttleInterval) {
+                                chrome.runtime.sendMessage({ type: "upload-status", 
+                                    uploadStatus, 
+                                    recordingName,
+                                    tabId: tabsInfo.current.tabId,
+                                    tabIds: tabsInfo.current.tabIds
+                                 });  // Send the message to the popup
+                                lastUpdateTimeRef.current = currentTime;
+                            }
+                        }
+                    };
+
+                    xhr.onload = () => {
+                        if (xhr.status === 200) {
+                            const eTag = xhr.getResponseHeader("ETag");
+                            ETagRef.current.push({ PartNumber: partNumber, ETag: eTag });
+                            totalUploadedRef.current += chunk.size;
+                            resolve(true);
+                        } else {
+                            reject(new Error(`Failed to upload part ${partNumber}`));
+                        }
+                    };
+
+                    xhr.onerror = () => {
+                        reject(new Error(`Network error on part ${partNumber}`));
+                    };
+
+                    // Set the abort signal for this request
+                    (xhr as any).signal = controller.signal;
+                    xhr.send(chunk);
+                });
+
+            } catch (error) {
+                console.error(`Error uploading part ${partNumber}:`, error);
+                resetUploadRefs()
+                break; // Optionally stop the process on error
+            }
+        }
+
+        console.log("Upload completed");
+
+        console.log("ETagETag", ETagRef.current)
+        setUploadStatus(null)
+        await chrome.storage.local.set({ "showUploadStatus": false })
+        console.log(ETagRef.current, "Check uploadedPartsuploadedParts")
+        const completeResponse = await fetch(
+            `${process.env.PLASMO_PUBLIC_ADILO_API}/s3/multipart/${uploadId}/complete?key=${key}`,
+            {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${userDetails.access_token}`
+                },
+                body: JSON.stringify({
+                    parts: ETagRef.current,
+                }),
+            }
+        );
+
+        const completeData = await completeResponse.json();
+        console.log("Upload completed:", completeData);
+        console.log("keykey=>", key)
+        console.log("selectedProject=>", selectedProject)
+        console.log("blob=>", newBlob)
+        const savePayload = {
+            video: {
+                location: completeData.location,
+            },
+            video_id: key.split('/')[0], // Pass your videoId
+            project_id: selectedProject.id, // Pass your projectId
+            fileType: newBlob.type || "video/mp4",
+            drm_protection: "false",
+            mediaType: "uploadVideos",
+            filesize: newBlob.size,
+        };
+        console.log("savePayload==>", savePayload)
+        const saveResponse = await fetch(
+            `${process.env.PLASMO_PUBLIC_ADILO_API}/video-upload/s3-sign/save`,
+            {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${userDetails.access_token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(savePayload),
+            }
+        );
+        const saveData = await saveResponse.json();
+        console.log("Video saved successfully:", saveData);
+        setIspublishing(false)
+        setPublishedData(saveData)
+        chrome.runtime.sendMessage({ type: "REFETCH_MEDIA_LIST", project: selectedProject, userDetails })
+        resetUploadRefs()
+        toast.success("Recording succeccfully saved to your adilo account.")
+    };
+
+
     const handlePublish = async (blob) => {
-        chrome.storage.local.get(['userInfo', 'selectedProject'], async result => {
+        chrome.storage.local.get(['userInfo', 'selectedProject', 'showUploadStatus'], async result => {
             console.log(blob, "result223", result)
             const userDetails = result.userInfo;
+            showUploadStatusRef.current = result?.showUploadStatus || {}
             const selectedProject = result.selectedProject
-            const chunk_size = 16242880;
-
+            selectedProjectRef.current = selectedProject
+            // const chunk_size = 16242880;
+            const chunk_size = 5 * 1024 * 1024;
             console.log(chunk_size, "Echunk_sizehandlePublish====>", blob)
             // const chunk_size =  16 * 1024 * 1024;
             // const chunk_size = 1 * 1024 * 1024;
@@ -764,146 +989,152 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                     let lastUpdateTime = 0;
                     const throttleInterval = 500
                     setUploadStatus(true)
-                    for (let i = 0; i < partUrls.length; i++) {
-                        const { partNumber, uploadUrl, chunk } = partUrls[i];
+                    partsUrlsRef.current = partUrls
+                    keyRef.current = key
+                    userDetailRef.current = userDetails
+                    uploadIdRef.current = uploadId
+                    newBlobRef.current = blob
+                    await handleUpload(partUrls, uploadId, key, userDetails, blob, selectedProject, showUploadStatusRef.current)
+                    // for (let i = 0; i < partUrls.length; i++) {
+                    //     const { partNumber, uploadUrl, chunk } = partUrls[i];
 
-                        await new Promise((resolve, reject) => {
-                            const xhr = new XMLHttpRequest();
-                            xhr.open("PUT", uploadUrl, true);
+                    //     await new Promise((resolve, reject) => {
+                    //         const xhr = new XMLHttpRequest();
+                    //         xhr.open("PUT", uploadUrl, true);
 
-                            xhr.upload.onprogress = async (event) => {
-                                if (event.lengthComputable) {
-                                    const chunkProgress = (event.loaded / chunk.size) * 100;
-                                    const overallProgress = Math.min(
-                                        100,
-                                        Math.round(((totalUploaded + event.loaded) / blob.size) * 100)
-                                    );
-                                    const elapsedTime = (Date.now() - startTime) / 1000; // Seconds
-                                    const uploadSpeed = (totalUploaded + event.loaded) / elapsedTime; // Bytes per second
-                                    const timeLeft = Math.round((blob.size - (totalUploaded + event.loaded)) / uploadSpeed); // Seconds
-                                    const uploadStatus = {
-                                        progress: overallProgress,
-                                        uploadSize: totalUploaded + event.loaded,
-                                        timeLeft: timeLeft,
-                                        totalSize: blob.size
-                                    }
+                    //         xhr.upload.onprogress = async (event) => {
+                    //             if (event.lengthComputable) {
+                    //                 const chunkProgress = (event.loaded / chunk.size) * 100;
+                    //                 const overallProgress = Math.min(
+                    //                     100,
+                    //                     Math.round(((totalUploaded + event.loaded) / blob.size) * 100)
+                    //                 );
+                    //                 const elapsedTime = (Date.now() - startTime) / 1000; // Seconds
+                    //                 const uploadSpeed = (totalUploaded + event.loaded) / elapsedTime; // Bytes per second
+                    //                 const timeLeft = Math.round((blob.size - (totalUploaded + event.loaded)) / uploadSpeed); // Seconds
+                    //                 const uploadStatus = {
+                    //                     progress: overallProgress,
+                    //                     uploadSize: totalUploaded + event.loaded,
+                    //                     timeLeft: timeLeft,
+                    //                     totalSize: blob.size
+                    //                 }
 
-                                    const radius = 45; // Radius of the circle
-                                    const strokeWidth = 5; // Thickness of the circle
-                                    const normalizedRadius = radius - strokeWidth / 2;
-                                    const circumference = 2 * Math.PI * normalizedRadius;
-                                    const strokeDashoffset = circumference - (overallProgress / 100) * circumference;
-                                    console.log("progressStrokeWidth==>", progressStrokeWidth)
-                                    console.log("uploadProgressRef==>", uploadProgressRef)
-                                    if (progressStrokeWidth.current) {
-                                        progressStrokeWidth.current.innerHTML = `
-                                            <svg
-                                                height="${radius * 2}"
-                                                width="${radius * 2}"
-                                                style="transform: rotate(-90deg);"
-                                            >
-                                                <circle
-                                                    stroke="#CEEFFC"
-                                                    fill="transparent"
-                                                    stroke-width="${strokeWidth}"
-                                                    r="${normalizedRadius}"
-                                                    cx="${radius}"
-                                                    cy="${radius}"
-                                                />
-                                                <circle
-                                                    stroke="#0DABD8"
-                                                    fill="transparent"
-                                                    stroke-width="${strokeWidth}"
-                                                    stroke-dasharray="${circumference} ${circumference}"
-                                                    stroke-linecap="round"
-                                                    stroke-dashoffset="${strokeDashoffset}"
-                                                    r="${normalizedRadius}"
-                                                    cx="${radius}"
-                                                    cy="${radius}"
-                                                />
-                                            </svg>
-                                        `;
-                                    }
+                    //                 const radius = 45; // Radius of the circle
+                    //                 const strokeWidth = 5; // Thickness of the circle
+                    //                 const normalizedRadius = radius - strokeWidth / 2;
+                    //                 const circumference = 2 * Math.PI * normalizedRadius;
+                    //                 const strokeDashoffset = circumference - (overallProgress / 100) * circumference;
+                    //                 console.log("progressStrokeWidth==>", progressStrokeWidth)
+                    //                 console.log("uploadProgressRef==>", uploadProgressRef)
+                    //                 if (progressStrokeWidth.current) {
+                    //                     progressStrokeWidth.current.innerHTML = `
+                    //                         <svg
+                    //                             height="${radius * 2}"
+                    //                             width="${radius * 2}"
+                    //                             style="transform: rotate(-90deg);"
+                    //                         >
+                    //                             <circle
+                    //                                 stroke="#CEEFFC"
+                    //                                 fill="transparent"
+                    //                                 stroke-width="${strokeWidth}"
+                    //                                 r="${normalizedRadius}"
+                    //                                 cx="${radius}"
+                    //                                 cy="${radius}"
+                    //                             />
+                    //                             <circle
+                    //                                 stroke="#0DABD8"
+                    //                                 fill="transparent"
+                    //                                 stroke-width="${strokeWidth}"
+                    //                                 stroke-dasharray="${circumference} ${circumference}"
+                    //                                 stroke-linecap="round"
+                    //                                 stroke-dashoffset="${strokeDashoffset}"
+                    //                                 r="${normalizedRadius}"
+                    //                                 cx="${radius}"
+                    //                                 cy="${radius}"
+                    //                             />
+                    //                         </svg>
+                    //                     `;
+                    //                 }
 
-                                    if (uploadProgressRef.current) {
-                                        uploadProgressRef.current.innerText = `${overallProgress}%`
-                                    }
+                    //                 if (uploadProgressRef.current) {
+                    //                     uploadProgressRef.current.innerText = `${overallProgress}%`
+                    //                 }
 
-                                    const currentTime = Date.now();
-                                    if (currentTime - lastUpdateTime > throttleInterval) {
-                                        await chrome.storage.local.set({ "showUploadStatus": true })
-                                        chrome.runtime.sendMessage({ type: "upload-status", uploadStatus, recordingName });  // Send the message to the popup
-                                        lastUpdateTime = currentTime;
-                                    }
-                                }
-                            };
+                    //                 const currentTime = Date.now();
+                    //                 if (currentTime - lastUpdateTime > throttleInterval) {
+                    //                     await chrome.storage.local.set({ "showUploadStatus": true })
+                    //                     chrome.runtime.sendMessage({ type: "upload-status", uploadStatus, recordingName });  // Send the message to the popup
+                    //                     lastUpdateTime = currentTime;
+                    //                 }
+                    //             }
+                    //         };
 
-                            xhr.onload = () => {
-                                if (xhr.status === 200) {
-                                    const eTag = xhr.getResponseHeader("ETag");
-                                    ETag.push({ PartNumber: partNumber, ETag: eTag });
-                                    totalUploaded += chunk.size;
-                                    resolve(true);
-                                } else {
-                                    reject(new Error(`Failed to upload part ${partNumber}`));
-                                }
-                            };
+                    //         xhr.onload = () => {
+                    //             if (xhr.status === 200) {
+                    //                 const eTag = xhr.getResponseHeader("ETag");
+                    //                 ETag.push({ PartNumber: partNumber, ETag: eTag });
+                    //                 totalUploaded += chunk.size;
+                    //                 resolve(true);
+                    //             } else {
+                    //                 reject(new Error(`Failed to upload part ${partNumber}`));
+                    //             }
+                    //         };
 
-                            xhr.onerror = () => {
-                                setUploadError(true)
-                                reject(new Error(`Network error on part ${partNumber}`))
-                            };
+                    //         xhr.onerror = () => {
+                    //             setUploadError(true)
+                    //             reject(new Error(`Network error on part ${partNumber}`))
+                    //         };
 
-                            xhr.send(chunk);
-                        });
-                    }
-                    console.log("ETagETag", ETag)
-                    setUploadStatus(null)
-                    await chrome.storage.local.set({ "showUploadStatus": false })
-                    console.log(ETag, "Check uploadedPartsuploadedParts")
-                    const completeResponse = await fetch(
-                        `${process.env.PLASMO_PUBLIC_ADILO_API}/s3/multipart/${uploadId}/complete?key=${key}`,
-                        {
-                            method: "POST",
-                            headers: {
-                                "Authorization": `Bearer ${userDetails.access_token}`
-                            },
-                            body: JSON.stringify({
-                                parts: ETag,
-                            }),
-                        }
-                    );
+                    //         xhr.send(chunk);
+                    //     });
+                    // }
+                    // console.log("ETagETag", ETag)
+                    // setUploadStatus(null)
+                    // await chrome.storage.local.set({ "showUploadStatus": false })
+                    // console.log(ETag, "Check uploadedPartsuploadedParts")
+                    // const completeResponse = await fetch(
+                    //     `${process.env.PLASMO_PUBLIC_ADILO_API}/s3/multipart/${uploadId}/complete?key=${key}`,
+                    //     {
+                    //         method: "POST",
+                    //         headers: {
+                    //             "Authorization": `Bearer ${userDetails.access_token}`
+                    //         },
+                    //         body: JSON.stringify({
+                    //             parts: ETag,
+                    //         }),
+                    //     }
+                    // );
 
-                    const completeData = await completeResponse.json();
-                    console.log("Upload completed:", completeData);
-                    const savePayload = {
-                        video: {
-                            location: completeData.location,
-                        },
-                        video_id: key.split('/')[0], // Pass your videoId
-                        project_id: selectedProject.id, // Pass your projectId
-                        fileType: blob.type || "video/mp4",
-                        drm_protection: "false",
-                        mediaType: "uploadVideos",
-                        filesize: blob.size,
-                    };
-                    const saveResponse = await fetch(
-                        `${process.env.PLASMO_PUBLIC_ADILO_API}/video-upload/s3-sign/save`,
-                        {
-                            method: "POST",
-                            headers: {
-                                "Authorization": `Bearer ${userDetails.access_token}`,
-                                "Content-Type": "application/json",
-                            },
-                            body: JSON.stringify(savePayload),
-                        }
-                    );
-                    const saveData = await saveResponse.json();
-                    console.log("Video saved successfully:", saveData);
-                    setIspublishing(false)
-                    setPublishedData(saveData)
-                    chrome.runtime.sendMessage({ type: "REFETCH_MEDIA_LIST", project: selectedProject, userDetails  })
-                    toast.success("Recording succeccfully saved to your adilo account.")
+                    // const completeData = await completeResponse.json();
+                    // console.log("Upload completed:", completeData);
+                    // const savePayload = {
+                    //     video: {
+                    //         location: completeData.location,
+                    //     },
+                    //     video_id: key.split('/')[0], // Pass your videoId
+                    //     project_id: selectedProject.id, // Pass your projectId
+                    //     fileType: blob.type || "video/mp4",
+                    //     drm_protection: "false",
+                    //     mediaType: "uploadVideos",
+                    //     filesize: blob.size,
+                    // };
+                    // const saveResponse = await fetch(
+                    //     `${process.env.PLASMO_PUBLIC_ADILO_API}/video-upload/s3-sign/save`,
+                    //     {
+                    //         method: "POST",
+                    //         headers: {
+                    //             "Authorization": `Bearer ${userDetails.access_token}`,
+                    //             "Content-Type": "application/json",
+                    //         },
+                    //         body: JSON.stringify(savePayload),
+                    //     }
+                    // );
+                    // const saveData = await saveResponse.json();
+                    // console.log("Video saved successfully:", saveData);
+                    // setIspublishing(false)
+                    // setPublishedData(saveData)
+                    // chrome.runtime.sendMessage({ type: "REFETCH_MEDIA_LIST", project: selectedProject, userDetails  })
+                    // toast.success("Recording succeccfully saved to your adilo account.")
                 }
             } catch (error) {
                 await chrome.storage.local.set({ "showUploadStatus": false })
@@ -911,6 +1142,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                 toast.error("Publishing recording failed, Please contact to Adilo support.")
                 setIspublishing(false)
                 setUploadStatus(null)
+                resetUploadRefs()
                 console.error("Error during upload:", error.message);
             }
         })
@@ -1019,7 +1251,8 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         publishedData,
         undoRedoClick,
         handlePauseUpload,
-        handleResumeUpload
+        handleResumeUpload,
+        tabsInfo
     };
 
     return (

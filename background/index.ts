@@ -190,7 +190,7 @@ let saveInterval = 10; // Save to IndexedDB every 10 seconds
 let saveCounter = 0;
 let isCamInjection = false;
 let previewTabId = null;
-
+let previewTabsIds = []
 // Start timer function
 
 function startTimer(tabType?: string | undefined) {
@@ -499,6 +499,9 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   if (message.type === 'PAUSE_UPLOAD') {
     chrome.tabs.sendMessage(previewTabId, { type: "PAUSE_UPLOAD" })
   }
+  if (message.type === 'RESUME_UPLOAD') {
+    chrome.tabs.sendMessage(previewTabId, { type: "RESUME_UPLOAD" })
+  }
   if (message.type === 'CHECK_FOR_SYSTEM_SCREEN') {
     chrome.storage.local.set({ "screenShareSelection": message.screenShareSelection })
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -560,20 +563,23 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
         type: "RECORDING_CHUNK_PREVIEW",
         data: message.data,
         index: message.index,
-        isLastChunk: message.isLastChunk
+        isLastChunk: message.isLastChunk,
       }, function () { })
     }, 2000)
   }
 
-  if (message.type === 'RECORDING_CHUNK_UPLOAD_COMPLETE') {
-    console.log("RECORDING_CHUNK_UPLOAD_COMPLETE", message)
+  if(message.type === 'PREVIEW_TAB_INFO'){
+    setTimeout(() => {
+      chrome.tabs.sendMessage(previewTabId, {
+        type: "PREVIEW_TAB_INFO_PREVIEW",
+        tabId: previewTabId,
+        tabIds: previewTabsIds
+      }, function () { })
+    }, 1000)
   }
 
-  if (message.type === 'GET_INDEXDB_RECORDING') {
-    setTimeout(() => {
-      console.log("GET_INDEXDB_RECORDINGGET_INDEXDB_RECORDING", previewTabId)
-      // chrome.tabs.sendMessage(previewTabId, { type: "DATA_FOR_SANDBOX", data: message.data }, function () { })
-    }, 3000)
+  if (message.type === 'RECORDING_CHUNK_UPLOAD_COMPLETE') {
+    console.log("RECORDING_CHUNK_UPLOAD_COMPLETE", message)
   }
 
   if (message.type === "startTimer") {
@@ -840,8 +846,6 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     stopTimer()
     navigatedTabs = []
     isCamInjection = false
-    // await chrome.storage.local.set({ "blobUrl": message.videoUrl, "isAudioOnly": message?.isAudioOnly || false })
-
     try {
       chrome.storage.local.set({
         "blobUrl": message.videoUrl,
@@ -859,45 +863,25 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
               chrome.tabs.sendMessage(tabs[0]?.id, { type: "RECORDING_COMPLETED" }, function () { })
             }
           })
-
           if (isToOpenPreview) {
-            // chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-            //   console.log("Tabssss", tabs)
-            //   if (tabs.length > 0) {
-            //     chrome.tabs.sendMessage(tabs[0]?.id, {type: "OPEN_SANDBOX"})
-            //   }
-            // })
             chrome.tabs.create({ url: chrome.runtime.getURL(message?.isAudioOnly ? 'sandboxes/audioDemo.html' : `sandboxes/demo.html?hasAudio=${message?.hasAudio}&duration=${tillDuration}`) }, async (tab) => {
-              // chrome.tabs.create({ url: chrome.runtime.getURL('tabs/sandbox-container.html') }, async (tab) => {
-              // const port = chrome.tabs.connect(tab.id, { name: 'sandbox-bridge' });
-
-              // // Listen for messages from the content script
-              // port.onMessage.addListener((message) => {
-              //   console.log('Message from sandbox:', message);
-
-              //   // Send a reply back to the content script
-              //   port.postMessage({ type: 'response', text: 'Hello from background!' });
-              // });
-
-              // // Send an initialization message to the content script
-              // port.postMessage({ type: 'init', text: 'Connection established!', base64: 'base64StringHere' });
-              // console.log('Port initialized:', port);
               previewTabId = tab.id
-              // chrome.tabs.query({}, (tabs) => {
-              //   tabs.forEach((tab) => {
-              //     // Send message to each tab
-              //     setTimeout(() => {
-              //       console.log("SENT@!#!!!")
-              //       chrome.tabs.sendMessage(tab.id, { type: "DATA_FOR_SANDBOX" }, function () { })
-              //     }, 10000)
-              //   });
-              // });
-              console.log("SENT!!")
+              previewTabsIds.push(tab.id)
               chrome.tabs.sendMessage(tab.id, { type: "RECORDING_COMPLETED" }, function () { })
               chrome.tabs.onUpdated.addListener(function listener(tabId, info) {
                 if (tabId === tab.id && info.status === 'complete') {
                   chrome.tabs.onUpdated.removeListener(listener);
-                  chrome.runtime.sendMessage({ type: "PREVIEW_OPENED_SUCCESSFULY" })
+                  chrome.runtime.sendMessage({ type: "PREVIEW_OPENED_SUCCESSFULY" , tabId: previewTabId, tabList: previewTabsIds})
+                }
+              });
+              // Listener for when the tab is closed
+              chrome.tabs.onRemoved.addListener(function (closedTabId, removeInfo) {
+                if (closedTabId === tab.id) {
+                  console.log(`Tab with ID ${closedTabId} has been closed.`);
+                  previewTabsIds = previewTabsIds.filter(id => id !== closedTabId)
+                  chrome.runtime.sendMessage({ type: "PREVIEW_TAB_CLOSED", tabId: closedTabId, tabList: previewTabsIds });
+
+                  // Optional: Perform cleanup or other actions here
                 }
               });
             });

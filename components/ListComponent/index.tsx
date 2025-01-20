@@ -40,7 +40,8 @@ const UploadStatus = ({ progressBarRef, progressPercent, progressUploadSize, pro
                 <FaPause onClick={() => {
                     chrome.runtime.sendMessage({type: "PAUSE_UPLOAD"})
                 }} cursor={'pointer'} size={18} />
-                <FaPlay  onClick={() => {
+                <FaPlay  onClick={async () => {
+                    await chrome.storage.local.set({ "uploadOngoingStatus": 'pause' })
                     chrome.runtime.sendMessage({type: "RESUME_UPLOAD"})
                 }} cursor={'pointer'} size={18}/>
                 <FaRegTrashAlt cursor={'pointer'} size={15} color="red" />
