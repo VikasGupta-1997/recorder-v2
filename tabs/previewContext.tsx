@@ -938,71 +938,76 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         })
 
         console.log(ETagRef.current, "Check uploadedPartsuploadedParts")
-        const completeResponse = await fetch(
-            `${process.env.PLASMO_PUBLIC_ADILO_API}/s3/multipart/${uploadId}/complete?key=${key}`,
-            {
-                method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${userDetails.access_token}`
-                },
-                body: JSON.stringify({
-                    parts: ETagRef.current,
-                }),
-            }
-        );
-
-        const completeData = await completeResponse.json();
+        let completeData;
+        try {
+            const completeResponse = await fetch(
+                `${process.env.PLASMO_PUBLIC_ADILO_API}/s3/multipart/${uploadId}/complete?key=${key}`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${userDetails.access_token}`
+                    },
+                    body: JSON.stringify({
+                        parts: ETagRef.current,
+                    }),
+                }
+            );
+    
+            completeData = await completeResponse.json();
+        } catch(error){
+            throw new Error(error?.message || "Upload Failed please try again!")
+        }
+       
         console.log("Upload completed:", completeData);
         console.log("keykey=>", key)
         console.log("selectedProject=>", selectedProject)
         console.log("blob=>", newBlob)
-        const savePayload = {
-            video: {
-                location: completeData.location,
-            },
-            video_id: key.split('/')[0], // Pass your videoId
-            project_id: selectedProject.id, // Pass your projectId
-            fileType: newBlob.type || "video/mp4",
-            drm_protection: "false",
-            mediaType: "uploadVideos",
-            filesize: newBlob.size,
-        };
-        console.log("savePayload==>", savePayload)
-        const saveResponse = await fetch(
-            `${process.env.PLASMO_PUBLIC_ADILO_API}/video-upload/s3-sign/save`,
-            {
-                method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${userDetails.access_token}`,
-                    "Content-Type": "application/json",
+        try {
+            const savePayload = {
+                video: {
+                    location: completeData.location,
                 },
-                body: JSON.stringify(savePayload),
-            }
-        );
-        const saveData = await saveResponse.json();
-        console.log("Video saved successfully:", saveData);
-        setIspublishing(false)
-        setPublishedData(saveData)
-        stoppedUpload.current = false
-        chrome.runtime.sendMessage({ type: "REFETCH_MEDIA_LIST", project: selectedProject, userDetails })
-        resetUploadRefs()
-        toast.success("Recording succeccfully saved to your adilo account.")
+                video_id: key.split('/')[0], // Pass your videoId
+                project_id: selectedProject.id, // Pass your projectId
+                fileType: newBlob.type || "video/mp4",
+                drm_protection: "false",
+                mediaType: "uploadVideos",
+                filesize: newBlob.size,
+            };
+            console.log("savePayload==>", savePayload)
+            const saveResponse = await fetch(
+                `${process.env.PLASMO_PUBLIC_ADILO_API}/video-upload/s3-sign/save`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${userDetails.access_token}`,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(savePayload),
+                }
+            );
+            const saveData = await saveResponse.json();
+            console.log("Video saved successfully:", saveData);
+            setIspublishing(false)
+            setPublishedData(saveData)
+            stoppedUpload.current = false
+            chrome.runtime.sendMessage({ type: "REFETCH_MEDIA_LIST", project: selectedProject, userDetails })
+            resetUploadRefs()
+            toast.success("Recording succeccfully saved to your adilo account.")
+        } catch(error){
+            throw new Error(error?.message || "Upload Failed please try again!")
+        }
     };
 
-    const handlePublish = async (blob) => {
+    const handlePublish = async () => {
         chrome.storage.local.get(['userInfo', 'selectedProject', 'uploadStatus'], async result => {
             console.log(blob, "result223", result)
-            // const base64Data: string = await blobToBase64(blob); // Ensure `base64Data` is typed as string
-            // uploadChunksToBackground(base64Data)
-
-            // return base64Data
-            // sendBlobInChunks(blob);
-            // return;
             const userDetails = result.userInfo;
             const selectedProject = result.selectedProject
             selectedProjectRef.current = selectedProject
             // const chunk_size = 16242880;
-            const chunk_size = 5 * 1024 * 1024;
+            const chunk_size =  5 * 1024 * 1024;
+            // Determine chunk size based on blob size
             console.log(chunk_size, "Echunk_sizehandlePublish====>", blob)
             // const chunk_size =  16 * 1024 * 1024;
             // const chunk_size = 1 * 1024 * 1024;
