@@ -14,6 +14,9 @@ import convertTime from '~utils/convertTime'
 import formatBlobSize from '~utils/formatBlobSize'
 
 let tabId;
+const uploadDataV = {}
+let uploadingData = {}
+
 function IndexPopup() {
   const formattedTimeRef = useRef(null)
   const mainDivRef = useRef(null)
@@ -45,7 +48,8 @@ function IndexPopup() {
   const progressUploadSize = useRef(null)
   const fileNameref = useRef(null)
   const progressTimeLeft = useRef(null)
-
+  const [uploadDataSend] = useStorage("uploadData", null)
+  const [newUploads, setNewUploads] = useState(null)
   const setCurrentSelection = (selections, micOptions, cameraOptions, newDevices) => {
     let micRecording;
     let cameraRecording;
@@ -133,24 +137,29 @@ function IndexPopup() {
             window.close();
           }
             break;
-          case "upload-status": {
-            const uploadStatus = message.uploadStatus
-            progressBarRef.current.style.width = `${uploadStatus.progress}%`;
-            console.log("progressPercent==>", uploadStatus)
-            if (progressPercent.current) {
-              progressPercent.current.innerText = `Uploading ${uploadStatus.progress}%`
-            }
-            if (progressUploadSize.current) {
-              progressUploadSize.current.innerText = `${formatBlobSize(uploadStatus.uploadSize)} of ${formatBlobSize(uploadStatus.totalSize)}`
-            }
-            if (progressTimeLeft.current) {
-              progressTimeLeft.current.innerText = `${convertTime(uploadStatus.timeLeft)} left`
-            }
-            if (fileNameref.current) {
-              fileNameref.current.innerText = message.recordingName
-            }
-          }
-            break;
+          // case "upload-status": {
+          //   const uploadStatus = message.uploadStatus
+          //   uploadingData[message.tabId] = {
+          //     uploadStatus: message.uploadStatus,
+          //     recordingName: message.recordingName
+          //   }
+          //   setNewUploads(uploadingData)
+          //   // progressBarRef.current.style.width = `${uploadStatus.progress}%`;
+          //   console.log("progressPercent==>", uploadStatus)
+          //   // if (progressPercent.current) {
+          //   //   progressPercent.current.innerText = `Uploading ${uploadStatus.progress}%`
+          //   // }
+          //   // if (progressUploadSize.current) {
+          //   //   progressUploadSize.current.innerText = `${formatBlobSize(uploadStatus.uploadSize)} of ${formatBlobSize(uploadStatus.totalSize)}`
+          //   // }
+          //   // if (progressTimeLeft.current) {
+          //   //   progressTimeLeft.current.innerText = `${convertTime(uploadStatus.timeLeft)} left`
+          //   // }
+          //   // if (fileNameref.current) {
+          //   //   fileNameref.current.innerText = message.recordingName
+          //   // }
+          // }
+          //   break;
           case "START_RECORDING": {
             console.log("DRTT", message)
           }
@@ -228,12 +237,6 @@ function IndexPopup() {
             </> :
               <>
                 <ListComponent
-                  uploadStatus={uploadStatus}
-                  progressBarRef={progressBarRef}
-                  progressPercent={progressPercent}
-                  progressUploadSize={progressUploadSize}
-                  progressTimeLeft={progressTimeLeft}
-                  fileNameref={fileNameref}
                   mediaListLoading={mediaListLoading}
                   handleProjectChange={handleProjectChange}
                   projectList={projectList}

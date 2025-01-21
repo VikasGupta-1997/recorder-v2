@@ -1,11 +1,7 @@
 import React, { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
-import onSubmitAdvanceAuphonic, { fetchMp3File } from '~utils/auphonicProduction';
+import onSubmitAdvanceAuphonic from '~utils/auphonicProduction';
 import { defaultAdvanceAuphonicState } from '~utils/constants';
-import getAuphonicProcessedData from '~utils/getAuphonicProcessedData';
-
-import fixWebmDuration from "fix-webm-duration";
-import { default as fixWebmDurationFallback } from "webm-duration-fix";
 
 const PreviewContext = createContext<any>(undefined);
 
@@ -75,14 +71,13 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     let totalUploadedRef = useRef(0);
     let lastUpdateTimeRef = useRef(0);
     let ETagRef = useRef([]);
-    const tabsInfo = useRef({tabId: null, tabIds: null})
+    const tabsInfo = useRef({ tabId: null, tabIds: null })
     const partsUrlsRef = useRef([])
     const keyRef = useRef(null)
     const userDetailRef = useRef(null)
     const uploadIdRef = useRef(null)
     const newBlobRef = useRef(null)
     const selectedProjectRef = useRef(null)
-    const showUploadStatusRef = useRef(null)
     const [publishedData, setPublishedData] = useState(null)
     const switchModeAudios = useRef({
         auphonicAudio: null,
@@ -94,6 +89,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         }
     })
     const isAuphonicSubmitted = useRef(false)
+    const stoppedUpload = useRef(false)
     const [trimState, setTrimState] = useState({
         start: 0,
         end: 1,
@@ -160,7 +156,12 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                 switch (message.type) {
                     case "PREVIEW_TAB_INFO_PREVIEW": {
                         console.log("Message===>", message)
-                        tabsInfo.current = {tabId: message.tabId, tabIds: message.tabIds}
+                        tabsInfo.current = { tabId: message.tabId, tabIds: message.tabIds }
+                    }
+                        break;
+                    case "DELETE_UPLOAD": {
+                        // handleDeleteUpload()
+                        stoppedUpload.current = true
                     }
                     break;
                     case "PAUSE_UPLOAD": {
@@ -717,12 +718,12 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         isPausedref.current = false; // Set the flag to false
         console.log("Resuming upload...");
         // partUrls, uploadId, key, userDetails, blob, selectedProject
-        handleUpload(partsUrlsRef.current, uploadIdRef.current, keyRef.current, userDetailRef.current, newBlobRef.current, selectedProjectRef.current, showUploadStatusRef.current);
+        handleUpload(partsUrlsRef.current, uploadIdRef.current, keyRef.current, userDetailRef.current, newBlobRef.current, selectedProjectRef.current);
     }
 
     const resetUploadRefs = () => {
-        controllersRef.current = []
         isPausedref.current = false
+        controllersRef.current.forEach((controller) => controller.abort());
         currentPartIndexRef.current = 0
         totalUploadedRef.current = 0
         lastUpdateTimeRef.current = 0
@@ -733,9 +734,33 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         uploadIdRef.current = null
         newBlobRef.current = null
         selectedProjectRef.current = null
+         // Optionally, reset the UI progress
+        if (progressStrokeWidth.current) {
+            progressStrokeWidth.current.innerHTML = ''; // Clear progress SVG
+        }
+        if (uploadProgressRef.current) {
+            uploadProgressRef.current.innerText = '0%'; // Reset text progress
+        }
     }
 
-    const handleUpload = async (partUrls, uploadId, key, userDetails, newBlob, selectedProject, showUploadStatus = {}) => {
+    const handleDeleteUpload = () => {
+        // resetUploadRefs()
+        console.log("Pause the upload Delete!")
+        if (controllersRef.current[currentPartIndexRef.current]) {
+            controllersRef.current[currentPartIndexRef.current].abort(); // Abort the current chunk upload
+            console.log("Upload paused at part", currentPartIndexRef.current + 1);
+        }
+        console.log("controllersRef.current", controllersRef.current)
+        controllersRef.current.forEach((controller) => controller.abort());
+        controllersRef.current = []; // Clear controllers
+        console.log("Pause the upload Delete2!")
+        isPausedref.current = true; // Set the flag to true
+        setIspublishing(false)
+        setUploadStatus(null)
+        // toast.error("Uploading stopped!!")
+    }
+
+    const handleUpload = async (partUrls, uploadId, key, userDetails, newBlob, selectedProject) => {
         const startTime = Date.now();
         const throttleInterval = 500
         for (let i = currentPartIndexRef.current; i < partUrls.length; i++) {
@@ -752,8 +777,23 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                 return; // Exit the loop if paused
             }
 
+            if(stoppedUpload.current){
+                currentPartIndexRef.current = i; // Save the current index for resuming
+                console.log("Deleted upload api1@4", partNumber);
+                stoppedUpload.current = false
+                handleDeleteUpload()
+
+                setIspublishing(false)
+                // setPublishedData(saveData)
+                // chrome.runtime.sendMessage({ type: "REFETCH_MEDIA_LIST", project: selectedProject, userDetails })
+                resetUploadRefs()
+                toast.error("Uploading Deleted !")
+
+                return; // Exit the loop if paused
+            }
+
             try {
-                await new Promise(async(resolve, reject) => {
+                await new Promise(async (resolve, reject) => {
                     const xhr = new XMLHttpRequest();
                     xhr.open("PUT", uploadUrl, true);
                     // await chrome.storage.local.set({ "showUploadStatus": {
@@ -825,8 +865,10 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                                     uploadStatus, 
                                     recordingName,
                                     tabId: tabsInfo.current.tabId,
-                                    tabIds: tabsInfo.current.tabIds
-                                 });  // Send the message to the popup
+                                    tabIds: tabsInfo.current.tabIds,
+                                 });
+                                 console.log("uploadStatus", uploadStatus)
+                                  // Send the message to the popup
                                 lastUpdateTimeRef.current = currentTime;
                             }
                         }
@@ -844,6 +886,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                     };
 
                     xhr.onerror = () => {
+                        stoppedUpload.current = false
                         reject(new Error(`Network error on part ${partNumber}`));
                     };
 
@@ -853,6 +896,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                 });
 
             } catch (error) {
+                stoppedUpload.current = false
                 console.error(`Error uploading part ${partNumber}:`, error);
                 resetUploadRefs()
                 break; // Optionally stop the process on error
@@ -863,7 +907,36 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
 
         console.log("ETagETag", ETagRef.current)
         setUploadStatus(null)
-        await chrome.storage.local.set({ "showUploadStatus": false })
+        chrome.storage.local.get(['uploadsData'], async result => {
+            if(result.uploadsData) {
+                const newUp = {...result.uploadsData}
+                delete newUp[tabsInfo.current.tabId]
+                await chrome.storage.local.set({"uploadsData": newUp})                                    
+            }
+        })
+        //showUploadStatusRef.current
+        console.log("showUploadStatusRef.current",)
+        // chrome.storage.local.get([''])
+        chrome.storage.local.get(['uploadData'], async result => {
+            const showUploadStatus = result?.uploadData || {}
+            let newUpdates = { ...showUploadStatus }
+            if (tabsInfo.current.tabId in newUpdates) {
+                console.log("YEs Delete!!")
+                delete newUpdates[tabsInfo.current.tabId]
+            }
+            console.log("newUpdates", newUpdates)
+            if (!!newUpdates) {
+                if (Object.keys(newUpdates)?.length === 0) {
+                    newUpdates = null
+                }
+            }
+            console.log("After newUpdates", newUpdates)
+            await chrome.storage.local.set({
+                "showUploadStatus": false,
+                "uploadStatus": newUpdates
+            })
+        })
+
         console.log(ETagRef.current, "Check uploadedPartsuploadedParts")
         const completeResponse = await fetch(
             `${process.env.PLASMO_PUBLIC_ADILO_API}/s3/multipart/${uploadId}/complete?key=${key}`,
@@ -910,17 +983,22 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         console.log("Video saved successfully:", saveData);
         setIspublishing(false)
         setPublishedData(saveData)
+        stoppedUpload.current = false
         chrome.runtime.sendMessage({ type: "REFETCH_MEDIA_LIST", project: selectedProject, userDetails })
         resetUploadRefs()
         toast.success("Recording succeccfully saved to your adilo account.")
     };
 
-
     const handlePublish = async (blob) => {
-        chrome.storage.local.get(['userInfo', 'selectedProject', 'showUploadStatus'], async result => {
+        chrome.storage.local.get(['userInfo', 'selectedProject', 'uploadStatus'], async result => {
             console.log(blob, "result223", result)
+            // const base64Data: string = await blobToBase64(blob); // Ensure `base64Data` is typed as string
+            // uploadChunksToBackground(base64Data)
+
+            // return base64Data
+            // sendBlobInChunks(blob);
+            // return;
             const userDetails = result.userInfo;
-            showUploadStatusRef.current = result?.showUploadStatus || {}
             const selectedProject = result.selectedProject
             selectedProjectRef.current = selectedProject
             // const chunk_size = 16242880;
@@ -962,8 +1040,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                     for (let partNumber = 1; partNumber <= totalChunks; partNumber++) {
                         const start = (partNumber - 1) * chunk_size;
                         const end = Math.min(start + chunk_size, blob.size);
-                        const chunk = blob.slice(start, end, "video/mp4");
-                        console.log("chunkchunk", chunk)
+                        // console.log("chunkchunk", chunk)
                         // Request pre-signed URL for this part
                         const partResponse = await fetch(
                             `${process.env.PLASMO_PUBLIC_ADILO_API}/s3/multipart/${uploadId}/${partNumber}?key=${key}`, {
@@ -994,147 +1071,8 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                     userDetailRef.current = userDetails
                     uploadIdRef.current = uploadId
                     newBlobRef.current = blob
-                    await handleUpload(partUrls, uploadId, key, userDetails, blob, selectedProject, showUploadStatusRef.current)
-                    // for (let i = 0; i < partUrls.length; i++) {
-                    //     const { partNumber, uploadUrl, chunk } = partUrls[i];
-
-                    //     await new Promise((resolve, reject) => {
-                    //         const xhr = new XMLHttpRequest();
-                    //         xhr.open("PUT", uploadUrl, true);
-
-                    //         xhr.upload.onprogress = async (event) => {
-                    //             if (event.lengthComputable) {
-                    //                 const chunkProgress = (event.loaded / chunk.size) * 100;
-                    //                 const overallProgress = Math.min(
-                    //                     100,
-                    //                     Math.round(((totalUploaded + event.loaded) / blob.size) * 100)
-                    //                 );
-                    //                 const elapsedTime = (Date.now() - startTime) / 1000; // Seconds
-                    //                 const uploadSpeed = (totalUploaded + event.loaded) / elapsedTime; // Bytes per second
-                    //                 const timeLeft = Math.round((blob.size - (totalUploaded + event.loaded)) / uploadSpeed); // Seconds
-                    //                 const uploadStatus = {
-                    //                     progress: overallProgress,
-                    //                     uploadSize: totalUploaded + event.loaded,
-                    //                     timeLeft: timeLeft,
-                    //                     totalSize: blob.size
-                    //                 }
-
-                    //                 const radius = 45; // Radius of the circle
-                    //                 const strokeWidth = 5; // Thickness of the circle
-                    //                 const normalizedRadius = radius - strokeWidth / 2;
-                    //                 const circumference = 2 * Math.PI * normalizedRadius;
-                    //                 const strokeDashoffset = circumference - (overallProgress / 100) * circumference;
-                    //                 console.log("progressStrokeWidth==>", progressStrokeWidth)
-                    //                 console.log("uploadProgressRef==>", uploadProgressRef)
-                    //                 if (progressStrokeWidth.current) {
-                    //                     progressStrokeWidth.current.innerHTML = `
-                    //                         <svg
-                    //                             height="${radius * 2}"
-                    //                             width="${radius * 2}"
-                    //                             style="transform: rotate(-90deg);"
-                    //                         >
-                    //                             <circle
-                    //                                 stroke="#CEEFFC"
-                    //                                 fill="transparent"
-                    //                                 stroke-width="${strokeWidth}"
-                    //                                 r="${normalizedRadius}"
-                    //                                 cx="${radius}"
-                    //                                 cy="${radius}"
-                    //                             />
-                    //                             <circle
-                    //                                 stroke="#0DABD8"
-                    //                                 fill="transparent"
-                    //                                 stroke-width="${strokeWidth}"
-                    //                                 stroke-dasharray="${circumference} ${circumference}"
-                    //                                 stroke-linecap="round"
-                    //                                 stroke-dashoffset="${strokeDashoffset}"
-                    //                                 r="${normalizedRadius}"
-                    //                                 cx="${radius}"
-                    //                                 cy="${radius}"
-                    //                             />
-                    //                         </svg>
-                    //                     `;
-                    //                 }
-
-                    //                 if (uploadProgressRef.current) {
-                    //                     uploadProgressRef.current.innerText = `${overallProgress}%`
-                    //                 }
-
-                    //                 const currentTime = Date.now();
-                    //                 if (currentTime - lastUpdateTime > throttleInterval) {
-                    //                     await chrome.storage.local.set({ "showUploadStatus": true })
-                    //                     chrome.runtime.sendMessage({ type: "upload-status", uploadStatus, recordingName });  // Send the message to the popup
-                    //                     lastUpdateTime = currentTime;
-                    //                 }
-                    //             }
-                    //         };
-
-                    //         xhr.onload = () => {
-                    //             if (xhr.status === 200) {
-                    //                 const eTag = xhr.getResponseHeader("ETag");
-                    //                 ETag.push({ PartNumber: partNumber, ETag: eTag });
-                    //                 totalUploaded += chunk.size;
-                    //                 resolve(true);
-                    //             } else {
-                    //                 reject(new Error(`Failed to upload part ${partNumber}`));
-                    //             }
-                    //         };
-
-                    //         xhr.onerror = () => {
-                    //             setUploadError(true)
-                    //             reject(new Error(`Network error on part ${partNumber}`))
-                    //         };
-
-                    //         xhr.send(chunk);
-                    //     });
-                    // }
-                    // console.log("ETagETag", ETag)
-                    // setUploadStatus(null)
-                    // await chrome.storage.local.set({ "showUploadStatus": false })
-                    // console.log(ETag, "Check uploadedPartsuploadedParts")
-                    // const completeResponse = await fetch(
-                    //     `${process.env.PLASMO_PUBLIC_ADILO_API}/s3/multipart/${uploadId}/complete?key=${key}`,
-                    //     {
-                    //         method: "POST",
-                    //         headers: {
-                    //             "Authorization": `Bearer ${userDetails.access_token}`
-                    //         },
-                    //         body: JSON.stringify({
-                    //             parts: ETag,
-                    //         }),
-                    //     }
-                    // );
-
-                    // const completeData = await completeResponse.json();
-                    // console.log("Upload completed:", completeData);
-                    // const savePayload = {
-                    //     video: {
-                    //         location: completeData.location,
-                    //     },
-                    //     video_id: key.split('/')[0], // Pass your videoId
-                    //     project_id: selectedProject.id, // Pass your projectId
-                    //     fileType: blob.type || "video/mp4",
-                    //     drm_protection: "false",
-                    //     mediaType: "uploadVideos",
-                    //     filesize: blob.size,
-                    // };
-                    // const saveResponse = await fetch(
-                    //     `${process.env.PLASMO_PUBLIC_ADILO_API}/video-upload/s3-sign/save`,
-                    //     {
-                    //         method: "POST",
-                    //         headers: {
-                    //             "Authorization": `Bearer ${userDetails.access_token}`,
-                    //             "Content-Type": "application/json",
-                    //         },
-                    //         body: JSON.stringify(savePayload),
-                    //     }
-                    // );
-                    // const saveData = await saveResponse.json();
-                    // console.log("Video saved successfully:", saveData);
-                    // setIspublishing(false)
-                    // setPublishedData(saveData)
-                    // chrome.runtime.sendMessage({ type: "REFETCH_MEDIA_LIST", project: selectedProject, userDetails  })
-                    // toast.success("Recording succeccfully saved to your adilo account.")
+                    await handleUpload(partUrls, uploadId, key, userDetails, blob, selectedProject)
+                    stoppedUpload.current = false
                 }
             } catch (error) {
                 await chrome.storage.local.set({ "showUploadStatus": false })

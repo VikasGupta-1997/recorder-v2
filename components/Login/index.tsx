@@ -59,7 +59,6 @@ const LoginForm = () => {
     useEffect(() => {
         chrome.runtime.onMessage.addListener(
             async function (message) {
-                console.log("Login", message)
                 switch (message.type) {
                     case 'login_loading': {
                         setLoading(message.state)

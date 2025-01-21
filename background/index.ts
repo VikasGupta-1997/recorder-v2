@@ -485,7 +485,7 @@ const getProjectList = async (userDetails) => {
     console.log("Error", error)
   }
 }
-
+const chunksStorage = {}; 
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   if (message.type === 'START_LOGIN') {
     handleLogin(message.state)
@@ -496,12 +496,24 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   if (message.type === 'GET_MEDIA_FILES') {
     getMediaFile(message.projectList, message.project, true, message.userDetails)
   }
-  if (message.type === 'PAUSE_UPLOAD') {
-    chrome.tabs.sendMessage(previewTabId, { type: "PAUSE_UPLOAD" })
+  if (message.type === 'PAUSE_UPLOAD_BG') {
+    chrome.tabs.sendMessage(+message.data, { type: "PAUSE_UPLOAD" })
   }
-  if (message.type === 'RESUME_UPLOAD') {
-    chrome.tabs.sendMessage(previewTabId, { type: "RESUME_UPLOAD" })
+  if (message.type === 'RESUME_UPLOAD_BG') {
+    chrome.tabs.sendMessage(+message.data, { type: "RESUME_UPLOAD" })
   }
+  if(message.type === 'DELETE_UPLOAD_BG'){
+    chrome.tabs.sendMessage(+message.data, { type: "DELETE_UPLOAD" })
+  }
+
+  if(message.type === 'RECORDING_CHUNK_TO_BG') {
+    console.log("Message==>", message)
+  }
+
+  if(message.type === 'RECORDING_CHUNK_UPLOAD_COMPLETE_TO_BG') {
+    console.log("CompletedTransfer==>", message)
+  }
+  
   if (message.type === 'CHECK_FOR_SYSTEM_SCREEN') {
     chrome.storage.local.set({ "screenShareSelection": message.screenShareSelection })
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -879,8 +891,14 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
                 if (closedTabId === tab.id) {
                   console.log(`Tab with ID ${closedTabId} has been closed.`);
                   previewTabsIds = previewTabsIds.filter(id => id !== closedTabId)
+                  chrome.storage.local.get(['uploadsData'], async result => {
+                    if(result.uploadsData) {
+                        const newUp = {...result.uploadsData}
+                        delete newUp[closedTabId]
+                        await chrome.storage.local.set({"uploadsData": newUp})                                    
+                    }
+                  })
                   chrome.runtime.sendMessage({ type: "PREVIEW_TAB_CLOSED", tabId: closedTabId, tabList: previewTabsIds });
-
                   // Optional: Perform cleanup or other actions here
                 }
               });
