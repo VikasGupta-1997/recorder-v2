@@ -30,20 +30,27 @@ const UploadStatus = ({
 
     React.useEffect(() => {
         if (uploadData) {
-            if (progressBarRef.current) {
-                progressBarRef.current.style.width = `${uploadData.progress}%`;
-            }
-            if (progressPercentRef.current) {
-                progressPercentRef.current.innerText = `Uploading ${uploadData.progress}%`;
-            }
-            if (progressUploadSizeRef.current) {
-                progressUploadSizeRef.current.innerText = `${formatBlobSize(uploadData?.uploadSize)} of ${formatBlobSize(uploadData?.totalSize)}`;
-            }
-            if (progressTimeLeftRef.current) {
-                progressTimeLeftRef.current.innerText = `${convertTime(uploadData?.timeLeft)} left`;
-            }
-            if (fileNameRef.current) {
-                fileNameRef.current.innerText = uploadData.recordingName;
+            console.log(pausePlay, tabId,"pausePlay?.[tabId]", pausePlay?.[tabId])
+            if(pausePlay?.[tabId] === 'pause') {
+                console.log("Gone Here No Update !")
+                return;
+            } else {
+                console.log("Recieve Updates !")
+                if (progressBarRef.current) {
+                    progressBarRef.current.style.width = `${uploadData.progress}%`;
+                }
+                if (progressPercentRef.current) {
+                    progressPercentRef.current.innerText = `Uploading ${uploadData.progress}%`;
+                }
+                if (progressUploadSizeRef.current) {
+                    progressUploadSizeRef.current.innerText = `${formatBlobSize(uploadData?.uploadSize)} of ${formatBlobSize(uploadData?.totalSize)}`;
+                }
+                if (progressTimeLeftRef.current) {
+                    progressTimeLeftRef.current.innerText = `${convertTime(uploadData?.timeLeft)} left`;
+                }
+                if (fileNameRef.current) {
+                    fileNameRef.current.innerText = uploadData.recordingName;
+                }
             }
         }
     }, [uploadData]);
@@ -206,6 +213,7 @@ const ListComponent = ({
         };
         uploadDataRef.current = newUploadData;
         delete newUploadData[tabId]
+        setPausePlay(prev => ({...prev, [tabId]: 'pause' }))
         setUploadKeys(Object.keys(newUploadData)); //
         chrome.runtime.sendMessage({ type: "DELETE_UPLOAD_BG", data: tabId })
         await chrome.storage.local.set({ "uploadsData": newUploadData })

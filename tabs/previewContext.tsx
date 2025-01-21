@@ -1070,7 +1070,11 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                     let totalUploaded = 0;
                     let lastUpdateTime = 0;
                     const throttleInterval = 500
-                    setUploadStatus(true)
+                    if(stoppedUpload.current){
+                        stoppedUpload.current = false
+                    } else {
+                        setUploadStatus(true)
+                    }
                     partsUrlsRef.current = partUrls
                     keyRef.current = key
                     userDetailRef.current = userDetails
