@@ -20,7 +20,8 @@ const UploadStatus = ({
     handleResume,
     tabId,
     pausePlay,
-    handleDeleteUpload
+    handleDeleteUpload,
+    quickPause
 }) => {
     const progressBarRef = useRef(null);
     const progressPercentRef = useRef(null);
@@ -30,12 +31,9 @@ const UploadStatus = ({
 
     React.useEffect(() => {
         if (uploadData) {
-            console.log(pausePlay, tabId,"pausePlay?.[tabId]", pausePlay?.[tabId])
-            if(pausePlay?.[tabId] === 'pause') {
-                console.log("Gone Here No Update !")
-                return;
-            } else {
-                console.log("Recieve Updates !")
+            console.log(quickPause,"pausePlay?2.[tabId]")
+                // console.log("Recieve Updates !", uploadData)
+                if(quickPause[tabId] === 'resume') return;
                 if (progressBarRef.current) {
                     progressBarRef.current.style.width = `${uploadData.progress}%`;
                 }
@@ -51,9 +49,8 @@ const UploadStatus = ({
                 if (fileNameRef.current) {
                     fileNameRef.current.innerText = uploadData.recordingName;
                 }
-            }
         }
-    }, [uploadData]);
+    }, [uploadData, quickPause]);
 
     return <div className="upload-status" >
         <div className="flex justify-between" >
@@ -115,6 +112,7 @@ const ListComponent = ({
     const [uploadKeys, setUploadKeys] = useState([]);
     const [pausePlay, setPausePlay] = useState({})
     const [mediaFilesRef, setMediaFilesRef] = useState([])
+    const quickPause = useRef({})
     const handleMenuClick = async (item) => {
         console.log("Item==>", item)
     }
@@ -158,6 +156,8 @@ const ListComponent = ({
             loadThumbnails(mediaFiles);
             if(Object.keys((result?.playResumeUpload || {}))?.length > 0) {
                 setPausePlay(result?.playResumeUpload)
+                console.log("result?.playResumeUpload", result?.playResumeUpload)
+                // quickPause.current =  result?.playResumeUpload 
             }
             if (Object.keys(uploadData)?.length > 0) {
                 uploadDataRef.current = uploadData;
@@ -187,6 +187,15 @@ const ListComponent = ({
                         await chrome.storage.local.set({ "uploadsData": newUploadData })
                     }
                         break;
+                    case "REMOVE_FROM_UPLOAD_LIST": {
+                        console.log("  const uploadData = result.uploadsData")
+                        chrome.storage.local.get(['uploadsData'], async result => {
+                            const uploadData = result.uploadsData
+                            console.log("uploadData==>", uploadData)
+                            setUploadKeys(Object.keys(uploadData)); 
+                        })
+                    }
+                    break;
                 }
             })
     }, []);
@@ -194,6 +203,7 @@ const ListComponent = ({
     const handlePause = async (data, tabId) => {
         console.log("Pause data", data, tabId)
         const playPause = { ...pausePlay, [tabId]: 'resume' }
+        quickPause.current = { ...quickPause.current, [tabId]: 'resume' }
         setPausePlay(playPause)
         chrome.runtime.sendMessage({ type: "PAUSE_UPLOAD_BG", data: tabId })
         await chrome.storage.local.set({ "playResumeUpload": playPause })
@@ -202,6 +212,7 @@ const ListComponent = ({
     const handleResume = async (data, tabId) => {
         console.log("Resume data", data, tabId)
         const playPause = { ...pausePlay, [tabId]: 'pause' }
+        quickPause.current = { ...quickPause.current, [tabId]: 'pause' }
         setPausePlay(playPause)
         chrome.runtime.sendMessage({ type: "RESUME_UPLOAD_BG", data: tabId })
         await chrome.storage.local.set({ "playResumeUpload": playPause })
@@ -213,8 +224,10 @@ const ListComponent = ({
         };
         uploadDataRef.current = newUploadData;
         delete newUploadData[tabId]
-        setPausePlay(prev => ({...prev, [tabId]: 'pause' }))
+        const oldPlayPause = { ...pausePlay,  [tabId]: 'pause' }
+        setPausePlay(oldPlayPause)
         setUploadKeys(Object.keys(newUploadData)); //
+        await chrome.storage.local.set({ "playResumeUpload": oldPlayPause })
         chrome.runtime.sendMessage({ type: "DELETE_UPLOAD_BG", data: tabId })
         await chrome.storage.local.set({ "uploadsData": newUploadData })
     }
@@ -236,6 +249,7 @@ const ListComponent = ({
                         <UploadStatus
                             key={id}
                             tabId={id}
+                            quickPause={quickPause.current}
                             pausePlay={pausePlay}
                             handlePause={handlePause}
                             handleResume={handleResume}

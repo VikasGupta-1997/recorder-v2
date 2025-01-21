@@ -155,13 +155,16 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                 console.log("OonMountListenersonMountListenersn", message)
                 switch (message.type) {
                     case "PREVIEW_TAB_INFO_PREVIEW": {
-                        console.log("Message===>", message)
+                        console.log("Message1===>", message)
                         tabsInfo.current = { tabId: message.tabId, tabIds: message.tabIds }
                     }
                         break;
                     case "DELETE_UPLOAD": {
                         // handleDeleteUpload()
                         stoppedUpload.current = true
+                        setIspublishing(false)
+                        setUploadStatus(false)
+                        resetUploadRefs()
                     }
                     break;
                     case "PAUSE_UPLOAD": {
@@ -825,7 +828,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                             const strokeDashoffset = circumference - (overallProgress / 100) * circumference;
                             // console.log("progressStrokeWidth==>", progressStrokeWidth)
                             // console.log("uploadProgressRef==>", uploadProgressRef)
-                            if (progressStrokeWidth.current) {
+                            if (progressStrokeWidth.current && !stoppedUpload.current ) {
                                 progressStrokeWidth.current.innerHTML = `
                                     <svg
                                         height="${radius * 2}"
@@ -855,21 +858,23 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                                 `;
                             }
 
-                            if (uploadProgressRef.current) {
+                            if (uploadProgressRef.current && !stoppedUpload.current) {
                                 uploadProgressRef.current.innerText = `${overallProgress}%`
                             }
 
                             const currentTime = Date.now();
                             if (currentTime - lastUpdateTimeRef.current > throttleInterval) {
-                                chrome.runtime.sendMessage({ type: "upload-status", 
-                                    uploadStatus, 
-                                    recordingName,
-                                    tabId: tabsInfo.current.tabId,
-                                    tabIds: tabsInfo.current.tabIds,
-                                 });
-                                 console.log("uploadStatus", uploadStatus)
-                                  // Send the message to the popup
-                                lastUpdateTimeRef.current = currentTime;
+                                if(!stoppedUpload.current) {
+                                    chrome.runtime.sendMessage({ type: "upload-status", 
+                                        uploadStatus, 
+                                        recordingName,
+                                        tabId: tabsInfo.current.tabId,
+                                        tabIds: tabsInfo.current.tabIds,
+                                     });
+                                     console.log("uploadStatus", uploadStatus)
+                                      // Send the message to the popup
+                                    lastUpdateTimeRef.current = currentTime;
+                                }
                             }
                         }
                     };
@@ -991,6 +996,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
             setIspublishing(false)
             setPublishedData(saveData)
             stoppedUpload.current = false
+            chrome.runtime.sendMessage({type: "REMOVE_FROM_UPLOAD_LIST", tabId: tabsInfo.current.tabId })
             chrome.runtime.sendMessage({ type: "REFETCH_MEDIA_LIST", project: selectedProject, userDetails })
             resetUploadRefs()
             toast.success("Recording succeccfully saved to your adilo account.")
@@ -999,7 +1005,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
-    const handlePublish = async () => {
+    const handlePublish = async (blob) => {
         chrome.storage.local.get(['userInfo', 'selectedProject', 'uploadStatus'], async result => {
             console.log(blob, "result223", result)
             const userDetails = result.userInfo;
