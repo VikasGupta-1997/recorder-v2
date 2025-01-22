@@ -149,13 +149,13 @@ function PreviewPage() {
         setConfirmPublish(true)
     }
 
-    // if (loadingVideo) {
-    //     return (
-    //         <div className={style["loading-container"]} >
-    //             <div className={style["loader"]}></div>
-    //         </div>
-    //     )
-    // }
+    if (loadingVideo) {
+        return (
+            <div className={style["loading-container"]} >
+                <div className={style["loader"]}></div>
+            </div>
+        )
+    }
 
     const lastHistoryData = history[history.length - 1];
     // console.log("Check Historyyyy", history)
@@ -226,7 +226,7 @@ function PreviewPage() {
                     </div>} */}
                 </div>
             </span>
-            <div>
+            {/* <div>
                 <input type="file" onChange={e => {
                     const file = e.target.files[0];
                     handlePublish(file)
@@ -238,7 +238,7 @@ function PreviewPage() {
             }} >
                 <button type="button" style={{cursor: 'pointer'}} onClick={handlePauseUpload}>Pause</button>
                 <button type="button" style={{cursor: 'pointer'}} onClick={handleResumeUpload}>Resume</button>
-            </div>
+            </div> */}
             {auphonicProcessingError && <ConfirmationModal
                 body={<div>
                     <p>

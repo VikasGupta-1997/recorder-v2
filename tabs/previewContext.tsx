@@ -276,10 +276,10 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         }
         sendPostMessage({ type: "load-ffmpeg" });
         onMountListeners()
-        // window.onbeforeunload = async function () {
-        // await chrome.storage.local.set({"showUploadStatus": false})
-        //     return true;
-        // };
+        window.onbeforeunload = async function () {
+        await chrome.storage.local.set({"showUploadStatus": false})
+            return true;
+        };
     }, [])
 
     const latestAuphonicData = useMemo(() => {
@@ -1029,7 +1029,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
-    const handlePublish = async (blob) => {
+    const handlePublish = async () => {
         chrome.storage.local.get(['userInfo', 'selectedProject', 'uploadStatus'], async result => {
             console.log(blob, "result223", result)
             const userDetails = result.userInfo;

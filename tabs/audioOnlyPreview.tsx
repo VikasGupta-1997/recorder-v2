@@ -106,13 +106,13 @@ function PreviewPage() {
         setConfirmPublish(true)
     }
 
-    // if (loadingVideo) {
-    //     return (
-    //         <div className={style["loading-container"]} >
-    //             <div className={style["loader"]}></div>
-    //         </div>
-    //     )
-    // }
+    if (loadingVideo) {
+        return (
+            <div className={style["loading-container"]} >
+                <div className={style["loader"]}></div>
+            </div>
+        )
+    }
     console.log("isAudio1212", showAuphonicWrap)
     return (
         <div id="container" className={style["container"]}>
@@ -141,11 +141,11 @@ function PreviewPage() {
                         <AudioPreview blobUrl={"http://localhost:8080/stream?url=https://auphonic.com/api/download/audio-result/beS6vmTQNGqr6M4Yo5neaV/audio_1733314734721_5kzbwl0u.mp3"} blob={blob} audioRef={auphonicAudioRef} containerRef={containerRef} />
                     </div>}
                 </div>
-                <input type={"file"} onChange={e => {
+                {/* <input type={"file"} onChange={e => {
                      const file = e.target.files[0];
                      const blob = new Blob([file], { type: file.type });
                      handlePublish(file)
-                }} />
+                }} /> */}
                 {(!isEditMode && !showAuphonicWrap && !publishedData) && <div className={`${style['edit-mode-btn-audio']}`} > <button className={`${style["rounded-btn"]} ${style['publish-btn']}`} disabled={!isFfmpegLoaded || ffmpegRunning || isPublishing || isVideoEndcoding} onClick={changeMode} >Edit Video</button></div>}
                 {(isPublishing && !showAuphonicWrap) && <p className={style["publishing-load-text"]} >{`${publishingUpload ? "Publishing content" : "Cleaning audio with auphonic"} , please wait and do not close the window till upload is not complete.`}</p>}
                 {!isFfmpegLoaded && <p>Please wait editing tool is loading...</p>}

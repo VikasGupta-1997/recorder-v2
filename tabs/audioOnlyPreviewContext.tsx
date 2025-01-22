@@ -282,9 +282,10 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
           }
         sendPostMessage({ type: "load-ffmpeg" });
         onMountListeners()
-        // window.onbeforeunload = function () {
-        //     return true;
-        // };
+        window.onbeforeunload = async function () {
+            await chrome.storage.local.set({"showUploadStatus": false})
+            return true;
+        };
     }, [])
 
     useEffect(() => {
@@ -821,7 +822,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
         }
     };
 
-    const handlePublish = async (blob) => {
+    const handlePublish = async () => {
         chrome.storage.local.get(['userInfo', 'selectedProject', 'uploadStatus'], async result => {
             console.log(blob, "result223", result)
             // const base64Data: string = await blobToBase64(blob); // Ensure `base64Data` is typed as string
