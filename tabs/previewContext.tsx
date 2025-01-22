@@ -708,11 +708,14 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
 
 
     const handlePauseUpload = () => {
-        console.log("Pause the upload")
+        console.log("Pause the upload!@")
         isPausedref.current = true; // Set the flag to true
         if (controllersRef.current[currentPartIndexRef.current]) {
             controllersRef.current[currentPartIndexRef.current].abort(); // Abort the current chunk upload
-            console.log("Upload paused at part", currentPartIndexRef.current + 1);
+            console.log("Upload p2aused at part", currentPartIndexRef.current + 1);
+        }
+        if(xhrRef.current){
+            xhrRef.current.abort()
         }
     }
 
@@ -763,16 +766,19 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         // toast.error("Uploading stopped!!")
     }
 
+    const xhrRef = useRef(null)
+
     const handleUpload = async (partUrls, uploadId, key, userDetails, newBlob, selectedProject) => {
+        console.log("partUrlspartUrls", partUrls)
         const startTime = Date.now();
         const throttleInterval = 500
-        for (let i = currentPartIndexRef.current; i < partUrls.length; i++) {
+        for (let i = 0; i < partUrls.length; i++) {
             const { partNumber, uploadUrl, chunk } = partUrls[i];
 
             // Create a new AbortController for each chunk upload
             const controller = new AbortController();
             controllersRef.current.push(controller);
-
+            // xhrRef.current.push(uploadUrl)
             // Check if upload is paused, if so, exit loop
             if (isPausedref.current) {
                 currentPartIndexRef.current = i; // Save the current index for resuming
@@ -794,11 +800,12 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
 
                 return; // Exit the loop if paused
             }
-
+            console.log("Current XHR", xhrRef.current)
             try {
                 await new Promise(async (resolve, reject) => {
                     const xhr = new XMLHttpRequest();
                     xhr.open("PUT", uploadUrl, true);
+                    xhrRef.current = xhr
                     // await chrome.storage.local.set({ "showUploadStatus": {
                     //     ...showUploadStatus,
                     //     [tabsInfo.current.tabId]: true,
@@ -884,6 +891,11 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                             const eTag = xhr.getResponseHeader("ETag");
                             ETagRef.current.push({ PartNumber: partNumber, ETag: eTag });
                             totalUploadedRef.current += chunk.size;
+                            console.log("Here If is null")
+                            xhrRef.current = null
+                            partsUrlsRef.current = partsUrlsRef.current.filter(
+                                (part) => part.partNumber !== partNumber
+                            );
                             resolve(true);
                         } else {
                             reject(new Error(`Failed to upload part ${partNumber}`));

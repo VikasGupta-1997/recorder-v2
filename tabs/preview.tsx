@@ -149,13 +149,13 @@ function PreviewPage() {
         setConfirmPublish(true)
     }
 
-    if (loadingVideo) {
-        return (
-            <div className={style["loading-container"]} >
-                <div className={style["loader"]}></div>
-            </div>
-        )
-    }
+    // if (loadingVideo) {
+    //     return (
+    //         <div className={style["loading-container"]} >
+    //             <div className={style["loader"]}></div>
+    //         </div>
+    //     )
+    // }
 
     const lastHistoryData = history[history.length - 1];
     // console.log("Check Historyyyy", history)

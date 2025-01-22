@@ -101,6 +101,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
     let totalUploadedRef = useRef(0);
     let lastUpdateTimeRef = useRef(0);
     let ETagRef = useRef([]);
+    const xhrRef = useRef(null)
     const controllersRef = useRef([]);
 
 
@@ -537,6 +538,9 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
             controllersRef.current[currentPartIndexRef.current].abort(); // Abort the current chunk upload
             console.log("Upload paused at part", currentPartIndexRef.current + 1);
         }
+        if(xhrRef.current){
+            xhrRef.current.abort()
+        }
     }
 
     const handleResumeUpload = () => {
@@ -567,7 +571,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
     const handleUpload = async (partUrls, uploadId, key, userDetails, newBlob, selectedProject) => {
         const startTime = Date.now();
         const throttleInterval = 500
-        for (let i = currentPartIndexRef.current; i < partUrls.length; i++) {
+        for (let i = 0; i < partUrls.length; i++) {
             const { partNumber, uploadUrl, chunk } = partUrls[i];
 
             // Create a new AbortController for each chunk upload
@@ -600,6 +604,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
                 await new Promise(async (resolve, reject) => {
                     const xhr = new XMLHttpRequest();
                     xhr.open("PUT", uploadUrl, true);
+                    xhrRef.current = xhr
                     // await chrome.storage.local.set({ "showUploadStatus": {
                     //     ...showUploadStatus,
                     //     [tabsInfo.current.tabId]: true,
@@ -683,6 +688,10 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
                             const eTag = xhr.getResponseHeader("ETag");
                             ETagRef.current.push({ PartNumber: partNumber, ETag: eTag });
                             totalUploadedRef.current += chunk.size;
+                            xhrRef.current = null
+                            partsUrlsRef.current = partsUrlsRef.current.filter(
+                                (part) => part.partNumber !== partNumber
+                            );
                             resolve(true);
                         } else {
                             reject(new Error(`Failed to upload part ${partNumber}`));
@@ -795,6 +804,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
             setIspublishing(false)
             setPublishedData(saveData)
             stoppedUpload.current = false
+            chrome.runtime.sendMessage({type: "REMOVE_FROM_UPLOAD_LIST", tabId: tabsInfo.current.tabId })
             chrome.runtime.sendMessage({ type: "REFETCH_MEDIA_LIST", project: selectedProject, userDetails })
             resetUploadRefs()
             toast.success("Recording succeccfully saved to your adilo account.")
