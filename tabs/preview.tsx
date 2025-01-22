@@ -243,7 +243,7 @@ function PreviewPage() {
             {auphonicProcessingError && <ConfirmationModal
                 body={<div>
                     <p>
-                        Audio Enhancement Failed , Please contact support!!
+                        You don't have enough AI credits to enhance this audio, login to your Adilo account and top up your AI credits to continue.
                     </p>
                 </div>}
                 showActions={false}
