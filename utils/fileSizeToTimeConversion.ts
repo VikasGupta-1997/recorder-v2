@@ -1,12 +1,28 @@
-export function calculateTimeFromSize(blobSizeBytes) {
-    const sizeInMB = blobSizeBytes / (1024 * 1024); // Convert bytes to MB
-    if (sizeInMB < 1) {
-        return "1 minute"; // Minimum size is 1MB
-    } else if (sizeInMB < 60) {
-        return `${Math.ceil(sizeInMB)} minutes`; // Show size in minutes, rounded up
-    } else {
-        const hours = Math.floor(sizeInMB / 60); // Calculate whole hours
-        const minutes = Math.ceil(sizeInMB % 60); // Calculate remaining minutes, rounded up
-        return `${hours} hour${hours > 1 ? "s" : ""}${minutes > 0 ? ` ${minutes} minute` : ""}`; // Return in hours and minutes
+export function calculateTimeFromSize(duration) {
+    // Minimum minutes threshold
+    const minMinutes = 3;
+
+    // Convert seconds to total minutes
+    let totalMinutes = Math.round(duration / 60);
+
+    // If less than 3 minutes, set totalMinutes to 3
+    if (totalMinutes < minMinutes) {
+        totalMinutes = minMinutes;
     }
+
+    // Calculate hours and remaining minutes
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+
+    // Construct the result string
+    let result = "";
+    if (hours > 0) {
+        result += `${hours} hr${hours > 1 ? "s" : ""}`; // Pluralize 'hr' if needed
+    }
+    if (minutes > 0) {
+        if (result) result += " "; // Add space if hours are present
+        result += `${minutes} min${minutes > 1 ? "s" : ""}`; // Pluralize 'min' if needed
+    }
+
+    return result || "3 mins";
 }

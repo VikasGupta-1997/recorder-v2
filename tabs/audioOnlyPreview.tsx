@@ -96,7 +96,8 @@ function PreviewPage() {
         setUploadError,
         downloadBlob,
         publishedData,
-        publishingUpload
+        publishingUpload,
+        duration
     } = useAudioOnlyPreview();
 
     const [showGhost, setShowGhost] = useState(false);
@@ -191,7 +192,7 @@ function PreviewPage() {
                 isPublishMode={confirmPublish}
                 onSubmit={confirmPublish ? handlePublish : startAuphonicAudioProcessing}
                 body={confirmPublish ? <p>Are you sure you want to publish this audio ?</p> : <div>
-                    <p>Enhancing the audio of this recording wil consume {calculateTimeFromSize(blob.size)} from you AI credits.</p>
+                    <p>Enhancing the audio of this recording wil consume {calculateTimeFromSize(duration || 0)} from you AI credits.</p>
                     <p>Do you want to continue ?</p>
                 </div>}
                 title={confirmPublish ? "Save to Adilo" : "Audio Enhancement"}

@@ -141,7 +141,8 @@ function PreviewPage() {
         publishedData,
         handlePauseUpload,
         handleResumeUpload,
-        publishingUpload
+        publishingUpload,
+        duration
     } = usePreview();
     const [showGhost, setShowGhost] = useState(false);
 
@@ -251,7 +252,7 @@ function PreviewPage() {
                 onClose={() => setAuphonicProcessingError(null)} />}
             {((confirmSendToAuphonic) || confirmPublish) && <ConfirmationModal
                 body={confirmPublish ? <p>Are you sure you want to publish this video ?</p> : <div>
-                    <p>Enhancing the audio of this recording wil consume {calculateTimeFromSize(blob.size)} from you AI credits.</p>
+                    <p>Enhancing the audio of this recording wil consume {calculateTimeFromSize(duration || 0)} from you AI credits.</p>
                     <p>Do you want to continue ?</p>
                 </div>}
                 isPublishMode={confirmPublish}
