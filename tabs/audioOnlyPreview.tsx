@@ -86,7 +86,6 @@ function PreviewPage() {
         auphonicAlgorithm,
         recordingName,
         handlePublish,
-        currentConfirmation,
         confirmPublish,
         setConfirmPublish,
         uploadProgressRef,
@@ -96,7 +95,8 @@ function PreviewPage() {
         uploadError,
         setUploadError,
         downloadBlob,
-        publishedData
+        publishedData,
+        publishingUpload
     } = useAudioOnlyPreview();
 
     const [showGhost, setShowGhost] = useState(false);
@@ -147,7 +147,7 @@ function PreviewPage() {
                      handlePublish(file)
                 }} />
                 {(!isEditMode && !showAuphonicWrap && !publishedData) && <div className={`${style['edit-mode-btn-audio']}`} > <button className={`${style["rounded-btn"]} ${style['publish-btn']}`} disabled={!isFfmpegLoaded || ffmpegRunning || isPublishing || isVideoEndcoding} onClick={changeMode} >Edit Video</button></div>}
-                {(isPublishing && !showAuphonicWrap) && <p className={style["publishing-load-text"]} >{`${currentConfirmation.current === 'publishConfirmation' ? "Publishing content" : "Cleaning audio with auphonic"} , please wait and do not close the window till upload is not complete.`}</p>}
+                {(isPublishing && !showAuphonicWrap) && <p className={style["publishing-load-text"]} >{`${publishingUpload ? "Publishing content" : "Cleaning audio with auphonic"} , please wait and do not close the window till upload is not complete.`}</p>}
                 {!isFfmpegLoaded && <p>Please wait editing tool is loading...</p>}
                 {ffmpegLoadError && <p className={`${style['error']}`}>Cannot edit video, editing tool not supported for your browser !!</p>}
                 {(isEditMode && !showAuphonicWrap && !publishedData) && <div className={style["editing-control-wrapper"]} >

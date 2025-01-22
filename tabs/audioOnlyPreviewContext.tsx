@@ -62,7 +62,6 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
     const [publishedData, setPublishedData] = useState(null)
 
     const undoRedoClick = useRef(null)
-    const currentConfirmation = useRef(null)
     const switchModeAudios = useRef({
         auphonicAudio: null,
         originalAudio: null,
@@ -100,6 +99,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
     let currentPartIndexRef = useRef(0);
     let totalUploadedRef = useRef(0);
     let lastUpdateTimeRef = useRef(0);
+    const [publishingUpload, setPublishingUpload] = useState(false)
     let ETagRef = useRef([]);
     const xhrRef = useRef(null)
     const controllersRef = useRef([]);
@@ -177,6 +177,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
                         }
                         setIspublishing(false)
                         setUploadStatus(false)
+                        setPublishingUpload(false)
                         resetUploadRefs()
                     }
                     break;
@@ -809,6 +810,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
             console.log("Video saved successfully:", saveData);
             setIspublishing(false)
             setPublishedData(saveData)
+            setPublishingUpload(false)
             stoppedUpload.current = false
             chrome.runtime.sendMessage({type: "REMOVE_FROM_UPLOAD_LIST", tabId: tabsInfo.current.tabId })
             chrome.runtime.sendMessage({ type: "REFETCH_MEDIA_LIST", project: selectedProject, userDetails })
@@ -847,6 +849,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
             // return;
             setIspublishing(true)
             setConfirmPublish(false)
+            setPublishingUpload(true)
             try {
                 const formData = new FormData();
                 formData.append("type", blob.type); // Update with actual type if dynamic
@@ -910,6 +913,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
             } catch (error) {
                 await chrome.storage.local.set({ "showUploadStatus": false })
                 setUploadError(true)
+                setPublishingUpload(false)
                 toast.error("Publishing recording failed, Please contact to Adilo support.")
                 setIspublishing(false)
                 setUploadStatus(null)
@@ -1065,16 +1069,6 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
         // sendPostMessage({ type: 'extract-audio', blob: blob })
     }
 
-    useEffect(() => {
-        if (confirmSendToAuphonic) {
-            currentConfirmation.current = 'auphonicConfirmation'
-        }
-        if (confirmSendToAuphonic) {
-            currentConfirmation.current = 'publishConfirmation'
-        }
-    }, [confirmSendToAuphonic, confirmSendToAuphonic])
-
-
     // const onSubmitAdvanceAuphonic = async data => {
     //     console.log("Data", data)
     //     setShowAuphonicAdvanceForm(false)
@@ -1164,7 +1158,6 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
         auphonicAlgorithm,
         handlePublish,
         recordingName,
-        currentConfirmation,
         confirmPublish,
         setConfirmPublish,
         uploadProgressRef,
@@ -1175,7 +1168,8 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
         setUploadError,
         downloadBlob,
         publishedData,
-        undoRedoClick
+        undoRedoClick,
+        publishingUpload
     };
 
     return (

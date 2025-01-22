@@ -131,7 +131,6 @@ function PreviewPage() {
         recordingName,
         confirmPublish,
         setConfirmPublish,
-        currentConfirmation,
         uploadStatus,
         setUploadStatus,
         uploadProgressRef,
@@ -141,7 +140,8 @@ function PreviewPage() {
         downloadBlob,
         publishedData,
         handlePauseUpload,
-        handleResumeUpload
+        handleResumeUpload,
+        publishingUpload
     } = usePreview();
     const [showGhost, setShowGhost] = useState(false);
 
@@ -191,7 +191,7 @@ function PreviewPage() {
                             // isVideoEndcoding || 
                             !isFfmpegLoaded ||
                             ffmpegRunning || isPublishing} onClick={changeMode} >Edit Video</button></div>}
-                        {(isPublishing && !auphonicVideoUrlPreview) && <p className={style["publishing-load-text"]} >{`${currentConfirmation.current === 'publishConfirmation' ? "Publishing content" : "Cleaning audio with auphonic"} , please wait and do not close the window till upload is not complete.`}</p>}
+                        {(isPublishing && !auphonicVideoUrlPreview) && <p className={style["publishing-load-text"]} >{`${publishingUpload ? "Publishing content" : "Cleaning audio with auphonic"} , please wait and do not close the window till upload is not complete.`}</p>}
                         {(!isFfmpegLoaded && !auphonicVideoUrlPreview) && <p>Please wait editing tool is loading...</p>}
                         {(ffmpegLoadError) && <p className={`${style['error']}`}>Cannot edit video, editing tool not supported for your browser !!</p>}
                         {(isEditMode && !auphonicVideoUrlPreview && !publishedData) && <div className={style["editing-control-wrapper"]} >

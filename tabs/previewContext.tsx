@@ -48,6 +48,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     const [ffmpegLoadError, setFfmpegLoadError] = useState(false)
     const [ffmpegRunning, setIsFfmpegRunning] = useState(false)
     const [isPublishing, setIspublishing] = useState(false)
+    const [publishingUpload, setPublishingUpload] = useState(false)
     const [videoSource, setVideoSource] = useState(null);
     const [auphonicVideoUrlPreview, setAuphonicVideoUrlPreview] = useState('')
     const [isAuphonicUiMode, setIsAuphonicUiMode] = useState(false)
@@ -61,7 +62,6 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     const latestAuphonicDataRef = useRef(null)
     const showConfirmation = useRef(true)
     const currentUniqid = useRef(null)
-    const currentConfirmation = useRef(null)
     const audioF = useRef(null)
     const undoRedoClick = useRef(null)
     const auphonicAlgorithm = useRef(null)
@@ -168,6 +168,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                         }
                         setIspublishing(false)
                         setUploadStatus(false)
+                        setPublishingUpload(false)
                         resetUploadRefs()
                     }
                     break;
@@ -384,7 +385,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
             }
 
             if (message.type === 'extracted-audio-blob') {
-                setConfirmSendToAuphonic(false)
+                // setConfirmSendToAuphonic(false)
                 chrome.storage.local.get(['advanceAuphonicSettings'], async result => {
                     let sendData;
                     console.log("resultadvanceAuphonicSettings=>", result)
@@ -1017,6 +1018,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
             console.log("Video saved successfully:", saveData);
             setIspublishing(false)
             setPublishedData(saveData)
+            setPublishingUpload(false)
             stoppedUpload.current = false
             chrome.runtime.sendMessage({type: "REMOVE_FROM_UPLOAD_LIST", tabId: tabsInfo.current.tabId })
             chrome.runtime.sendMessage({ type: "REFETCH_MEDIA_LIST", project: selectedProject, userDetails })
@@ -1049,6 +1051,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
             // return;
             setIspublishing(true)
             setConfirmPublish(false)
+            setPublishingUpload(true)
             try {
                 const formData = new FormData();
                 formData.append("type", blob.type); // Update with actual type if dynamic
@@ -1116,6 +1119,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                 setUploadError(true)
                 toast.error("Publishing recording failed, Please contact to Adilo support.")
                 setIspublishing(false)
+                setPublishingUpload(false)
                 setUploadStatus(null)
                 resetUploadRefs()
                 console.error("Error during upload:", error.message);
@@ -1140,15 +1144,6 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         sendPostMessage({ type: "download-playable-file", blob: blob })
     };
 
-
-    useEffect(() => {
-        if (confirmSendToAuphonic) {
-            currentConfirmation.current = 'auphonicConfirmation'
-        }
-        if (confirmPublish) {
-            currentConfirmation.current = 'publishConfirmation'
-        }
-    }, [confirmSendToAuphonic, confirmPublish])
 
     const value = {
         playPartialRecording,
@@ -1215,7 +1210,6 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         recordingName,
         confirmPublish,
         setConfirmPublish,
-        currentConfirmation,
         uploadStatus,
         setUploadStatus,
         uploadProgressRef,
@@ -1227,7 +1221,8 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         undoRedoClick,
         handlePauseUpload,
         handleResumeUpload,
-        tabsInfo
+        tabsInfo,
+        publishingUpload
     };
 
     return (
