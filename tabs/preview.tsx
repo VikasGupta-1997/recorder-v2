@@ -249,7 +249,7 @@ function PreviewPage() {
                 onSubmit={() => { }}
                 title="Audio Enhancement Failed."
                 onClose={() => setAuphonicProcessingError(null)} />}
-            {((confirmSendToAuphonic && showConfirmation.current) || confirmPublish) && <ConfirmationModal
+            {((confirmSendToAuphonic) || confirmPublish) && <ConfirmationModal
                 body={confirmPublish ? <p>Are you sure you want to publish this video ?</p> : <div>
                     <p>Enhancing the audio of this recording wil consume {calculateTimeFromSize(blob.size)} from you AI credits.</p>
                     <p>Do you want to continue ?</p>

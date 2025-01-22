@@ -407,6 +407,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                         console.log("sendDatasendData==>", sendData)
                         switchModeAudios.current.originalAudio = message.blob;
                         // console.log(latestAuphonicDataRef.current, "latestAuphonicDatalatestAuphonicData 318", latestAuphonicData)
+                        setConfirmSendToAuphonic(false)
                         const { file, uuid, fileName } = await onSubmitAdvanceAuphonic(sendData, message.blob, setIspublishing, uuidRef, setUuid, fileNameRef, isAuphonicSubmitted, switchModeAudios.current, latestAuphonicDataRef.current, toast)
                         switchModeAudios.current.auphonicAudio = file
                         // console.log(blobRef.current, ":RecoievedFile", file)
