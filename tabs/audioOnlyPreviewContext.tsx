@@ -172,6 +172,12 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
                     case "DELETE_UPLOAD": {
                         // handleDeleteUpload()
                         stoppedUpload.current = true
+                        if(xhrRef.current) {
+                            xhrRef.current.abort()
+                        }
+                        setIspublishing(false)
+                        setUploadStatus(false)
+                        resetUploadRefs()
                     }
                     break;
                     case "PAUSE_UPLOAD": {
@@ -518,17 +524,17 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
         ETagRef.current = []
         partsUrlsRef.current = []
         keyRef.current = null
-        userDetailRef.current = null
+        // userDetailRef.current = null
         uploadIdRef.current = null
-        newBlobRef.current = null
-        selectedProjectRef.current = null
+        // newBlobRef.current = null
+        // selectedProjectRef.current = null
          // Optionally, reset the UI progress
-        if (progressStrokeWidth.current) {
-            progressStrokeWidth.current.innerHTML = ''; // Clear progress SVG
-        }
-        if (uploadProgressRef.current) {
-            uploadProgressRef.current.innerText = '0%'; // Reset text progress
-        }
+        // if (progressStrokeWidth.current) {
+        //     progressStrokeWidth.current.innerHTML = ''; // Clear progress SVG
+        // }
+        // if (uploadProgressRef.current) {
+        //     uploadProgressRef.current.innerText = '0%'; // Reset text progress
+        // }
     }
 
     const handlePauseUpload = () => {
@@ -813,7 +819,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
         }
     };
 
-    const handlePublish = async () => {
+    const handlePublish = async (blob) => {
         chrome.storage.local.get(['userInfo', 'selectedProject', 'uploadStatus'], async result => {
             console.log(blob, "result223", result)
             // const base64Data: string = await blobToBase64(blob); // Ensure `base64Data` is typed as string
@@ -884,6 +890,11 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
                             // chunk
                             chunk: blob.slice((partNumber - 1) * chunk_size, partNumber * chunk_size, "video/mp4")
                         });
+                    }
+                    if(stoppedUpload.current){
+                        stoppedUpload.current = false
+                    } else {
+                        // setUploadStatus(true)
                     }
                     console.log("Received pre-signed URLs for all parts", partUrls);
                     // Step 3: Upload each chunk to S3

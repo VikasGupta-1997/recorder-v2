@@ -162,6 +162,10 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                     case "DELETE_UPLOAD": {
                         // handleDeleteUpload()
                         stoppedUpload.current = true
+                        console.log("In Delete====>", xhrRef.current)
+                        if(xhrRef.current) {
+                            xhrRef.current.abort()
+                        }
                         setIspublishing(false)
                         setUploadStatus(false)
                         resetUploadRefs()
@@ -736,17 +740,17 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         ETagRef.current = []
         partsUrlsRef.current = []
         keyRef.current = null
-        userDetailRef.current = null
+        // userDetailRef.current = null
         uploadIdRef.current = null
-        newBlobRef.current = null
-        selectedProjectRef.current = null
+        // newBlobRef.current = null
+        // selectedProjectRef.current = null
          // Optionally, reset the UI progress
-        if (progressStrokeWidth.current) {
-            progressStrokeWidth.current.innerHTML = ''; // Clear progress SVG
-        }
-        if (uploadProgressRef.current) {
-            uploadProgressRef.current.innerText = '0%'; // Reset text progress
-        }
+        // if (progressStrokeWidth.current) {
+        //     progressStrokeWidth.current.innerHTML = ''; // Clear progress SVG
+        // }
+        // if (uploadProgressRef.current) {
+        //     uploadProgressRef.current.innerText = '0%'; // Reset text progress
+        // }
     }
 
     const handleDeleteUpload = () => {
@@ -756,13 +760,18 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
             controllersRef.current[currentPartIndexRef.current].abort(); // Abort the current chunk upload
             console.log("Upload paused at part", currentPartIndexRef.current + 1);
         }
+        console.log("xhrRef.current", xhrRef.current)
+        if(xhrRef.current){
+            console.log("Aborting!")
+            xhrRef.current.abort()
+        }
         console.log("controllersRef.current", controllersRef.current)
         controllersRef.current.forEach((controller) => controller.abort());
         controllersRef.current = []; // Clear controllers
-        console.log("Pause the upload Delete2!")
+        console.log("Pause the upload Delete2 !")
         isPausedref.current = true; // Set the flag to true
         setIspublishing(false)
-        setUploadStatus(null)
+        // setUploadStatus(null)
         // toast.error("Uploading stopped!!")
     }
 
@@ -772,6 +781,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         console.log("partUrlspartUrls", partUrls)
         const startTime = Date.now();
         const throttleInterval = 500
+        setUploadStatus(true)
         for (let i = 0; i < partUrls.length; i++) {
             const { partNumber, uploadUrl, chunk } = partUrls[i];
 
@@ -835,7 +845,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                             const strokeDashoffset = circumference - (overallProgress / 100) * circumference;
                             // console.log("progressStrokeWidth==>", progressStrokeWidth)
                             // console.log("uploadProgressRef==>", uploadProgressRef)
-                            if (progressStrokeWidth.current && !stoppedUpload.current ) {
+                            if (progressStrokeWidth.current) {
                                 progressStrokeWidth.current.innerHTML = `
                                     <svg
                                         height="${radius * 2}"
@@ -865,13 +875,13 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                                 `;
                             }
 
-                            if (uploadProgressRef.current && !stoppedUpload.current) {
+                            if (uploadProgressRef.current) {
                                 uploadProgressRef.current.innerText = `${overallProgress}%`
                             }
 
                             const currentTime = Date.now();
                             if (currentTime - lastUpdateTimeRef.current > throttleInterval) {
-                                if(!stoppedUpload.current) {
+                                // if(!stoppedUpload.current) {
                                     chrome.runtime.sendMessage({ type: "upload-status", 
                                         uploadStatus, 
                                         recordingName,
@@ -881,7 +891,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                                      console.log("uploadStatus", uploadStatus)
                                       // Send the message to the popup
                                     lastUpdateTimeRef.current = currentTime;
-                                }
+                                // }
                             }
                         }
                     };
@@ -1084,14 +1094,14 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                         });
                     }
                     console.log("Received pre-signed URLs for all parts", partUrls);
-                    // Step 3: Upload each chunk to S3
+                    // Step 3: Upload  each chunk to S3
                     let totalUploaded = 0;
                     let lastUpdateTime = 0;
                     const throttleInterval = 500
                     if(stoppedUpload.current){
                         stoppedUpload.current = false
                     } else {
-                        setUploadStatus(true)
+                        // setUploadStatus(true)
                     }
                     partsUrlsRef.current = partUrls
                     keyRef.current = key
