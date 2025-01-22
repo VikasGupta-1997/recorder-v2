@@ -1041,6 +1041,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
         console.log("Blob===>", blob)
 
         setConfirmSendToAuphonic(false)
+        setIspublishing(true)
         chrome.storage.local.get(['advanceAuphonicSettings'], async result => {
             let sendData;
             // if (result?.advanceAuphonicSettings && result?.advanceAuphonicSettings?.trackCutting) {

@@ -33,7 +33,7 @@
 
 .lg-modal {
   width: 960px;
-  height: 710px;
+  height: 600px;
   /* background: #fbf8f8; */
 }
 
@@ -245,6 +245,10 @@
   .main {
     max-height: 500px;
     overflow: auto;
+  }
+
+  .lg-modal .main {
+    max-height: 390px;
   }
 
   .enhance-modalActions {
