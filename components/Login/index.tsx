@@ -48,9 +48,9 @@ const Form = ({ onSubmit, setState, state, loading }) => {
 
 const LoginForm = () => {
     const [state, setState] = useState({
-        userName: 'softwaredev@zestgeek.com',
+        userName: '',
         forgetEmail: '',
-        password: 'Adilo@0987',
+        password: '',
         showPassword: false,
     })
     const [loading, setLoading] = useState(false)
