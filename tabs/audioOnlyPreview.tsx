@@ -76,13 +76,24 @@ function PreviewPage() {
             </div>
         )
     }
+
+    const getVideoKeyFromUrl = (url) => {
+        const splittedUrl = url.split("/")
+        return splittedUrl[splittedUrl.length - 1].split('.')[0]
+    }
     
     return (
         <div id="container" className={style["container"]}>
             <span className={style["span-wrapper"]} style={{
                 pointerEvents: isPublishing ? 'none' : 'initial'
             }} >
-                <h1 style={{ width: '50%' }} className={style["heading-title"]}>
+                {publishedData ? <h1 style={{
+                    color: '#0DABD8',
+                    fontSize: '32px',
+                    fontWeight: 500
+                }} >
+                    Success! Recording Uploaded
+                </h1> :<h1 style={{ width: '50%' }} className={style["heading-title"]}>
                     <span className={style["title"]} >
                         {recordingName}
                         {" "}
@@ -93,7 +104,7 @@ function PreviewPage() {
                     {(isEditMode && !publishedData) && <span>
                         <button onClick={handleCancelEditing} disabled={ffmpegRunning || isPublishing} className={style["rounded-btn"]}>cancel</button>
                     </span>}
-                </h1>
+                </h1>}
                 <div className={style["audio-main-wrap"]} >
                     <div ref={normalAudioWrap} className={style["ref-wrapper"]}>
                         <AudioPreview blobUrl={blobUrl} blob={blob} audioRef={audioRef} containerRef={containerRef} />
@@ -123,9 +134,9 @@ function PreviewPage() {
                 </div>}
                 {
                     publishedData && <div className={style["copy-link-div"]} >
-                        <input type="text" disabled value={publishedData.video.location} />
-                        <button onClick={e => {
-                            const linkValue = publishedData.video.location;
+                        <input type="text" disabled value={`https://adilo.bigcommand.com/watch/${getVideoKeyFromUrl(publishedData.video.location)}`} />
+                        <button onClick={() => {
+                            const linkValue = `https://adilo.bigcommand.com/watch/${getVideoKeyFromUrl(publishedData.video.location)}`;
                             if (linkValue) {
                                 navigator.clipboard.writeText(linkValue).then(() => {
                                     toast.success("copied to clipboard!")

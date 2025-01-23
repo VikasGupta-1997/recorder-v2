@@ -114,12 +114,23 @@ function PreviewPage() {
         )
     }
 
+    const getVideoKeyFromUrl = (url) => {
+        const splittedUrl = url.split("/")
+        return splittedUrl[splittedUrl.length - 1].split('.')[0]
+    }
+
     return (
         <div id="container" className={style["container"]}>
             <span className={style["span-wrapper"]} style={{
                 pointerEvents: isPublishing ? 'none' : 'initial'
             }} >
-                <h1 className={style["heading-title"]}>
+                {publishedData ? <h1 style={{
+                    color: '#0DABD8',
+                    fontSize: '32px',
+                    fontWeight: 500
+                }} >
+                    Success! Recording Uploaded
+                </h1> : <h1 className={style["heading-title"]}>
                     <span className={style["title"]} >
                         {recordingName}
                         {" "}
@@ -130,16 +141,16 @@ function PreviewPage() {
                     {(isEditMode && !publishedData) && <span>
                         <button onClick={handleCancelEditing} disabled={ffmpegRunning || isPublishing} className={style["rounded-btn"]}>cancel</button>
                     </span>}
-                </h1>
+                </h1>}
                 <div className={style["video-wrapper"]} >
                     <div className={style["editing-video-wrapper"]}>
                         <div className={`${style["ref-wrapper-video"]} ${auphonicVideoUrlPreview ? style['auphonic-video'] : ''}`}>
                             <VideoPreview blobUrl={blobUrl} />
                         </div>
-                        {(!isEditMode && !auphonicVideoUrlPreview && !publishedData) && <div className={`${style['edit-mode-btn']}`} > <button className={`${style["rounded-btn"]} ${style['publish-btn']}`} disabled={!isFfmpegLoaded ||ffmpegRunning || isPublishing} onClick={changeMode} >Edit Video</button></div>}
+                        {(!isEditMode && !auphonicVideoUrlPreview && !publishedData) && <div className={`${style['edit-mode-btn']}`} > <button className={`${style["rounded-btn"]} ${style['publish-btn']}`} disabled={!isFfmpegLoaded || ffmpegRunning || isPublishing} onClick={changeMode} >Edit Video</button></div>}
                         {(isPublishing && !auphonicVideoUrlPreview) && <p className={style["publishing-load-text"]} >{
-                            publishingUpload ? "Publishing content , please wait and do not close the window till upload is not complete." 
-                            : "Enhancing your audio for crystal sound, please do not close this window till the process is complete."
+                            publishingUpload ? "Publishing content , please wait and do not close the window till upload is not complete."
+                                : "Enhancing your audio for crystal sound, please do not close this window till the process is complete."
                         }</p>}
                         {(!isFfmpegLoaded && !auphonicVideoUrlPreview) && <p>Please wait editing tool is loading...</p>}
                         {(ffmpegLoadError) && <p className={`${style['error']}`}>Cannot edit video, editing tool not supported for your browser !!</p>}
@@ -155,9 +166,9 @@ function PreviewPage() {
                         </div>}
                         {
                             publishedData && <div className={style["copy-link-div"]} >
-                                <input type="text" disabled value={publishedData.video.location} />
-                                <button onClick={e => {
-                                    const linkValue = publishedData.video.location;
+                                <input type="text" disabled value={`https://adilo.bigcommand.com/watch/${getVideoKeyFromUrl(publishedData.video.location)}`} />
+                                <button onClick={() => {
+                                    const linkValue = `https://adilo.bigcommand.com/watch/${getVideoKeyFromUrl(publishedData.video.location)}`;
                                     if (linkValue) {
                                         navigator.clipboard.writeText(linkValue).then(() => {
                                             toast.success("copied to clipboard!")
