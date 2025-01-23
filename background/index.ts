@@ -28,14 +28,14 @@ chrome.runtime.onInstalled.addListener(async (details) => {
     // This is the first time the extension is installed
     await createOffscreenDocument()
     await chrome.storage.local.set({ firstTimeLaunch: true });
-    chrome.tabs.query({}, function(tabs) {
-      // Reload each tab
-      tabs.forEach(tab => {
-          if (tab.id) {
-              chrome.tabs.reload(tab.id)
-          }
-      });
-    });
+    // chrome.tabs.query({}, function(tabs) {
+    //   // Reload each tab
+    //   tabs.forEach(tab => {
+    //       if (tab.id) {
+    //           chrome.tabs.reload(tab.id)
+    //       }
+    //   });
+    // });
   }
 });
 
@@ -485,6 +485,60 @@ const getProjectList = async (userDetails) => {
     console.log("Error", error)
   }
 }
+
+const deleteMedia = async (item, userDetails) => {
+  try {
+    const breakedEmbedUrl = item.embed_url.split('/')
+    const url = breakedEmbedUrl[breakedEmbedUrl.length - 1];
+    const response = await fetch(`${process.env.PLASMO_PUBLIC_ADILO_API}/editor/delete-video`, {
+      method: 'POST',
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${userDetails.access_token}`
+      },
+      body: JSON.stringify({
+        "video_id": url,
+        "bulkVideoIds": []
+      }),
+    })
+    const deleteResponse = await response.json();
+    if(deleteResponse.success){
+      chrome.storage.local.get(['selectedProject'], async result => {
+        const selectedProjected = result?.selectedProject;
+        refreshMediaList(userDetails,selectedProjected)
+      })
+    } else {
+      throw new Error("Failed to delete!")
+    }
+  } catch(error){
+    console.log("error", error)
+  }
+}
+
+const refreshMediaList = async(userDetails, project) => {
+  chrome.runtime.sendMessage({ type: "media_loading", state: true })
+  try {
+    const response = await fetch(`${process.env.PLASMO_PUBLIC_ADILO_API}/projects/videos?begin=0&limit=20&page=1&project_id=${project.id}&view=20&sort_by=date`, {
+      method: 'GET',
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${userDetails.access_token}`
+      },
+    })
+    const mediaFiles = await response.json();
+    const procesedMediaFiles = mediaFiles.map(file => ({
+      id: file.id,
+      thumbnail: file.thumbnail,
+      title: file.title,
+      embed_url: file.embed_url
+    }))
+    chrome.runtime.sendMessage({ type: "media_loading", state: false })
+    await chrome.storage.local.set({ "mediaFiles": procesedMediaFiles })
+  } catch(error){
+    chrome.runtime.sendMessage({ type: "media_loading", state: false })
+  }
+}
+
 const chunksStorage = {}; 
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   if (message.type === 'START_LOGIN') {
@@ -504,6 +558,10 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   }
   if(message.type === 'DELETE_UPLOAD_BG'){
     chrome.tabs.sendMessage(+message.data, { type: "DELETE_UPLOAD" })
+  }
+
+  if(message.type === 'DELETE_MEDIA'){
+    deleteMedia(message.item, message.userDetails)
   }
 
   if(message.type === 'RECORDING_CHUNK_TO_BG') {

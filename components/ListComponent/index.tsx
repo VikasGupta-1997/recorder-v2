@@ -114,11 +114,30 @@ const ListComponent = ({
     const [mediaFilesRef, setMediaFilesRef] = useState([])
     const quickPause = useRef({})
     const handleMenuClick = async (item) => {
-        console.log("Item==>", item)
+        switch(item.id) {
+            case 1: {
+                navigator.clipboard.writeText(item.item.embed_url).then(() => {
+                    console.log("Copied !", item.item)
+                }).catch((err) => {
+                    console.error("Failed to copy text: ", err);
+                });
+            }
+            break
+            case 4: { 
+                window.open(item.item.embed_url,  "_blank")
+            }
+            break;
+            case 5: {
+                chrome.runtime.sendMessage({type: "DELETE_MEDIA", item: item.item , userDetails})
+            }
+            break;
+        }
+        return null
     }
     const uploadDataRef = useRef({});
     useEffect(() => {
         const loadThumbnails = async (mediaFiles) => {
+            if(!Array.isArray(mediaFiles)) return;
             const promises = mediaFiles.map(async (l) => {
                 const base64 = l.thumbnail.includes("sunshine.website") ? processingImage : await fetchImageAsBase64(l.thumbnail);
                 return { id: l.id, base64 };
@@ -137,10 +156,6 @@ const ListComponent = ({
                 // Check if the 'mediaFiles' key has been changed
                 if (changes.mediaFiles) {
                     const { oldValue, newValue } = changes.mediaFiles;
-                    // console.log(`"mediaFiles" key changed in storage.local.`);
-                    // console.log(`Old value:`, oldValue);
-                    // console.log(`New value:`, newValue);
-                    // mediaFilesRef.current = newValue
                     setMediaFilesRef(newValue)
                     loadThumbnails(newValue);
                     // Perform additional actions if needed
@@ -159,7 +174,7 @@ const ListComponent = ({
                 console.log("result?.playResumeUpload", result?.playResumeUpload)
                 // quickPause.current =  result?.playResumeUpload 
             }
-            if (Object.keys(uploadData)?.length > 0) {
+            if (uploadData && Object.keys(uploadData)?.length > 0) {
                 uploadDataRef.current = uploadData;
                 const keys = Object.keys(uploadData)
                 setUploadKeys(keys)
@@ -258,7 +273,6 @@ const ListComponent = ({
                         />
                     ))}
                 </div>
-                {/* {uploadStatus && <UploadStatus fileNameref={fileNameref} progressTimeLeft={progressTimeLeft} progressUploadSize={progressUploadSize} progressPercent={progressPercent} progressBarRef={progressBarRef} />} */}
                 <div className="min-h-[100px] max-h-[250px] overflow-auto" >
                     {mediaListLoading ? <div className="flex items-center justify-center" ><div className="loader" ></div></div> : !mediaFilesRef?.length ? <p className="text-center" > No items to show !</p> :
                         mediaFilesRef?.map(l => {
