@@ -46,7 +46,11 @@ export default async function onSubmitAdvanceAuphonic(data, blob, setIspublishin
             Object.keys(generatedData).forEach((key) => {
                 formData.append(key, generatedData[key]);
             });
-            // formData.append('algorithms', JSON.stringify(generatedData));
+            // formData.append("denoise", "on")
+            // formData.append("normloudness", "on")
+            // processedData['denoise'] = 'on'
+            // processedData['normloudness'] =  'on'
+            // formData.append('algorithms ', JSON.stringify(generatedData));
             // formData.append('input_file', new File([blob], fileName + '.mp3' , { type: blob.type }));
             // formData.append('preset', presetUuid);
             const productionResponse = await fetch(`${process.env.PLASMO_PUBLIC_AUPHONICURL}/simple/productions.json`, {

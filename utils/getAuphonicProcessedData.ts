@@ -67,8 +67,8 @@ export default function getAuphonicProcessedData(data){
             processedData['compressor'] = data.adaptiveLeveler.compressorBroadcast.value; //Not sure to add as not added in api docs
         }
     }
-
-    console.log("processedDataprocessedData", processedData)
+    processedData['denoise'] = 'on'
+    processedData['normloudness'] = 'on'
     return processedData
     
 }
