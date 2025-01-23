@@ -257,21 +257,6 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
         window.parent.postMessage(message, "*");
     }
 
-    const getPresets = async () => {
-        try {
-            const response = await fetch(`${auphonicUrl}/presets.json`, {
-                method: 'GET',
-                headers: AUTH_HEADER,
-            });
-            const { data } = await response.json();
-            return data
-        } catch (error) {
-            console.error("Error fetching presets:", error);
-            return [];
-        }
-    };
-
-
     useEffect(() => {
         document.body.style.margin = "0px";
         document.body.style.padding = "0px";
@@ -1072,7 +1057,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
     }
 
     // const onSubmitAdvanceAuphonic = async data => {
-    //     console.log("Data", data)
+    //     console.log("Data ", data)
     //     setShowAuphonicAdvanceForm(false)
     //     setConfirmSendToAuphonic(true)
     // }
@@ -1094,6 +1079,8 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
     const downloadBlob = () => {
         sendPostMessage({ type: "download-playable-file", blob: blob})
     };
+
+    const isModalOpened = auphonicProcessingError || confirmSendToAuphonic || confirmPublish || uploadStatus || uploadError || showAuphonicAdvanceForm || isPublishing 
 
     const value = {
         playPartialRecording,
@@ -1128,11 +1115,9 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
         setIsFfmpegRunning,
         ffmpegRunning,
         isPublishing,
-        getPresets,
         originalDuration,
         videoSource,
         setVideoSource,
-        getDynamicTimestamp,
         getAuphonicData,
         auphonicAudioRef,
         wrapAuphonicAudioRef,
@@ -1171,7 +1156,9 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
         downloadBlob,
         publishedData,
         undoRedoClick,
-        publishingUpload
+        publishingUpload,
+        latestAuphonicDataRef,
+        isModalOpened
     };
 
     return (

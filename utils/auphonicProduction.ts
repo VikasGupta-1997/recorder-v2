@@ -161,7 +161,7 @@ export default async function onSubmitAdvanceAuphonic(data, blob, setIspublishin
             setUuid(uuid)
             isAuphonicSubmitted.current = true
             console.log("Production completed. Downloading the processed file...");
-            toast.success("Auphonic production completed  succesfully ! ")
+            toast.success("Magic audio enhancement completed successfully!")
             return { file, uuid: uuid, fileName: fileName || latestAuphonicDataRef?.fileName }
         } else {
             setIspublishing(false)
@@ -170,7 +170,7 @@ export default async function onSubmitAdvanceAuphonic(data, blob, setIspublishin
         }
 
     } catch (error) {
-        toast.error("Auphonic production failed, please contact to adilo support")
+        toast.error("Magic audio enhancement failed!, please contact to adilo support")
         setIspublishing(false)
         console.error("Error processing audio with Auphonic:", error);
         throw error; // Re-throw the error for further handling if needed

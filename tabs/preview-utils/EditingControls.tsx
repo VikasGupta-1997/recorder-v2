@@ -7,7 +7,6 @@ import { useEffect, useRef, useState } from "react"
 import WaveSurfer from "wavesurfer.js"
 import { GrMagic } from "react-icons/gr";
 import { GiSplashyStream } from "react-icons/gi";
-import { MdOutlineCameraswitch } from "react-icons/md";
 import { TbSwitch2 } from "react-icons/tb";
 // import { usePreview } from "~tabs/previewContext"
 
@@ -22,7 +21,8 @@ const EditingControls = ({
     showGhost,
     usePreview,
     isAudio,
-    publishBlob
+    publishBlob,
+    isModalOpened
 }) => {
 
     const {
@@ -356,10 +356,7 @@ const EditingControls = ({
     }
     
     const lastHistoryData = history[history.length - 1];
-    // console.log("Check Historyyyy", history)
-    // console.log(cutDataState, "lastHistoryDatalastHistoryData", lastHistoryData)
     const reprocessState = cutDataState?.find(cut => cut.id === lastHistoryData?.uniqid)
-    // console.log(uuidState, "reprocessStatereprocessState", reprocessState)
     return (
         <>
             <div>
@@ -390,7 +387,8 @@ const EditingControls = ({
                             style={{
                                 width: `${(trimState.end - trimState.start) * 100}%`,
                                 left: `${trimState.start * 100}%`,
-                                borderColor: isAuphonicUiMode ? '#50bb50' : '#10abd9'
+                                borderColor: isAuphonicUiMode ? '#50bb50' : '#10abd9',
+                                opacity: isModalOpened ? 0.3 : 1
                             }}
                         />
                         <div className={styles.trimmer}>
@@ -398,19 +396,30 @@ const EditingControls = ({
                                 className={`${styles.handle} ${styles.startHandle}`}
                                 onMouseDown={(e) => handleMouseDown(e, "start")}
                                 ref={startHandleRef}
-                                style={{ background: isAuphonicUiMode ? '#50bb50' : '#10abd9', left: `${trimState.start * 100}%` }}
+                                style={{ 
+                                    background: isAuphonicUiMode ? '#50bb50' : '#10abd9', 
+                                    left: `${trimState.start * 100}%`,
+                                    opacity: isModalOpened ? 0.3 : 1
+                                }}
                             />
                             <div
                                 className={`${styles.handle} ${styles.endHandle}`}
                                 onMouseDown={(e) => handleMouseDown(e, "end")}
                                 ref={endHandleRef}
-                                style={{ background: isAuphonicUiMode ? '#50bb50' : '#10abd9', left: `${trimState.end * 100}%` }}
+                                style={{ 
+                                    background: isAuphonicUiMode ? '#50bb50' : '#10abd9', 
+                                    left: `${trimState.end * 100}%`,
+                                    opacity: isModalOpened ? 0.3 : 1
+                                }}
                             />
                         </div>
                     </div>
                     <div
                         ref={waveContainerRef}
                         className={styles.waveform}
+                        style={{
+                            opacity: isModalOpened ? 0.3 : 1
+                        }}
                         onClick={handleWaveformClick}
                         onMouseMove={handleWaveformMouseMove}
                         onMouseEnter={handleWaveformMouseEnter}
@@ -419,12 +428,19 @@ const EditingControls = ({
                         <div
                             className={styles.cursor}
                             ref={customCursorRef}
-                            style={{ background: isAuphonicUiMode ? '#50bb50' : '#10abd9', left: `${cursorPosition * 100}%` }}
+                            style={{ 
+                                background: isAuphonicUiMode ? '#50bb50' : '#10abd9', 
+                                left: `${cursorPosition * 100}%`,
+                                opacity: isModalOpened ? 0.3 : 1
+                             }}
                         />
                         <div
                             className={styles.ghostCursor}
                             ref={ghostCursorRef}
-                            style={{ background: isAuphonicUiMode ? '#0AD68896' : 'rgba(16, 171, 217, 0.5)', opacity: showGhost ? 1 : 0 }}
+                            style={{
+                                background: isAuphonicUiMode ? '#0AD68896' : 'rgba(16, 171, 217, 0.5)', 
+                                opacity: showGhost ? 1 : 0 
+                            }}
                         />
                     </div>
                 </div>

@@ -18,7 +18,6 @@ const AUTH_HEADER = {
 
 export function PreviewProvider({ children }: { children: React.ReactNode }) {
     const waveSurferRef = useRef<WaveSurfer | null>(null);
-    const audioRef = useRef(null);
     const customCursorRef = useRef(null);
 
     const [blobUrl, setBlobUrl] = useState(null)
@@ -62,7 +61,6 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     const latestAuphonicDataRef = useRef(null)
     const showConfirmation = useRef(true)
     const currentUniqid = useRef(null)
-    const audioF = useRef(null)
     const undoRedoClick = useRef(null)
     const auphonicAlgorithm = useRef(null)
     const controllersRef = useRef([]); // This will hold the AbortController for each chunk
@@ -574,10 +572,6 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         }
         url.current = newBlobUrl;
         setDuration(originalDuration.current)
-        // if(audioRef.current){
-        //     // console.log("audioRef.current", url.current)
-        //     audioRef.current.src = newBlobUrl;
-        // }
     }
 
     const handleUndo = () => {
@@ -1147,6 +1141,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         sendPostMessage({ type: "download-playable-file", blob: blob })
     };
 
+    const isModalOpened = confirmSendToAuphonic || confirmPublish || auphonicProcessingError || uploadStatus || uploadError || showAuphonicAdvanceForm || isPublishing
 
     const value = {
         playPartialRecording,
@@ -1165,7 +1160,6 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         waveSurferRef,
         originalVideo,
         addToHistory,
-        audioRef,
         handleCancelEditing,
         changeMode,
         isEditMode,
@@ -1191,8 +1185,6 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         showAuphonicPreview,
         auphonicPlyrRef,
         auphonicVideoUrlPreview,
-        isVideoEndcoding,
-        audioF,
         showAuphonicAdvanceForm,
         setShowAuphonicAdvanceForm,
         confirmSendToAuphonic,
@@ -1225,7 +1217,9 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         handlePauseUpload,
         handleResumeUpload,
         tabsInfo,
-        publishingUpload
+        publishingUpload,
+        latestAuphonicDataRef,
+        isModalOpened
     };
 
     return (
