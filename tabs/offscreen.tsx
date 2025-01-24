@@ -13,8 +13,14 @@ let camOnlyChunks = [];
 let isCamOnlyRecordingDiscarded = false
 let isMicOnlyRecordingDiscarded = false
 let recordedStreamBase64 = null
-let audioBitsPerSecond = 128000;
-let videoBitsPerSecond = 5000000;
+
+//720p
+// let audioBitsPerSecond = 128000;
+// let videoBitsPerSecond = 5000000;
+
+// 1080p
+let audioBitsPerSecond = 192000;
+let videoBitsPerSecond = 8000000;
 
 let micOnlyRecorder = null;
 let micOnlyChunks = []
