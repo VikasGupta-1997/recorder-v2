@@ -568,6 +568,17 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     console.log("Message==>", message)
   }
 
+  if(message.type === 'TAKE_USER_INPUT'){
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs.length > 0) {
+        const activeTab = tabs[0];
+        console.log("activeTab", activeTab)
+        chrome.tabs.sendMessage(tabs[0]?.id, {type: 'SHOW_TAKE_USER_INPUT'} )
+      }
+    })
+  }
+  
+
   if(message.type === 'RECORDING_CHUNK_UPLOAD_COMPLETE_TO_BG') {
     console.log("CompletedTransfer==>", message)
   }
@@ -696,10 +707,13 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     chrome.storage.local.set({ "saving_in_indexdb": message.data })
   }
 
+  if(message.type === 'FALSE_FIRST_TIME'){
+    await chrome.storage.local.set({ firstTimeLaunch: false })
+  }
+
   if (message.type === 'INJECT_VIDEOCAM') {
-    // await chrome.storage.local.set({"isCamInjected": true})
     try {
-      chrome.storage.local.set({ isCamInjected: true }, function () {
+      chrome.storage.local.set({ isCamInjected: true, firstTimeLaunch: false }, function () {
         if (chrome.runtime.lastError) {
           if (chrome.runtime.lastError.message.includes("MAX_WRITE_OPERATIONS_PER_MINUTE")) {
           } else {
@@ -876,8 +890,11 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
           }
         } else {
           console.log("isCamOnlyisCamOnly", message)
-          chrome.runtime.sendMessage({ type: "START_RECORDING_OFFSCREEN", data: message.data, isCamOnly: message?.isCamOnly, isAudioOnly: message?.isAudioOnly });
-          return;
+          chrome.storage.local.get(["firstTimeLaunch"], result => {
+            const firstTimeLaunch = result?.firstTimeLaunch
+            chrome.runtime.sendMessage({ type: "START_RECORDING_OFFSCREEN", data: message.data, isCamOnly: message?.isCamOnly, isAudioOnly: message?.isAudioOnly, firstTimeLaunch });
+            return;
+          })
         }
       });
     } catch (error) {
@@ -886,8 +903,21 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 
   }
 
-  if (message.type === "SCREEN_SELECTION") {
-
+  if (message.type === "FIRST_RECORDING_CANCELED") {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs[0]?.id) {
+        chrome.tabs.sendMessage(tabs[0].id, { type: "FIRST_RECORDING_CANCELED_BG" })
+      }
+    })
+  }
+  if(message.type === 'FIRST_TIME_RECORDING') {
+    chrome.storage.local.get(['selectedCameraRecording'], result => {
+      const selectedCameraRecording = result?.selectedCameraRecording;
+      chrome.runtime.sendMessage({type: 'FIRST_TIME_RECORDING_OFFSCREEN' , camera: selectedCameraRecording})
+      setTimeout(async() => {
+        await chrome.storage.local.set({ "firstTimeLaunch": false })
+      }, 1000)
+    })
   }
   if (message.type === 'NAVIGATE_TO_TAB') {
     const originalTabId = message.originalTabId;

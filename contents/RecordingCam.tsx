@@ -23,6 +23,7 @@ const CountDown = 5
 const CustomButton = () => {
   const [mediaRecorder, setMediaRecorder] = useState(null)
   const [showStartOverlay, setShowStartOverlay] = useState(false);
+  const [showUserTakeInputScreen, setShowUserTakeInputScreen] = useState(false)
   const [isRestarted, setIsRestarted] = useState(false)
   const [showToolBar, setShowToolBar] = useStorage("showToolBar", false)
   const [isRecordingPaused, setIsRecordingPaused] = useStorage("isRecordingPaused", false)
@@ -285,6 +286,16 @@ const CustomButton = () => {
             case callBackConstants.POPUP_CLOSED:
               resetAllNew()
               break;
+            case "SHOW_TAKE_USER_INPUT": {
+              console.log("SHow User Take Input")
+              setShowUserTakeInputScreen(true)
+            }
+            break;
+            case "FIRST_RECORDING_CANCELED_BG": {
+              console.log("Cancel Called!!!")
+              setShowUserTakeInputScreen(false)
+            }
+            break;
             case "WINDOW_SELECTION_RESTART_CONTENT": {
               setShowStartOverlay(false)
               setIsRestarted(true)
@@ -295,31 +306,7 @@ const CustomButton = () => {
       );
     }
 
-  const onPortMethodAttach = () => {
-    chrome.runtime.onConnect.addListener((port) => {
-      console.log('Connected to background script:', port.name);
-
-      port.onMessage.addListener((message) => {
-        console.log('Message from background script via port:', message);
-
-        // Forward the message to the sandboxed page
-        window.postMessage({ type: 'from-extension', data: message.base64 }, '*');
-      });
-
-      // Listen for messages from the sandboxed page
-      window.addEventListener('message', (event) => {
-        if (event.source !== window || event.data.type !== 'from-sandbox') return;
-
-        console.log('Message from sandbox:', event.data);
-
-        // Forward the message to the background script
-        port.postMessage(event.data.data);
-      });
-    });
-  };
-
   useEffect(() => {
-    // onPortMethodAttach()
     onMountListners();
   }, [])
 
@@ -501,9 +488,9 @@ const CustomButton = () => {
 
   return <div>
     <iframe className={style['permissions-iframe']} ref={iframeRef} />
-    {showStartOverlay && (
+    {(showStartOverlay || showUserTakeInputScreen) && (
       <div className={style["recording-start-overlay"]}>
-        <div className={style["countdown-text"]}>{count}</div>
+       {showStartOverlay && <div className={style["countdown-text"]}>{count}</div>}
       </div>
     )}
     {
@@ -512,6 +499,27 @@ const CustomButton = () => {
         isPopupConfirmation={isPopupConfirmation}
       />
     }
+     {
+            showUserTakeInputScreen && <div onClick={() => {
+              console.log("Start to record!!")
+              chrome.runtime.sendMessage({type: "FIRST_TIME_RECORDING"})
+              setShowUserTakeInputScreen(false)
+            }} style={{
+              position: "fixed", /* Use fixed to keep it always in view */
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              fontSize: '42px',
+              fontFamily: 'sans-serif'
+            }}>
+                Click any where to start recording!
+            </div>
+          }
     <div className={style["draggable-container"]} >
       <Draggable
         position={position}

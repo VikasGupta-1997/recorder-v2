@@ -48,6 +48,7 @@ const OffScreen = () => {
   const [isWindowOnlyRecording, setIsWindowOnlyRecording] = useState(false)
   const [uploadChunksCall, setUploadChunksCall] = useState(false)
   const videoRef = useRef(null)
+  const settingsSufraceRef = useRef(null)
   const [base64Data, setBase64Data] = useState(null)
   const [isPreviewOpened, setIsPreviewOpened] = useState(false)
   const window10 = navigator.userAgent.match(/Windows NT 10.0/)
@@ -238,6 +239,7 @@ const OffScreen = () => {
   };
 
   const windowOnlyOption = async (screenStream, backgroundUrl) => {
+    chrome.runtime.sendMessage({type: "FALSE_FIRST_TIME"})
     // Get the webcam stream
     navigator.storage.persist();
     userMediaStream = await navigator.mediaDevices.getUserMedia({
@@ -387,7 +389,7 @@ const OffScreen = () => {
     recorder = mediaRecorder;
   }
 
-  const recordingScreens = async (selections) => {
+  const recordingScreens = async (selections, firstTimeLaunch) => {
     try {
       const audioDevice = selections?.micRecording?.value;
       const isAudioDeviceSelected = selections?.micRecording && audioDevice !== "mic_off";
@@ -416,11 +418,20 @@ const OffScreen = () => {
           setIsWindowOnlyRecording(true)
         } else {
           console.log("NOW APPEND VIDEO@!!!")
-          appendVideoOrNot(selections?.cameraRecording)
-          setShowVideo(true)
+          // chrome.storage.local.get(["firstTimeLaunch"], result => {
+            if(!firstTimeLaunch && !isVidDisable){
+              appendVideoOrNot(selections?.cameraRecording)
+              setShowVideo(true)
+            }
+          // })
         }
       }
       videoTrack.addEventListener('ended', () => {
+        console.log("Ending Called!!!")
+        if(firstTimeLaunch && !isVidDisable){
+          console.log("NO VIDEOOO")
+          chrome.runtime.sendMessage({ type: "FIRST_RECORDING_CANCELED" })
+        }
         if (isRecordingStarted) {
           handleRemoveVideo()
         } else {
@@ -432,9 +443,18 @@ const OffScreen = () => {
       const audioTrack = await mergeAudioWithStream(isAudioDeviceSelected, audioDevice)
       setAudioVideoStreams({ audioTrack: audioTrack, videoTrack: videoTrack })
       setNewStream(displayStream)
-      chrome.runtime.sendMessage({ type: "CHECK_FOR_SYSTEM_SCREEN", screenShareSelection: settings?.displaySurface })
-      chrome.runtime.sendMessage({ type: "START_COUNTDOWN" })
+      settingsSufraceRef.current = settings?.displaySurface
+      // chrome.storage.local.get(["firstTimeLaunch"], result => {
+        if(firstTimeLaunch && !isVidDisable) {
+          chrome.runtime.sendMessage({ type: "TAKE_USER_INPUT" })
+        } else {
+          chrome.runtime.sendMessage({ type: "CHECK_FOR_SYSTEM_SCREEN", screenShareSelection: settings?.displaySurface })
+          chrome.runtime.sendMessage({ type: "START_COUNTDOWN" })
+        }
+      // })
+     
     } catch (error) {
+      console.log("Rejected Clain@@@")
       console.log("error", error)
       handleRemoveVideo()
     }
@@ -830,6 +850,13 @@ const OffScreen = () => {
             chrome.runtime.sendMessage({ type: 'pauseTimer' })
           }
             break;
+          case "FIRST_TIME_RECORDING_OFFSCREEN": {
+            appendVideoOrNot(message?.camera)
+            setShowVideo(true)
+            chrome.runtime.sendMessage({ type: "CHECK_FOR_SYSTEM_SCREEN", screenShareSelection: settingsSufraceRef.current })
+            chrome.runtime.sendMessage({ type: "START_COUNTDOWN" })
+          }
+          break;
           case "AUDIOONLY_RECORDING_DELETE": {
             isMicOnlyRecordingDiscarded = true
             chrome.runtime.sendMessage({ type: 'stopTimer' })
@@ -882,7 +909,7 @@ const OffScreen = () => {
               chrome.runtime.sendMessage({ type: "OPEN_MIC_ONLY_RECORDING", selections: message?.data })
             } else {
               recordSetSelections(message?.data)
-              recordingScreens(message?.data)
+              recordingScreens(message?.data, message.firstTimeLaunch)
             }
           }
             break;
