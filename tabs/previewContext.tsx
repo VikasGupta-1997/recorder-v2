@@ -521,7 +521,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                 console.log("ffmpeg-loaded Call from Demo!!", message)
                 hasAudio.current = message.hasAudio
                 durationTillNow.current = +message.durationTillNow
-                chrome.runtime.sendMessage({ type: "START_UPLOAD_CHUNKS" })
+                chrome.runtime.sendMessage({ type: "START_UPLOAD_CHUNKS_BG" })
                 chrome.runtime.sendMessage({ type: "PREVIEW_TAB_INFO" })
             }
             if (message.type === "ffmpeg-load-error") {

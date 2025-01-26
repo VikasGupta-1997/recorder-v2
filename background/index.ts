@@ -126,8 +126,9 @@ const openNewWindow = (url, sendMessageAction, selections, isWindowSelected) => 
         }
       };
       chrome.tabs.onUpdated.addListener(checkTabLoaded);
-      chrome.windows.onRemoved.addListener((closedWindowId) => {
+      chrome.windows.onRemoved.addListener(async (closedWindowId) => {
         if (closedWindowId === cameraWindowId) {
+          await setupOffscreenDocument()
           if (url === "tabs/camera.html") {
             chrome.runtime.sendMessage({ type: "END_CAM_ONLY_RECORDING" })
           }
@@ -797,7 +798,18 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   // }
 
   if (message.type === 'END_MIC_ONLY_RECORDING') {
+    await setupOffscreenDocument()
     chrome.runtime.sendMessage({ type: "END_MIC_ONLY_RECORDING_AUDIO" })
+  }
+
+  if(message.type === 'START_CAM_ONLY_RECORDING_BG'){
+    await setupOffscreenDocument()
+    chrome.runtime.sendMessage({ type: "START_CAM_ONLY_RECORDING" , data: message.data})
+  }
+
+  if(message.type === 'START_MIC_ONLY_RECORDING_BG'){
+    await setupOffscreenDocument()
+    chrome.runtime.sendMessage({ type: "START_MIC_ONLY_RECORDING" , data: message.data})
   }
 
   if (message.type === 'GET_SYSTEM_SCREEN_RECORDING') {
@@ -809,6 +821,7 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
       isToOpenPreview = false
     }
     stopTimer()
+    await setupOffscreenDocument()
     chrome.runtime.sendMessage({ type: "RECORDING_END_OFFSCREEN" })
     // chrome.storage.local.set({ "isRecordingInProgress": false })
     try {
@@ -838,6 +851,7 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   }
 
   if (message.type === 'RECORDING_RESTART') {
+    await setupOffscreenDocument()
     if (message?.isToOpenPreview === 'setToFalse') {
       isToOpenPreview = false
     }
@@ -937,6 +951,10 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
       }, 1000)
     })
   }
+  if(message.type === 'START_UPLOAD_CHUNKS_BG') {
+    await setupOffscreenDocument();
+    chrome.runtime.sendMessage({type: "START_UPLOAD_CHUNKS"})
+  }
   if (message.type === 'NAVIGATE_TO_TAB') {
     const originalTabId = message.originalTabId;
     chrome.tabs.update(originalTabId, { active: true });
@@ -976,9 +994,10 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
               previewTabId = tab.id
               previewTabsIds.push(tab.id)
               chrome.tabs.sendMessage(tab.id, { type: "RECORDING_COMPLETED" }, function () { })
-              chrome.tabs.onUpdated.addListener(function listener(tabId, info) {
+              chrome.tabs.onUpdated.addListener(async function listener(tabId, info) {
                 if (tabId === tab.id && info.status === 'complete') {
                   chrome.tabs.onUpdated.removeListener(listener);
+                  await setupOffscreenDocument()
                   chrome.runtime.sendMessage({ type: "PREVIEW_OPENED_SUCCESSFULY" , tabId: previewTabId, tabList: previewTabsIds})
                 }
               });

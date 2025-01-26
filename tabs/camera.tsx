@@ -43,7 +43,7 @@ const Camera = () => {
             console.log("NOW START RECORDING!!", selections)
             setIsRecordingPaused(false)
             chrome.storage.local.set({"isRecordingPaused": false})
-            chrome.runtime.sendMessage({type: "START_CAM_ONLY_RECORDING", data: selections})
+            chrome.runtime.sendMessage({type: "START_CAM_ONLY_RECORDING_BG", data: selections})
             // recordedChunksV = []
             // startRecording()
         }

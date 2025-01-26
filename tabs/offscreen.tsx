@@ -822,14 +822,12 @@ const OffScreen = () => {
           }
             break;
           case "START_CAM_ONLY_RECORDING": {
-            console.log("START_CAM_ONLY_RECORDING", message)
             camOnlyChunks = []
             console.log("YEAH Mormal callww")
             recordCameraOnly(message?.data)
           }
             break;
           case "START_MIC_ONLY_RECORDING": {
-            console.log("START_MIC_ONLY_RECORDING", message)
             recordMicOnly(message?.data)
           }
             break;

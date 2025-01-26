@@ -45,7 +45,7 @@ const Audio = () => {
         if (startRecordingNow) {
             console.log("startRecordingNowstartRecordingNow", selections)
             startRecording();
-            chrome.runtime.sendMessage({type: "START_MIC_ONLY_RECORDING", data: selections})
+            chrome.runtime.sendMessage({type: "START_MIC_ONLY_RECORDING_BG", data: selections})
         }
     }, [startRecordingNow, selections]);
 
