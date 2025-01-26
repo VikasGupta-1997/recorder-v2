@@ -815,18 +815,6 @@ const OffScreen = () => {
             setIsPreviewOpened(true)
           }
             break;
-          case "OPEN_SANDBOX": {
-            console.log("OFFSCREEN OPEN_SANDBOX!!!")
-            // use window.open to create a popup
-            const sandboxWin = window.open(chrome.runtime.getURL('sandboxes/demo.html'), "SANDBOXED!", "height=800,width=500");
-            // fire a postMessage event to the sandbox. Inspect the sandbox and see the 
-            // message in the console.
-            setTimeout(() => {
-              console.log("SENDING!!!!")
-              sandboxWin.postMessage({ "message": "It works!!" }, "*");
-            }, 4000)
-          }
-            break;
           case "END_MIC_ONLY_RECORDING": {
             isMicOnlyRecordingDiscarded = false
             console.log("END_CAM_ONLY_RECORDING", micOnlyRecorder)
@@ -954,18 +942,11 @@ const OffScreen = () => {
             // console.log("RECORDING_PLAY_OFFSCREEN FROM OFFSCREEN!")
           }
             break;
-          case "RECORDING_DELETE_OFFSCREEN": {
-            console.log("RECORDING_DELETE_OFFSCREEN FROM OFFSCREEN!")
-          }
-            break;
           case "RECORDING_RESTART_OFFSCREEN": {
             chrome.runtime.sendMessage({ type: "PreviewShow" })
             setIsDiscardRecording(true)
             setStartToRecord(false)
             restartRecording()
-          }
-            break;
-          case "CHECK_VID_BLOB_OFFSCREEN": {
           }
             break;
         }

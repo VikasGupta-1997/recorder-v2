@@ -2,6 +2,38 @@
 import { sendToContentScript } from '@plasmohq/messaging'
 
 const OFFSCREEN_URL = chrome.runtime.getURL('tabs/offscreen.html');
+let creating;
+
+async function setupOffscreenDocument() {
+  // Check all windows controlled by the service worker to see if one
+  // of them is the offscreen document with the given path
+  const offscreenUrl = OFFSCREEN_URL;
+  const existingContexts = await chrome.runtime.getContexts({
+    contextTypes: ['OFFSCREEN_DOCUMENT'] as any,
+    documentUrls: [offscreenUrl]
+  });
+  console.log(existingContexts.length > 0,"existingContexts==>", existingContexts )
+  if (existingContexts.length > 0) {
+    console.log("I am here!!!")
+    return;
+  }
+  console.log("Create!!", creating)
+  // create offscreen document
+  if (creating) {
+    console.log("GHere!!")
+    await creating;
+  } else {
+    console.log("Creating Here!!!!!")
+    creating = chrome.offscreen.createDocument({
+      url: OFFSCREEN_URL,
+      reasons: ["USER_MEDIA"] as any,
+      justification: "screen recording using getUserMedia apis",
+    });
+    await creating;
+    creating = null;
+  }
+}
+
 const createOffscreenDocument = async () => {
   try {
     // Check if an offscreen document already exists
@@ -26,7 +58,8 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   if (details.reason === 'install') {
     console.log("INSTALEDDD FIRST TIME!!!")
     // This is the first time the extension is installed
-    await createOffscreenDocument()
+    // await createOffscreenDocument()
+    await setupOffscreenDocument()
     await chrome.storage.local.set({ firstTimeLaunch: true });
     // chrome.tabs.query({}, function(tabs) {
     //   // Reload each tab
@@ -314,6 +347,7 @@ function startBadgeCountdown() {
         console.log("resultresult", result)
         // startTimer(result?.screenShareSelection)
         console.log("STARTED RECORDING!!!!")
+        await setupOffscreenDocument()
         await chrome.storage.local.set({ "showToolBar": true })
         chrome.runtime.sendMessage({ type: "NEW_RECORDING_STARTED_OFFSCREEN" }, () => {
           startTimer();
@@ -700,10 +734,6 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     timer = 0;
   }
 
-  if (message.type === "CHECK_VID_BLOB") {
-    chrome.runtime.sendMessage({ type: "CHECK_VID_BLOB_OFFSCREEN" })
-  }
-
   if (message.type === 'STOP_WEBCAM_STREAM') {
     chrome.runtime.sendMessage({ type: "STOP_CAM_RECORD_IN_IFRAME" })
   }
@@ -799,10 +829,6 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     chrome.runtime.sendMessage({ type: "RECORDING_PLAY_OFFSCREEN" })
   }
 
-  if (message.type === 'RECORDING_DELETE') {
-    chrome.runtime.sendMessage({ type: "RECORDING_DELETE_OFFSCREEN" })
-  }
-
   if (message.type === 'NoPreviewShow') {
     isToOpenPreview = false
   }
@@ -837,12 +863,14 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   }
 
   if (message.type === 'OPEN_CAM_ONLY') {
+    await setupOffscreenDocument();
     setTimeout(() => {
       chrome.runtime.sendMessage({ type: "START_RECORDING_OFFSCREEN", data: message.data, isCamOnly: message?.isCamOnly, isAudioOnly: message?.isAudioOnly });
     }, 250)
   }
 
   if (message.type === 'OPEN_MIC_ONLY') {
+    await setupOffscreenDocument();
     setTimeout(() => {
       chrome.runtime.sendMessage({ type: "START_RECORDING_OFFSCREEN", data: message.data, isCamOnly: message?.isCamOnly, isAudioOnly: message?.isAudioOnly });
     }, 250)
@@ -853,7 +881,10 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   }
 
   if (message.type === 'NEW_RECORDING_STARTED') {
-    chrome.runtime.sendMessage({ type: "NEW_RECORDING_STARTED_OFFSCREEN" });
+    await setupOffscreenDocument()
+    setTimeout(() => {
+      chrome.runtime.sendMessage({ type: "NEW_RECORDING_STARTED_OFFSCREEN" });
+    }, 250)
   }
 
   if (message.type === 'CLOSE_POPUP') {
@@ -862,6 +893,7 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 
   if (message.type === 'START_TO_RECORD') {
     const offscreenExists = await chrome.offscreen.hasDocument();
+    await setupOffscreenDocument();
     // if (!offscreenExists) {
     //   await createOffscreenDocument()
     // }
@@ -873,9 +905,12 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
         'selectedScreenRecordings': message.data?.screenRecording,
       }, function () {
           console.log("isCamOnlyisCamOnly", message)
-          chrome.storage.local.get(["firstTimeLaunch"], result => {
+          chrome.storage.local.get(["firstTimeLaunch"], async result => {
+            await setupOffscreenDocument();
             const firstTimeLaunch = result?.firstTimeLaunch
-            chrome.runtime.sendMessage({ type: "START_RECORDING_OFFSCREEN", data: message.data, isCamOnly: message?.isCamOnly, isAudioOnly: message?.isAudioOnly, firstTimeLaunch });
+            setTimeout(() => {
+              chrome.runtime.sendMessage({ type: "START_RECORDING_OFFSCREEN", data: message.data, isCamOnly: message?.isCamOnly, isAudioOnly: message?.isAudioOnly, firstTimeLaunch });
+            }, 250)
             return;
           })
       });
@@ -893,7 +928,8 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     })
   }
   if(message.type === 'FIRST_TIME_RECORDING') {
-    chrome.storage.local.get(['selectedCameraRecording'], result => {
+    chrome.storage.local.get(['selectedCameraRecording'], async result => {
+      await setupOffscreenDocument()
       const selectedCameraRecording = result?.selectedCameraRecording;
       chrome.runtime.sendMessage({type: 'FIRST_TIME_RECORDING_OFFSCREEN' , camera: selectedCameraRecording})
       setTimeout(async() => {

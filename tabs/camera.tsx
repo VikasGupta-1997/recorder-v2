@@ -256,7 +256,6 @@ const Camera = () => {
                 // setIsRecordingPaused(true);
                 // recorder.pause();
                 // chrome.runtime.sendMessage({ type: "pauseTimer" })
-                // chrome.runtime.sendMessage({ type: "RECORDING_DELETE" })
             }
                 break;
         }

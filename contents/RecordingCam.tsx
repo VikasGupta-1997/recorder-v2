@@ -183,18 +183,6 @@ const CustomButton = () => {
               })
             }
               break;
-            case "OPEN_SANDBOX": {
-              // use window.open to create a popup
-              const sandboxWin = window.open(chrome.runtime.getURL('sandboxes/demo.html'), "SANDBOXED!", "height=800,width=500");
-              // fire a postMessage event to the sandbox. Inspect the sandbox and see the 
-              // message in the console.
-              setTimeout(() => {
-                console.log("SENDING content!!!!")
-                chrome.runtime.sendMessage({ type: "YEAHHHH" })
-                sandboxWin.postMessage({ "message": "It works!!" }, "*");
-              }, 4000)
-            }
-              break;
             case "DATA_FOR_SANDBOX": {
               console.log(sender, "Try Sending from HEre!!!", sendResponse)
               setTimeout(() => {

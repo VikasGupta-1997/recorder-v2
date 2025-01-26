@@ -329,7 +329,6 @@ const Audio = () => {
                 chrome.runtime.sendMessage({ type: "AUDIOONLY_RECORDING_PAUSE" });
 
                 // resetAll();
-                // chrome.runtime.sendMessage({ type: "RECORDING_DELETE" });
             }
                 break;
         }
