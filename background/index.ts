@@ -367,6 +367,11 @@ const fetchUser = async user => {
 const handleLogin = async (state) => {
   chrome.runtime.sendMessage({ type: 'login_loading', state: true })
   try {
+    if(state.rememberMe){
+      await chrome.storage.local.set({ "emailRememberMe": state.userName })
+    } else {
+      await chrome.storage.local.set({ "emailRememberMe": null })
+    }
     const data = await authenticateEmail(state.userName)
     if (data.result === 'success') {
       try {
@@ -540,10 +545,35 @@ const refreshMediaList = async(userDetails, project) => {
   }
 }
 
+const handleLogout = async (userDetails) => {
+  const storageData = await chrome.storage.local.get("emailRememberMe");
+  const emailRememberMe = storageData.emailRememberMe;
+  await chrome.storage.local.clear()
+  await chrome.storage.sync.clear()
+  if (emailRememberMe !== undefined) {
+      await chrome.storage.local.set({ emailRememberMe });
+  }
+  chrome.runtime.sendMessage({ type: "LOGOUT_SUCCESS" })
+  try {
+      await fetch(`${process.env.PLASMO_PUBLIC_ADILO_API}/logout`, {
+          method: 'GET',
+          headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${userDetails.access_token}`
+          },
+      })
+  } catch(error){
+      console.log("Error", error)
+  }
+}
+
 const chunksStorage = {}; 
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   if (message.type === 'START_LOGIN') {
     handleLogin(message.state)
+  }
+  if(message.type === 'INITIATE_LOGOUT'){
+    handleLogout(message.userDetails)
   }
   if (message.type === 'GET_PROJECT_LIST') {
     getProjectList(message.userDetails)

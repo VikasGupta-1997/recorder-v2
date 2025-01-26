@@ -133,6 +133,10 @@ function IndexPopup() {
             setUserDetails(message.userDetails)
           }
             break;
+          case 'LOGOUT_SUCCESS': {
+            setUserDetails(null)
+          }
+          break;
           case "START_RECORDING": {
             console.log("DRTT", message)
           }

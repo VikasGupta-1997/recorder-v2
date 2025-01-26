@@ -27,7 +27,7 @@ const Form = ({ onSubmit, setState, state, loading }) => {
             </div>
             <div className="flex justify-between pt-3 px-2" >
                 <div className="checkbox flex gap-1" >
-                    <input disabled={loading} id="remember-me" type="checkbox" />
+                    <input onClick={(event) => setState(prev => ({...prev, rememberMe: (event.target as HTMLInputElement).checked }))} checked={state.rememberMe} disabled={loading} id="remember-me" type="checkbox" />
                     <label htmlFor="remember-me" >Remember Me</label>
                 </div>
                 <div className="forgot-pass text-blue-500" >
@@ -52,6 +52,7 @@ const LoginForm = () => {
         forgetEmail: '',
         password: '',
         showPassword: false,
+        rememberMe: false
     })
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
@@ -71,6 +72,11 @@ const LoginForm = () => {
                 }
             }
         )
+        chrome.storage.local.get(["emailRememberMe"], result => {
+            if(result?.emailRememberMe){
+                setState(prev => ({...prev, userName: result?.emailRememberMe, rememberMe: true }))
+            }
+        })
     }, [])
 
     const handleLoginSubmit = async (e) => {

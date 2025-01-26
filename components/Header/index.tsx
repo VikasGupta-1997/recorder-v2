@@ -1,43 +1,19 @@
 
 import { VscChromeMinimize } from "react-icons/vsc";
 import { IoMdClose } from "react-icons/io";
-
 import './header.css'
-import { callBackConstants } from "~utils/constants";
-import { AdiloLogo, Home, LogoutSvg, OpenOptions } from "~utils/Icons";
-import { useEffect, useRef, useState } from "react";
+import { AdiloLogo, Home, OpenOptions } from "~utils/Icons";
 import CustomMenu from "~components/Menu";
 
 function Header({ inRecordingMode, setInRecordingMode, userDetails }) {
     const closePopUp = () => {
-        // chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-        // chrome.tabs.sendMessage(tabs[0].id, { type: callBackConstants.POPUP_CLOSED }, function(){})
-        // })
         window.close()
     }
-
-    const handleLogout = async () => {
-        try {
-            await fetch(`${process.env.PLASMO_PUBLIC_ADILO_API}/logout`, {
-                method: 'GET',
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${userDetails.access_token}`
-                },
-            })
-        } catch(error){
-            console.log("Error", error)
-        }
-        await chrome.storage.local.clear()
-        await chrome.storage.sync.clear()
-    }
-
 
     const handleMenuClick = async option => {
         switch (option.id) {
             case 5: {
-                handleLogout()
-               
+                chrome.runtime.sendMessage({type: "INITIATE_LOGOUT", userDetails})
             }
                 break;
         }
