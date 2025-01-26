@@ -58,19 +58,20 @@ const OffScreen = () => {
   // console.log("1121", base64)
   useEffect(() => {
     if (startToRecord) {
+      console.log("Recording Started!!1", recordSelections)
       if (isWindowOnlyRecording) {
         chunks = []
         isRecordingDiscarded = false
         // resetAll()
         recorder = null
         console.log("Is normal  call")
-        windowOnlyOption(newStream, "./giphy.gif")
         chrome.runtime.sendMessage({ type: "SCREEN_SHARE_WINDOW_SELECTED", selections: recordSelections })
+        windowOnlyOption(newStream, "./giphy.gif")
       } else {
         recordStream()
       }
     }
-  }, [audioVideoStreams, startToRecord, isWindowOnlyRecording])
+  }, [audioVideoStreams, startToRecord, isWindowOnlyRecording, recordSelections])
 
   const uploadChunks = () => {
     console.log("uploadChunks started!!")
@@ -241,7 +242,7 @@ const OffScreen = () => {
   const windowOnlyOption = async (screenStream, backgroundUrl) => {
     // chrome.runtime.sendMessage({type: "FALSE_FIRST_TIME"})
     // Get the webcam stream
-    navigator.storage.persist();
+    // navigator.storage.persist();
     userMediaStream = await navigator.mediaDevices.getUserMedia({
       video: {
         deviceId: recordSelections?.cameraRecording?.value
@@ -390,6 +391,7 @@ const OffScreen = () => {
   }
 
   const recordingScreens = async (selections, firstTimeLaunch) => {
+    console.log(firstTimeLaunch,"recordingScreens function Called!!!", selections)
     try {
       const audioDevice = selections?.micRecording?.value;
       const isAudioDeviceSelected = selections?.micRecording && audioDevice !== "mic_off";
@@ -404,10 +406,13 @@ const OffScreen = () => {
         } : {
           video: { displaySurface: 'monitor', deviceId: videoDevice },
         });
+        console.log("displayStreamdisplayStream",displayStream)
       videoTrack = displayStream.getVideoTracks()[0];
+      console.log("videoTrack==>", videoTrack)
       const settings = videoTrack.getSettings();
       const injectVideo = settings?.displaySurface === 'browser'
       const isWindowVideo = settings?.displaySurface === "window"
+      console.log("isVidDisable==>", isVidDisable)
       if (isVidDisable) {
         setShowVideo(false)
       } else {
@@ -441,6 +446,9 @@ const OffScreen = () => {
       });
 
       const audioTrack = await mergeAudioWithStream(isAudioDeviceSelected, audioDevice)
+      console.log("audioTrack===>", audioTrack)
+      console.log("videoTrack===>", videoTrack)
+      console.log("Final displayStream", displayStream)
       setAudioVideoStreams({ audioTrack: audioTrack, videoTrack: videoTrack })
       setNewStream(displayStream)
       settingsSufraceRef.current = settings?.displaySurface
@@ -448,6 +456,7 @@ const OffScreen = () => {
         if(firstTimeLaunch && !isVidDisable && !injectVideo && !isWindowVideo) {
           chrome.runtime.sendMessage({ type: "TAKE_USER_INPUT" })
         } else {
+          console.log("COME HERE!!1")
           chrome.runtime.sendMessage({ type: "CHECK_FOR_SYSTEM_SCREEN", screenShareSelection: settings?.displaySurface })
           chrome.runtime.sendMessage({ type: "START_COUNTDOWN" })
         }
@@ -513,7 +522,8 @@ const OffScreen = () => {
 
   const streamRef = useRef({ videoTrack: null, audioTrack: null })
   const recordStream = async () => {
-    navigator.storage.persist();
+    console.log("recordStream Called!!!", audioVideoStreams)
+    // navigator.storage.persist();
     const { videoTrack, audioTrack } = audioVideoStreams
     console.log("videoTrack==>", videoTrack)
     console.log("audioTrack==>", audioTrack)
@@ -533,6 +543,7 @@ const OffScreen = () => {
 
     }
     let mediaRecorder
+    console.log("trackstracks==>", tracks)
     if (tracks.length > 0) {
       // const { qualityValue } = await chrome.storage.local.get(["qualityValue"]);
 
@@ -682,7 +693,7 @@ const OffScreen = () => {
   };
 
   const recordMicOnly = async selections => {
-    navigator.storage.persist();
+    // navigator.storage.persist();
     console.log("recordMicOnly121", selections)
     const stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: selections?.micRecording?.value } });
     micOnlyRecorder = new MediaRecorder(stream);
@@ -706,7 +717,7 @@ const OffScreen = () => {
   }
 
   const recordCameraOnly = async (selections) => {
-    navigator.storage.persist();
+    // navigator.storage.persist();
     const mediaStream = await navigator.mediaDevices.getUserMedia({
       audio: { deviceId: selections?.micRecording?.value },
       video: { deviceId: selections?.cameraRecording?.value }
@@ -887,7 +898,7 @@ const OffScreen = () => {
           }
             break;
           case "START_RECORDING_OFFSCREEN": {
-            console.log("MESS OFF", message)
+            console.log("MESS OFF footer Start recording called!", message)
             if (message?.isCamOnly) {
               chrome.runtime.sendMessage({ type: "OPEN_CAM_ONLY_RECORDING", selections: message?.data })
             } else if (message?.isAudioOnly) {

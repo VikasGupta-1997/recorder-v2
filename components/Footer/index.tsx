@@ -1,5 +1,3 @@
-import { callBackConstants } from '~utils/constants'
-
 import './footer.css'
 import { BsRecordCircle } from 'react-icons/bs'
 import { useEffect } from 'react'
@@ -10,6 +8,7 @@ const Footer = ({ selections, isRecordingInProgress, formattedTimeRef }) => {
   const isDisabled = Object.values(selections)?.every((selection: selectOption) => !!selection?.disable)
 
   const handleRecording = () => {
+    console.log("selections===>", selections)
     if (isRecordingInProgress) {
       // console.log("HANDLE STOP RECORDING")
       chrome.runtime.sendMessage({ type: "stopTimer" })
@@ -28,18 +27,19 @@ const Footer = ({ selections, isRecordingInProgress, formattedTimeRef }) => {
         window?.close()
       }, 250)
       return;
+    } else {
+      if (selections?.screenRecording?.value === 'camOnly') {
+        chrome.runtime.sendMessage({ type: "START_TO_RECORD", data: selections, isCamOnly: true, isAudioOnly: false })
+        // chrome.runtime.sendMessage({ type: "OPEN_CAM_ONLY_RECORDING", selections: selections })
+      } else if (selections?.screenRecording?.value === 'audioOnly') {
+        chrome.runtime.sendMessage({ type: "START_TO_RECORD", data: selections, isCamOnly: false, isAudioOnly: true })
+        // chrome.runtime.sendMessage({ type: "OPEN_MIC_ONLY_RECORDING", selections: selections, isCamOnly: false, isAudioOnly: true })
+      }
+      else {
+        chrome.runtime.sendMessage({ type: "START_TO_RECORD", data: selections, isCamOnly: false , isAudioOnly: false})
+      }
     }
     // return;
-    if (selections?.screenRecording?.value === 'camOnly') {
-      chrome.runtime.sendMessage({ type: "START_TO_RECORD", data: selections, isCamOnly: true, isAudioOnly: false })
-      // chrome.runtime.sendMessage({ type: "OPEN_CAM_ONLY_RECORDING", selections: selections })
-    } else if (selections?.screenRecording?.value === 'audioOnly') {
-      chrome.runtime.sendMessage({ type: "START_TO_RECORD", data: selections, isCamOnly: false, isAudioOnly: true })
-      // chrome.runtime.sendMessage({ type: "OPEN_MIC_ONLY_RECORDING", selections: selections, isCamOnly: false, isAudioOnly: true })
-    }
-    else {
-      chrome.runtime.sendMessage({ type: "START_TO_RECORD", data: selections, isCamOnly: false , isAudioOnly: false})
-    }
     window.close();
   }
 

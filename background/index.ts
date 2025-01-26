@@ -869,7 +869,9 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   }
 
   if (message.type === 'START_COUNTDOWN') {
+    console.log("Now I am in start count down!")
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      console.log("Check for tab query !!!", tabs)
       if (tabs[0]?.id) {
         chrome.tabs.sendMessage(tabs[0].id, { type: "START_COUNTDOWN_CONTENT" })
       }
@@ -906,6 +908,7 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   }
 
   if (message.type === 'START_TO_RECORD') {
+    console.log("START_TO_RECORD Check Called!!!", message)
     const offscreenExists = await chrome.offscreen.hasDocument();
     await setupOffscreenDocument();
     // if (!offscreenExists) {

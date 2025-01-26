@@ -222,6 +222,7 @@ const CustomButton = () => {
             }
               break;
             case "START_COUNTDOWN_CONTENT": {
+              console.log("Get Call START_COUNTDOWN_CONTENT")
               setShowStartOverlay(true)
             }
               break;
@@ -288,6 +289,7 @@ const CustomButton = () => {
   // useEffect(() => countDown(showStartOverlay, count, setCount, setShowStartOverlay, setStartRecordingNow), [showStartOverlay, count]);
   useEffect(() => {
     if (showStartOverlay) {
+      console.log("Now I am in counting !!!!", count)
       if (count > 1) {
         const timer = setTimeout(() => {
           setCount(count - 1);
@@ -295,6 +297,7 @@ const CustomButton = () => {
 
         return () => clearTimeout(timer); // Clear the timer on cleanup
       } else if (count === 1) {
+        console.log("now count is 1")
         const timer = setTimeout(() => {
           setShowStartOverlay(false)
           setStartRecordingNow(true)
@@ -326,6 +329,7 @@ const CustomButton = () => {
 
   useEffect(() => {
     if (startRecordingNow) {
+      console.log("Now Starting Recording from 332 line")
       startRecordingEffect()
     }
   }, [startRecordingNow])
