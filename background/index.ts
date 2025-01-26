@@ -707,13 +707,9 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     chrome.storage.local.set({ "saving_in_indexdb": message.data })
   }
 
-  if(message.type === 'FALSE_FIRST_TIME'){
-    await chrome.storage.local.set({ firstTimeLaunch: false })
-  }
-
   if (message.type === 'INJECT_VIDEOCAM') {
     try {
-      chrome.storage.local.set({ isCamInjected: true, firstTimeLaunch: false }, function () {
+      chrome.storage.local.set({ isCamInjected: true }, function () {
         if (chrome.runtime.lastError) {
           if (chrome.runtime.lastError.message.includes("MAX_WRITE_OPERATIONS_PER_MINUTE")) {
           } else {

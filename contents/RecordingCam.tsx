@@ -517,7 +517,7 @@ const CustomButton = () => {
               fontSize: '42px',
               fontFamily: 'sans-serif'
             }}>
-                Click any where to start recording!
+                Double Click any where to start recording!
             </div>
           }
     <div className={style["draggable-container"]} >

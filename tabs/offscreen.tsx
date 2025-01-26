@@ -239,7 +239,7 @@ const OffScreen = () => {
   };
 
   const windowOnlyOption = async (screenStream, backgroundUrl) => {
-    chrome.runtime.sendMessage({type: "FALSE_FIRST_TIME"})
+    // chrome.runtime.sendMessage({type: "FALSE_FIRST_TIME"})
     // Get the webcam stream
     navigator.storage.persist();
     userMediaStream = await navigator.mediaDevices.getUserMedia({
@@ -419,7 +419,7 @@ const OffScreen = () => {
         } else {
           console.log("NOW APPEND VIDEO@!!!")
           // chrome.storage.local.get(["firstTimeLaunch"], result => {
-            if(!firstTimeLaunch && !isVidDisable){
+            if(!firstTimeLaunch && !isVidDisable && !injectVideo && !isWindowVideo){
               appendVideoOrNot(selections?.cameraRecording)
               setShowVideo(true)
             }
@@ -428,7 +428,7 @@ const OffScreen = () => {
       }
       videoTrack.addEventListener('ended', () => {
         console.log("Ending Called!!!")
-        if(firstTimeLaunch && !isVidDisable){
+        if(firstTimeLaunch && !isVidDisable && !injectVideo && !isWindowVideo){
           console.log("NO VIDEOOO")
           chrome.runtime.sendMessage({ type: "FIRST_RECORDING_CANCELED" })
         }
@@ -445,7 +445,7 @@ const OffScreen = () => {
       setNewStream(displayStream)
       settingsSufraceRef.current = settings?.displaySurface
       // chrome.storage.local.get(["firstTimeLaunch"], result => {
-        if(firstTimeLaunch && !isVidDisable) {
+        if(firstTimeLaunch && !isVidDisable && !injectVideo && !isWindowVideo) {
           chrome.runtime.sendMessage({ type: "TAKE_USER_INPUT" })
         } else {
           chrome.runtime.sendMessage({ type: "CHECK_FOR_SYSTEM_SCREEN", screenShareSelection: settings?.displaySurface })
