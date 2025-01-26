@@ -85,12 +85,6 @@ const CustomButton = () => {
     // await chrome.storage.local.set({ "isCamInjected": false })
     try {
       chrome.storage.local.set({ isCamInjected: false }, function () {
-        if (chrome.runtime.lastError) {
-          if (chrome.runtime.lastError.message.includes("MAX_WRITE_OPERATIONS_PER_MINUTE")) {
-          } else {
-          }
-        } else {
-        }
       });
     } catch (error) {
       console.error("Caught exception: ", error);
@@ -110,12 +104,6 @@ const CustomButton = () => {
         // chrome.storage.local.set({ "selectedCameraRecording": data })
         try {
           chrome.storage.local.set({ selectedCameraRecording: data }, function () {
-            if (chrome.runtime.lastError) {
-              if (chrome.runtime.lastError.message.includes("MAX_WRITE_OPERATIONS_PER_MINUTE")) {
-              } else {
-              }
-            } else {
-            }
           });
         } catch (error) {
           console.error("Caught exception: ", error);
@@ -125,12 +113,6 @@ const CustomButton = () => {
       case "micRecording": {
         try {
           chrome.storage.local.set({ selectedMicRecording: data }, function () {
-            if (chrome.runtime.lastError) {
-              if (chrome.runtime.lastError.message.includes("MAX_WRITE_OPERATIONS_PER_MINUTE")) {
-              } else {
-              }
-            } else {
-            }
           });
         } catch (error) {
           console.error("Caught exception: ", error);
@@ -141,12 +123,6 @@ const CustomButton = () => {
         // chrome.storage.local.set({ "selectedScreenRecordings": data })
         try {
           chrome.storage.local.set({ selectedScreenRecordings: data }, function () {
-            if (chrome.runtime.lastError) {
-              if (chrome.runtime.lastError.message.includes("MAX_WRITE_OPERATIONS_PER_MINUTE")) {
-              } else {
-              }
-            } else {
-            }
           });
         } catch (error) {
           console.error("Caught exception: ", error);
@@ -174,13 +150,6 @@ const CustomButton = () => {
                   // chrome.storage.local.set({ "isRecordingInProgress": false })
                   try {
                     chrome.storage.local.set({ isRecordingInProgress: false }, function () {
-                      if (chrome.runtime.lastError) {
-                        if (chrome.runtime.lastError.message.includes("MAX_WRITE_OPERATIONS_PER_MINUTE")) {
-                        } else {
-                          console.error("Other error: ", chrome.runtime.lastError.message);
-                        }
-                      } else {
-                      }
                     });
                   } catch (error) {
                     console.error("Caught exception: ", error);
@@ -497,6 +466,14 @@ const CustomButton = () => {
       }
     })
   }, [])
+
+  // useEffect(() => {
+  //   if(showUserTakeInputScreen){
+  //     window.addEventListener('click', () => {
+  //       console.log("clicked!!!")
+  //     })
+  //   }
+  // }, [showUserTakeInputScreen])
 
   return <div>
     <iframe className={style['permissions-iframe']} ref={iframeRef} />

@@ -20,13 +20,6 @@ const Footer = ({ selections, isRecordingInProgress, formattedTimeRef }) => {
       // chrome.storage.local.set({ "isRecordingInProgress": false })
       try {
         chrome.storage.local.set({ isRecordingInProgress: false }, function() {
-          if (chrome.runtime.lastError) {
-            if (chrome.runtime.lastError.message.includes("MAX_WRITE_OPERATIONS_PER_MINUTE")) {
-            } else {
-              console.error("Other error: ", chrome.runtime.lastError.message);
-            }
-          } else {
-          }
         });
       } catch (error) {
         console.error("Caught exception: ", error);

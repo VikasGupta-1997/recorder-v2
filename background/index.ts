@@ -105,13 +105,6 @@ const openNewWindow = (url, sendMessageAction, selections, isWindowSelected) => 
           // chrome.storage.local.set({ "isRecordingInProgress": false })
           try {
             chrome.storage.local.set({ isRecordingInProgress: false }, function () {
-              if (chrome.runtime.lastError) {
-                if (chrome.runtime.lastError.message.includes("MAX_WRITE_OPERATIONS_PER_MINUTE")) {
-                } else {
-                  console.error("Other error: ", chrome.runtime.lastError.message);
-                }
-              } else {
-              }
             });
           } catch (error) {
             console.error("Caught exception: ", error);
@@ -636,14 +629,6 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     // chrome.storage.local.set({ "isRecordingInProgress": true })
     try {
       chrome.storage.local.set({ isRecordingInProgress: true }, function () {
-        if (chrome.runtime.lastError) {
-          console.log("chrome.runtime.onInstalled Error");
-          if (chrome.runtime.lastError.message.includes("MAX_WRITE_OPERATIONS_PER_MINUTE")) {
-          } else {
-            console.error("Other error: ", chrome.runtime.lastError.message);
-          }
-        } else {
-        }
       });
     } catch (error) {
       console.error("Caught exception: ", error);
@@ -655,13 +640,6 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     // chrome.storage.local.set({ "isRecordingInProgress": false })
     try {
       chrome.storage.local.set({ isRecordingInProgress: false }, function () {
-        if (chrome.runtime.lastError) {
-          if (chrome.runtime.lastError.message.includes("MAX_WRITE_OPERATIONS_PER_MINUTE")) {
-          } else {
-            console.error("Other error: ", chrome.runtime.lastError.message);
-          }
-        } else {
-        }
       });
     } catch (error) {
       console.error("Caught exception: ", error);
@@ -741,18 +719,12 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   if (message.type === 'INJECT_VIDEOCAM') {
     try {
       chrome.storage.local.set({ isCamInjected: true }, function () {
-        if (chrome.runtime.lastError) {
-          if (chrome.runtime.lastError.message.includes("MAX_WRITE_OPERATIONS_PER_MINUTE")) {
-          } else {
-          }
-        } else {
           isCamInjection = true
           chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
             if (tabs?.[0] && tabs[0]?.id) {
               chrome.tabs.sendMessage(tabs[0]?.id, { type: "INJECT_CAM" }, function () { })
             }
           })
-        }
       });
     } catch (error) {
       console.error("Caught exception: ", error);
@@ -811,12 +783,6 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     // chrome.storage.local.set({ "isRecordingInProgress": false })
     try {
       chrome.storage.local.set({ isRecordingInProgress: false }, function () {
-        if (chrome.runtime.lastError) {
-          if (chrome.runtime.lastError.message.includes("MAX_WRITE_OPERATIONS_PER_MINUTE")) {
-          } else {
-          }
-        } else {
-        }
       });
     } catch (error) {
       console.error("Caught exception: ", error);
@@ -896,33 +862,22 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 
   if (message.type === 'START_TO_RECORD') {
     const offscreenExists = await chrome.offscreen.hasDocument();
-    if (!offscreenExists) {
-      await createOffscreenDocument()
-    }
-    // console.log("offscreenExists121212", offscreenExists)
-    // chrome.storage.local.set({
-    //   'selectedCameraRecording': message.data?.cameraRecording,
-    //   'selectedMicRecording': message.data?.micRecording,
-    //   'selectedScreenRecordings': message.data?.screenRecording,
-    // })
+    // if (!offscreenExists) {
+    //   await createOffscreenDocument()
+    // }
+    console.log(message.data,"offscreenExists121212", offscreenExists)
     try {
       chrome.storage.local.set({
         'selectedCameraRecording': message.data?.cameraRecording,
         'selectedMicRecording': message.data?.micRecording,
         'selectedScreenRecordings': message.data?.screenRecording,
       }, function () {
-        if (chrome.runtime.lastError) {
-          if (chrome.runtime.lastError.message.includes("MAX_WRITE_OPERATIONS_PER_MINUTE")) {
-          } else {
-          }
-        } else {
           console.log("isCamOnlyisCamOnly", message)
           chrome.storage.local.get(["firstTimeLaunch"], result => {
             const firstTimeLaunch = result?.firstTimeLaunch
             chrome.runtime.sendMessage({ type: "START_RECORDING_OFFSCREEN", data: message.data, isCamOnly: message?.isCamOnly, isAudioOnly: message?.isAudioOnly, firstTimeLaunch });
             return;
           })
-        }
       });
     } catch (error) {
       console.error("Caught exception: ", error);
@@ -955,11 +910,6 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
       tabs.forEach((tab) => {
         // Send message to each tab
         chrome.tabs.sendMessage(tab.id, { type: 'CLEAR_RECORDING_UI_CONTENT' }, (response) => {
-          // if (chrome.runtime.lastError) {
-          //   console.error("Error sending message:", chrome.runtime.lastError);
-          // } else {
-          //   console.log("Response from tab:", response);
-          // }
         });
       });
     });
@@ -978,11 +928,6 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
         "blobUrl": message.videoUrl,
         "isAudioOnly": message?.isAudioOnly || false
       }, function () {
-        if (chrome.runtime.lastError) {
-          if (chrome.runtime.lastError.message.includes("MAX_WRITE_OPERATIONS_PER_MINUTE")) {
-          } else {
-          }
-        } else {
           chrome.runtime.sendMessage({ type: "CLOSE_WINDOW_CAMERA" })
           chrome.runtime.sendMessage({ type: "CLOSE_WINDOW_MIC" })
           chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
@@ -1021,7 +966,6 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
           } else {
             isToOpenPreview = true
           }
-        }
       });
     } catch (error) {
       console.error("Caught exception: ", error);
