@@ -25,7 +25,7 @@ const CustomButton = () => {
   const [showStartOverlay, setShowStartOverlay] = useState(false);
   const [showUserTakeInputScreen, setShowUserTakeInputScreen] = useState(false)
   const [isRestarted, setIsRestarted] = useState(false)
-  const [showToolBar, setShowToolBar] = useStorage("showToolBar", false)
+  const [showToolBar, setShowToolBar] = useState(false)
   const [isRecordingPaused, setIsRecordingPaused] = useStorage("isRecordingPaused", false)
   const formattedTimeRef = useRef(null)
   const [intervalId, setIntervalId] = useState(null);
@@ -78,7 +78,7 @@ const CustomButton = () => {
   const resetScreen = async () => {
     setIsRestarted(false)
     setShowStartOverlay(false)
-
+    chrome.storage.local.set({"showToolBar": false})
     setShowToolBar(false)
     setIsRecordingPaused(false)
     clearInterval(intervalId)
@@ -275,6 +275,7 @@ const CustomButton = () => {
             case "INJECT_CAM": {
               setInjectCam(true)
               setShowToolBar(true)
+              chrome.storage.local.set({"showToolBar": true})
               injectWebCamIframe()
             }
               break;
@@ -306,11 +307,6 @@ const CustomButton = () => {
       );
     }
 
-  useEffect(() => {
-    onMountListners();
-  }, [])
-
-  useEffect(() => {
     const handleError = (message, source, lineno, colno, error) => {
       console.log("ERROR OCcured", message)
       if (message.includes("MAX_WRITE_OPERATIONS_PER_MINUTE")) {
@@ -320,6 +316,13 @@ const CustomButton = () => {
       }
       return false; // Prevents the browser from logging the error in the console
     }
+
+  useEffect(() => {
+    chrome.storage.local.get(['showToolBar'], result => {
+      const showToolBar = result?.showToolBar || false
+      setShowToolBar(showToolBar)
+    })
+    onMountListners();
     window.onerror = handleError
   }, [])
 
@@ -352,6 +355,7 @@ const CustomButton = () => {
       if (result?.screenShareSelection) {
         if (result.screenShareSelection !== 'window') {
           setShowToolBar(true)
+          chrome.storage.local.set({"showToolBar": true})
         }
       }
     })
@@ -482,6 +486,7 @@ const CustomButton = () => {
       if (result?.isCamInjected) {
         injectWebCamIframe()
         setShowToolBar(true)
+        chrome.storage.local.set({"showToolBar": true})
       }
     })
   }, [])

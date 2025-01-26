@@ -19,7 +19,7 @@ function IndexPopup() {
   const [loading, setLoading] = useState(true)
 
   const [userDetails, setUserDetails] = useState(null)
-  const [selectedProjected] = useStorage("selectedProject", null)
+  const [selectedProjected, setSelectedProject] = useState(null)
 
   const [inRecordingMode, setInRecordingMode] = useState(false)
   const [recordingOptions, setRecordingOptions] = useState<recordingOptions>({
@@ -80,11 +80,13 @@ function IndexPopup() {
   }
 
   const getDeviceLists = async () => {
-    chrome.storage.local.get(["userInfo","selectedCameraRecording", "selectedMicRecording", "selectedScreenRecordings", "devices", "accessGranted", "isRecordingInProgress"], async (result) => {
+    chrome.storage.local.get(["selectedProject","userInfo","selectedCameraRecording", "selectedMicRecording", "selectedScreenRecordings", "devices", "accessGranted", "isRecordingInProgress"], async (result) => {
       const userInfo = result?.userInfo || null
       console.log(result,"userInfo===>", userInfo)
       setUserDetails(userInfo)
       setLoading(false)
+      const selectedProject = result?.selectedProject || null
+      setSelectedProject(selectedProject)
       setIsRecordingInProgress(result?.isRecordingInProgress)
       chrome.tabs.query({ active: true, currentWindow: true }, async function (tabs) {
         tabId = tabId
