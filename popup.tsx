@@ -16,8 +16,9 @@ let tabId;
 function IndexPopup() {
   const formattedTimeRef = useRef(null)
   const mainDivRef = useRef(null)
+  const [loading, setLoading] = useState(true)
 
-  const [userDetails] = useStorage("userInfo", null)
+  const [userDetails, setUserDetails] = useState(null)
   const [selectedProjected] = useStorage("selectedProject", null)
 
   const [inRecordingMode, setInRecordingMode] = useState(false)
@@ -34,7 +35,6 @@ function IndexPopup() {
   const [isRecordingInProgress, setIsRecordingInProgress] = useState(false)
   const [projectList, setProjectList] = useState([])
   const projectListRef = useRef([])
-  // const [mediaFiles, setMediaFiles] = useStorage("mediaFiles",[])
   const [projectListLoading] = useState(false)
   const [mediaListLoading, setMediaListLoading] = useState(false)
   const setCurrentSelection = (selections, micOptions, cameraOptions, newDevices) => {
@@ -80,7 +80,11 @@ function IndexPopup() {
   }
 
   const getDeviceLists = async () => {
-    chrome.storage.local.get(["selectedCameraRecording", "selectedMicRecording", "selectedScreenRecordings", "devices", "accessGranted", "isRecordingInProgress"], async (result) => {
+    chrome.storage.local.get(["userInfo","selectedCameraRecording", "selectedMicRecording", "selectedScreenRecordings", "devices", "accessGranted", "isRecordingInProgress"], async (result) => {
+      const userInfo = result?.userInfo || null
+      console.log(result,"userInfo===>", userInfo)
+      setUserDetails(userInfo)
+      setLoading(false)
       setIsRecordingInProgress(result?.isRecordingInProgress)
       chrome.tabs.query({ active: true, currentWindow: true }, async function (tabs) {
         tabId = tabId
@@ -122,6 +126,10 @@ function IndexPopup() {
         switch (message.type) {
           case 'CLOSE_POPUP_CALL': {
             window.close();
+          }
+            break;
+          case 'LOGIN_SUCCESS': {
+            setUserDetails(message.userDetails)
           }
             break;
           case "START_RECORDING": {
@@ -177,6 +185,12 @@ function IndexPopup() {
       chrome.runtime.sendMessage({type: "GET_PROJECT_LIST", userDetails})
     }
   }, [userDetails])
+
+  if(loading){
+    return (
+      <div className="flex items-center justify-center" ><div className="loader" ></div></div>
+    )
+  }
 
   return (
     <main ref={mainDivRef} className="main">

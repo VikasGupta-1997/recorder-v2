@@ -393,6 +393,7 @@ const handleLogin = async (state) => {
             avtar: userData.photo_url
           }
           await chrome.storage.local.set({ "userInfo": userDetails })
+          chrome.runtime.sendMessage({type: "LOGIN_SUCCESS", userDetails})
           chrome.runtime.sendMessage({ type: 'login_loading', state: false })
         } else {
           chrome.runtime.sendMessage({ type: 'login_loading', state: false })

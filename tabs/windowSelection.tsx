@@ -1,7 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Modal from "~components/Modal";
 import ToolBarBox from "~components/ToolBar";
-import useStorage from "~useStorageCustom";
 import formatTime from "~utils/formatTime";
 
 let stream;
@@ -9,7 +8,6 @@ const WindowSelected = () => {
     const cameraRef = useRef(null)
     const formattedTimeRef = useRef(null)
     const [isPopupConfirmation, setIsPopupConfirmation] = useState('')
-    // const [isRecordingPaused, setIsRecordingPaused] = useStorage("isRecordingPaused", false);
     const [isRecordingPaused, setIsRecordingPaused] = useState(false);
     const onMountListners = () => {
         chrome.runtime.onMessage.addListener(
