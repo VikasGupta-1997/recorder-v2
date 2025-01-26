@@ -1,8 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { callBackConstants, defaultRecordingOptions } from '~utils/constants'
 const { START_RECORDING, DEVICE_CHANGE, HIDE_CSUI } = callBackConstants;
-// import { useStorage } from "@plasmohq/storage/hook";
-import useStorage from "../useStorageCustom";
 import ToolBarBox from '~components/ToolBar';
 import Modal from '~components/Modal';
 import cssText from "data-text:./recording-cam.module.css"
@@ -26,7 +24,7 @@ const CustomButton = () => {
   const [showUserTakeInputScreen, setShowUserTakeInputScreen] = useState(false)
   const [isRestarted, setIsRestarted] = useState(false)
   const [showToolBar, setShowToolBar] = useState(false)
-  const [isRecordingPaused, setIsRecordingPaused] = useStorage("isRecordingPaused", false)
+  const [isRecordingPaused, setIsRecordingPaused] = useState(false)
   const formattedTimeRef = useRef(null)
   const [intervalId, setIntervalId] = useState(null);
   const [isPopupConfirmation, setIsPopupConfirmation] = useState('')
@@ -61,6 +59,7 @@ const CustomButton = () => {
     setCurrentRotate(0)
     setCount(CountDown)
     setIsRecordingPaused(false)
+    chrome.storage.local.set({'isRecordingPaused': false})
     if (mediaRecorder && mediaRecorder.state !== 'inactive') {
       mediaRecorder.stop();
     }
@@ -81,6 +80,7 @@ const CustomButton = () => {
     chrome.storage.local.set({"showToolBar": false})
     setShowToolBar(false)
     setIsRecordingPaused(false)
+    chrome.storage.local.set({'isRecordingPaused': false})
     clearInterval(intervalId)
     // await chrome.storage.local.set({ "isCamInjected": false })
     try {
@@ -318,9 +318,11 @@ const CustomButton = () => {
     }
 
   useEffect(() => {
-    chrome.storage.local.get(['showToolBar'], result => {
+    chrome.storage.local.get(['showToolBar', 'isRecordingPaused'], result => {
       const showToolBar = result?.showToolBar || false
+      const isRecordingPaused = result?.isRecordingPaused || false
       setShowToolBar(showToolBar)
+      setIsRecordingPaused(isRecordingPaused)
     })
     onMountListners();
     window.onerror = handleError
@@ -360,6 +362,7 @@ const CustomButton = () => {
       }
     })
     setIsRecordingPaused(false)
+    chrome.storage.local.set({'isRecordingPaused': false})
     chrome.runtime.sendMessage({ type: "NEW_RECORDING_STARTED" })
     chrome.runtime.sendMessage({ type: "startTimer" })
   }
@@ -389,6 +392,7 @@ const CustomButton = () => {
     if (!!isPopupConfirmation) {
       setIsDragging(false)
       setIsRecordingPaused(true)
+      chrome.storage.local.set({'isRecordingPaused': true})
       if (isPopupConfirmation === 'restart') {
         chrome.runtime.sendMessage({ type: "RECORDING_PAUSE" })
       }
@@ -432,11 +436,13 @@ const CustomButton = () => {
         break
       case "play": {
         setIsRecordingPaused(false)
+        chrome.storage.local.set({'isRecordingPaused': false})
         chrome.runtime.sendMessage({ type: "RECORDING_PLAY" })
       }
         break;
       case "pause": {
         setIsRecordingPaused(true)
+        chrome.storage.local.set({'isRecordingPaused': true})
         chrome.runtime.sendMessage({ type: "RECORDING_PAUSE" })
       }
         break
@@ -470,6 +476,7 @@ const CustomButton = () => {
         chrome.runtime.sendMessage({ type: "RECORDING_PLAY" })
       }, 100)
       setIsRecordingPaused(false)
+      chrome.storage.local.set({'isRecordingPaused': false})
     }
     setIsPopupConfirmation(setVal)
   }

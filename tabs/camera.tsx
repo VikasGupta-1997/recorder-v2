@@ -7,7 +7,6 @@ import styleText from "data-text:./camera.module.css"
 import * as style from './camera.module.css'
 import formatTime from '~utils/formatTime';
 import countDown from '~utils/countDown';
-import useStorage from "~useStorageCustom";
 import { saveRecordingToIndexedDB } from "~utils/saveRecordingToIndexedDB";
 
 export const getStyle = () => {
@@ -26,8 +25,7 @@ const Camera = () => {
     const [mediaRecorder, setMediaRecorder] = useState(null);
     const [stream, setStream] = useState(null);
     const videoRef = useRef(null); // Ref for the video element
-    const [isRecordingPaused, setIsRecordingPaused] = useStorage("isRecordingPaused", false);
-    // const [isRecordingPaused, setIsRecordingPaused] = useState(false)
+    const [isRecordingPaused, setIsRecordingPaused] = useState(false);
     const [selections, setSelections] = useState(null)
     const [showStartOverlay, setShowStartOverlay] = useState(false);
     const [count, setCount] = useState<any>(CountDown);
@@ -44,6 +42,7 @@ const Camera = () => {
         if (startRecordingNow) {
             console.log("NOW START RECORDING!!", selections)
             setIsRecordingPaused(false)
+            chrome.storage.local.set({"isRecordingPaused": false})
             chrome.runtime.sendMessage({type: "START_CAM_ONLY_RECORDING", data: selections})
             // recordedChunksV = []
             // startRecording()
@@ -120,6 +119,7 @@ const Camera = () => {
         recorder.onstart = () => {
             console.log("STARTED HERE!!")
             setIsRecordingPaused(false);
+            chrome.storage.local.set({"isRecordingPaused": false})
             chrome.runtime.sendMessage({ type: 'startTimer' })
             chrome.runtime.sendMessage({ type: "RECORDING_IN_PROGRESS" })
             isRecordingStarted = true
@@ -169,10 +169,14 @@ const Camera = () => {
         )
     }
 
-    // useEffect(() => {
-    useLayoutEffect(() => {
+    useEffect(() => {
+    // useLayoutEffect(() => {
         document.body.style.margin = '0';
         document.body.style.overflow = 'hidden';
+        chrome.storage.local.get(["isRecordingPaused"], result => {
+            const isRecordingPaused = result?.isRecordingPaused
+            setIsRecordingPaused(isRecordingPaused)
+        })
         // Listen for messages from the background script
         onMountListners()
     }, []);
@@ -205,13 +209,14 @@ const Camera = () => {
                 chrome.runtime.sendMessage({type: "PLAY_CAMONLY_TIMER"})
                 // chrome.runtime.sendMessage({ type: 'resumeTimer' })
                 setIsRecordingPaused(false)
-
+                chrome.storage.local.set({"isRecordingPaused": false})
                 // chrome.runtime.sendMessage({ type: "RECORDING_PLAY" })
             }
                 break;
             case "pause": {
                 console.log("PAUSE ", mediaRecorder)
                 setIsRecordingPaused(true)
+                chrome.storage.local.set({"isRecordingPaused": true})
                 chrome.runtime.sendMessage({type: "PAUSE_CAMONLY_TIMER"})
                 // recorder.pause();
                 // chrome.runtime.sendMessage({ type: "RECORDING_PAUSE" })
@@ -235,6 +240,7 @@ const Camera = () => {
                 // recorder.pause();
                 setIsPopupConfirmation('restart')
                 setIsRecordingPaused(true);
+                chrome.storage.local.set({"isRecordingPaused": true})
                 chrome.runtime.sendMessage({type: "PAUSE_CAMONLY_TIMER"})
                 // chrome.runtime.sendMessage({ type: "pauseTimer" })
                 // chrome.runtime.sendMessage({ type: "RECORDING_RESTART" })
@@ -328,6 +334,7 @@ const Camera = () => {
         const setVal = isValidValue ? type : ''
         if (!isValidValue) {
             setIsRecordingPaused(false)
+            chrome.storage.local.set({"isRecordingPaused": false})
             // recorder.resume();
             chrome.runtime.sendMessage({type: "PLAY_CAMONLY_TIMER"})
             // chrome.runtime.sendMessage({ type: "RECORDING_PLAY" })

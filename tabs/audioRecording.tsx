@@ -7,7 +7,6 @@ import styleText from "data-text:./audioRecording.module.css"
 import * as style from './audioRecording.module.css'
 import formatTime from '~utils/formatTime';
 import countDown from '~utils/countDown';
-import useStorage from '~useStorageCustom';
 import { saveRecordingToIndexedDB } from '~utils/saveRecordingToIndexedDB';
 
 export const getStyle = () => {
@@ -23,8 +22,7 @@ let isRestartRecording = false
 
 const CountDown = 5
 const Audio = () => {
-    const [isRecordingPaused, setIsRecordingPaused] = useStorage("isRecordingPaused", false);
-    // const [isRecordingPaused, setIsRecordingPaused] = useState(false);
+    const [isRecordingPaused, setIsRecordingPaused] = useState(false);
     const [selections, setSelections] = useState(null);
     const [showStartOverlay, setShowStartOverlay] = useState(false);
     const [count, setCount] = useState<any>(CountDown);
@@ -134,6 +132,7 @@ const Audio = () => {
                 chrome.runtime.sendMessage({ type: 'startTimer' })
                 // setIsRecordingStarted(true)
                 setIsRecordingPaused(false)
+                chrome.storage.local.set({"isRecordingPaused": false})
                 isRecordingStarted = true
                 chrome.runtime.sendMessage({type: "RECORDING_IN_PROGRESS"})
             }
@@ -214,10 +213,14 @@ const Audio = () => {
         );
     };
 
-    // useEffect(() => {
-    useLayoutEffect(() => {
+    useEffect(() => {
+    // useLayoutEffect(() => {
         document.body.style.margin = '0';
         document.body.style.overflow = 'hidden';
+        chrome.storage.local.get(["isRecordingPaused"], result => {
+            const isRecordingPaused = result?.isRecordingPaused
+            setIsRecordingPaused(isRecordingPaused)
+        })
         onMountListeners();
     }, []);
 
@@ -277,6 +280,7 @@ const Audio = () => {
                 if (recorder && recorder.state === "paused") {
                     recorder.resume();  // Resumes the recording
                     setIsRecordingPaused(false);
+                    chrome.storage.local.set({"isRecordingPaused": false})
                     chrome.runtime.sendMessage({ type: "AUDIOONLY_RECORDING_PLAY" });
                 }
             }
@@ -287,6 +291,7 @@ const Audio = () => {
                     chrome.runtime.sendMessage({ type: 'pauseTimer' })
                     recorder.pause();  // Pauses the recording
                     setIsRecordingPaused(true);
+                    chrome.storage.local.set({"isRecordingPaused": true})
                     chrome.runtime.sendMessage({ type: "AUDIOONLY_RECORDING_PAUSE" });
                 }
             }
@@ -308,6 +313,7 @@ const Audio = () => {
                 setIsPopupConfirmation('restart')
                 recorder.pause();  // Pauses the recording
                 setIsRecordingPaused(true);
+                chrome.storage.local.set({"isRecordingPaused": true})
                 chrome.runtime.sendMessage({ type: "AUDIOONLY_RECORDING_PAUSE" });
 
                 // chrome.runtime.sendMessage({ type: "RECORDING_RESTART" });
@@ -318,6 +324,7 @@ const Audio = () => {
                 chrome.runtime.sendMessage({ type: "pauseTimer" })
                 recorder.pause();  // Pauses the recording
                 setIsRecordingPaused(true);
+                chrome.storage.local.set({"isRecordingPaused": true})
                 setIsPopupConfirmation('delete')
                 chrome.runtime.sendMessage({ type: "AUDIOONLY_RECORDING_PAUSE" });
 
@@ -333,6 +340,7 @@ const Audio = () => {
         const setVal = isValidValue ? type : ''
         if (!isValidValue) {
             setIsRecordingPaused(false)
+            chrome.storage.local.set({"isRecordingPaused": false})
             console.log("PLAYYY")
             chrome.runtime.sendMessage({ type: "AUDIOONLY_RECORDING_PLAY" });
             // chrome.runtime.sendMessage({ type: "RECORDING_PLAY" })

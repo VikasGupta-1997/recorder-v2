@@ -8,7 +8,6 @@ import LoginForm from '~components/Login'
 import './styles.css'
 import { defaultRecordingOptions, screenRecordingOptions } from '~utils/constants'
 import formatTime from '~utils/formatTime'
-import useStorage from '~useStorageCustom'
 import ListComponent from '~components/ListComponent'
 
 let tabId;
