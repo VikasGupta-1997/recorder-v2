@@ -164,6 +164,9 @@ function PreviewPage() {
                                 isModalOpened={isModalOpened}
                             />
                         </div>}
+                        {/* <input type="file" onChange={e => {
+                            handlePublish(e.target.files[0])
+                        }} /> */}
                         {
                             publishedData && <div className={style["copy-link-div"]} >
                                 <input type="text" disabled value={`https://adilo.bigcommand.com/watch/${getVideoKeyFromUrl(publishedData.video.location)}`} />

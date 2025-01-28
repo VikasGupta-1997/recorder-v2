@@ -179,6 +179,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
                         setUploadStatus(false)
                         setPublishingUpload(false)
                         resetUploadRefs()
+                        toast.error("Uploading Deleted !")
                     }
                     break;
                     case "PAUSE_UPLOAD": {
@@ -541,7 +542,9 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
         isPausedref.current = false; // Set the flag to false
         console.log("Resuming upload...");
         // partUrls, uploadId, key, userDetails, blob, selectedProject
-        handleUpload(partsUrlsRef.current, uploadIdRef.current, keyRef.current, userDetailRef.current, newBlobRef.current, selectedProjectRef.current);
+        const remainingParts = partsUrlsRef.current.slice(currentPartIndexRef.current);
+        handleUpload(remainingParts, uploadIdRef.current, keyRef.current, userDetailRef.current, newBlobRef.current, selectedProjectRef.current);
+        // handleUpload(partsUrlsRef.current, uploadIdRef.current, keyRef.current, userDetailRef.current, newBlobRef.current, selectedProjectRef.current);
     }
 
     const handleDeleteUpload = () => {
@@ -578,20 +581,20 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
                 return; // Exit the loop if paused
             }
 
-            if(stoppedUpload.current){
-                currentPartIndexRef.current = i; // Save the current index for resuming
-                console.log("Deleted upload api1@4", partNumber);
-                stoppedUpload.current = false
-                handleDeleteUpload()
+            // if(stoppedUpload.current){
+            //     currentPartIndexRef.current = i; // Save the current index for resuming
+            //     console.log("Deleted upload api1@4", partNumber);
+            //     stoppedUpload.current = false
+            //     handleDeleteUpload()
 
-                setIspublishing(false)
-                // setPublishedData(saveData)
-                // chrome.runtime.sendMessage({ type: "REFETCH_MEDIA_LIST", project: selectedProject, userDetails })
-                resetUploadRefs()
-                toast.error("Uploading Deleted !")
+            //     setIspublishing(false)
+            //     // setPublishedData(saveData)
+            //     // chrome.runtime.sendMessage({ type: "REFETCH_MEDIA_LIST", project: selectedProject, userDetails })
+            //     resetUploadRefs()
+            //     toast.error("Uploading Deleted !")
 
-                return; // Exit the loop if paused
-            }
+            //     return; // Exit the loop if paused
+            // }
 
             try {
                 await new Promise(async (resolve, reject) => {
@@ -742,7 +745,9 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
                 "uploadStatus": newUpdates
             })
         })
-
+        const uniqueArray = ETagRef.current.filter((obj, index, self) =>
+            index === self.findIndex((o) => o.PartNumber === obj.PartNumber)
+          );
         console.log(ETagRef.current, "Check uploadedPartsuploadedParts")
         let completeData;
         try {
@@ -754,13 +759,14 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
                         "Authorization": `Bearer ${userDetails.access_token}`
                     },
                     body: JSON.stringify({
-                        parts: ETagRef.current,
+                        parts: uniqueArray,
                     }),
                 }
             );
     
             completeData = await completeResponse.json();
         }catch(error){
+            setPublishingUpload(false)
             throw new Error(error?.message || "Upload Failed please try again!")
         }
         
@@ -803,6 +809,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
             resetUploadRefs()
             toast.success("Recording succeccfully saved to your adilo account.")
         } catch(error){
+            setPublishingUpload(false)
             throw new Error(error?.message || "Upload Failed please try again!")
         }
     };
@@ -854,6 +861,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
                 const initData = await initResponse.json();
                 console.log("initDatainitData=>", initData)
                 console.log("Original Blob Type:", blob.type);
+                newBlobRef.current = blob
                 if (initData?.uploadId) {
                     uploadId = initData.uploadId;
                     key = initData.key;
@@ -879,6 +887,9 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
                             // chunk
                             chunk: blob.slice((partNumber - 1) * chunk_size, partNumber * chunk_size, "video/mp4")
                         });
+                        if (partUrls.length === 2) {
+                            handleUpload(partUrls, uploadId, key, userDetails, blob, selectedProject);
+                        }
                     }
                     if(stoppedUpload.current){
                         stoppedUpload.current = false
@@ -892,9 +903,8 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
                     keyRef.current = key
                     userDetailRef.current = userDetails
                     uploadIdRef.current = uploadId
-                    newBlobRef.current = blob
-                    await handleUpload(partUrls, uploadId, key, userDetails, blob, selectedProject)
-                    stoppedUpload.current = false
+                    // await handleUpload(partUrls, uploadId, key, userDetails, blob, selectedProject)
+                    // stoppedUpload.current = false
                 }
             } catch (error) {
                 await chrome.storage.local.set({ "showUploadStatus": false })
