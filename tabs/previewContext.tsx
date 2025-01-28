@@ -1099,7 +1099,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                             chunk: blob.slice((partNumber - 1) * chunk_size, partNumber * chunk_size, "video/mp4")
                         });
 
-                        if (partUrls.length === 2) {
+                        if (partUrls.length === 1) {
                             handleUpload(partUrls, uploadId, key, userDetails, blob, selectedProject);
                         }
                     }

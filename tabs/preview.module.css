@@ -412,7 +412,7 @@ video {
 }
 
 .editing-container {
-  justify-content: inherit;
+  justify-content: center;
   gap: 6px;
 }
 
