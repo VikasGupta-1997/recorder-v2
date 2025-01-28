@@ -191,6 +191,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                         if (message.isLastChunk) {
                             console.log("All chunks received. Reassembling...");
                             const { newBlob, newBlobUrl } = await playPartialRecording(receivedChunks); // Play the complete recording
+                            setIsVideoEncoding(false)
                             sendPostMessage({ type: "fixMetadata", blob: newBlob })
                         }
                     }
@@ -481,7 +482,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                 }
 
                 if (message.fixMetadata) {
-                    setIsVideoEncoding(false)
+                    // setIsVideoEncoding(false)
                     setOriginalVideo({
                         blob: message.blob,
                         url: URL.createObjectURL(message.blob)
@@ -1226,7 +1227,8 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         tabsInfo,
         publishingUpload,
         latestAuphonicDataRef,
-        isModalOpened
+        isModalOpened,
+        isVideoEndcoding
     };
 
     return (

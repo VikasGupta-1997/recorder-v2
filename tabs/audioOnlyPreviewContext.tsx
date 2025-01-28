@@ -213,6 +213,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
                             console.log("All chunks received. Reassembling...");
 
                             const { newBlob, newBlobUrl } = await playPartialRecording(receivedChunks); // Play the complete recording
+                            setIsVideoEncoding(false)
                             sendPostMessage({ type: "fixMetadata", blob: newBlob })
                             // setOriginalVideo({
                             //     blob: newBlob,
@@ -410,7 +411,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
             }
 
             if (message.fixMetadata) {
-                setIsVideoEncoding(false)
+                
                 setOriginalVideo({
                     blob: message.blob,
                     url: URL.createObjectURL(message.blob)
