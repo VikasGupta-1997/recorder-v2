@@ -105,6 +105,7 @@ const ListComponent = ({
     projectListLoading,
     mediaListLoading,
     handleProjectChange,
+    setSelectedProject
 }) => {
     // const refs = useRef({});
     // const [refs, setRefs] = useState({});
@@ -251,6 +252,7 @@ const ListComponent = ({
         <div className="" >
             <UserInfo
                 selectedProjected={selectedProjected}
+                setSelectedProject={setSelectedProject}
                 projectList={projectList}
                 loading={projectListLoading}
                 setInRecordingMode={setInRecordingMode}

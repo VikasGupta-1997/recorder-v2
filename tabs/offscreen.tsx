@@ -21,7 +21,7 @@ let recordedStreamBase64 = null
 // 1080p
 let audioBitsPerSecond = 192000;
 let videoBitsPerSecond = 8000000;
-
+const chunkSize = 10 * 1024 * 1024; // 10MB chunks
 let micOnlyRecorder = null;
 let micOnlyChunks = []
 let vidStream;
@@ -47,6 +47,7 @@ const OffScreen = () => {
   const [isDiscardRecording, setIsDiscardRecording] = useState(false)
   const [isWindowOnlyRecording, setIsWindowOnlyRecording] = useState(false)
   const [uploadChunksCall, setUploadChunksCall] = useState(false)
+  const recordedBlob = useRef(null)
   const videoRef = useRef(null)
   const settingsSufraceRef = useRef(null)
   const [base64Data, setBase64Data] = useState(null)
@@ -96,16 +97,44 @@ const OffScreen = () => {
     });
     console.log("All chunks sent.");
   }
+  async function sendBlobToBackground(blob) {
+    console.log("Size===>", blob)
+    let offset = 0;
+  
+    while (offset < blob.size) {
+      const chunk = blob.slice(offset, offset + chunkSize);
+      offset += chunkSize;
+  
+      // Convert to Uint8Array for safer transfer
+      const arrayBuffer = await chunk.arrayBuffer();
+      const uint8Array = new Uint8Array(arrayBuffer);
+      console.log("uint8Arrayuint8Array", uint8Array)
+      // Send chunk to the background
+      chrome.runtime.sendMessage({
+        type: "chunk",
+        data: Array.from(uint8Array), // Convert Uint8Array to a regular array
+      });
+  
+      // Wait briefly to avoid overwhelming the message pipeline
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    setIsPreviewOpened(false)
+    // Notify that all chunks are sent
+    chrome.runtime.sendMessage({ type: "complete" });
+  }
 
   useEffect(() => {
     if (isPreviewOpened) {
       if (base64Data) {
-        console.log("base64Data1121", base64Data)
-        if (uploadChunksCall) {
-          uploadChunks()
-          setIsPreviewOpened(false)
-          setUploadChunksCall(false)
-        }
+        sendBlobToBackground(recordedBlob.current)
+        setIsPreviewOpened(false)
+        setIsPreviewOpened(false)
+      //   console.log("base64Data1121", base64Data)
+      //   if (uploadChunksCall) {
+      //     uploadChunks()
+      //     setIsPreviewOpened(false)
+      //     setUploadChunksCall(false)
+      //   }
       }
     }
   }, [isPreviewOpened, base64Data, uploadChunksCall])
@@ -166,6 +195,7 @@ const OffScreen = () => {
     }
     camOnlyChunks = []
     micOnlyChunks = []
+    // recordedBlob.current = null
     setIsWindowOnlyRecording(false)
     setRecorderState('ideal')
     setIsDiscardRecording(false)
@@ -369,9 +399,10 @@ const OffScreen = () => {
           });
         }
         onComplete()
-        const base64Data = await saveRecordingToIndexedDB(blob)
-        recordedStreamBase64 = base64Data
-        setBase64Data(base64Data)
+        console.log("Blob====>", blob)
+        // const base64Data = await saveRecordingToIndexedDB(blob)
+        // recordedStreamBase64 = base64Data
+        // setBase64Data(base64Data)
       } else {
         chrome.runtime.sendMessage({ type: "OFFSCREEN_RECORDING_END" });
         chunks = [];
@@ -590,6 +621,8 @@ const OffScreen = () => {
         setRecorderState('ideal')
         if (!isRecordingDiscarded) {
           const blob = new Blob(recordingChunks, { type: 'video/webm' });
+          console.log("blob===>", blob)
+          recordedBlob.current = blob
           function onComplete() {
             const url = (URL as any).createObjectURL(blob);
             chrome.runtime.sendMessage({
@@ -602,9 +635,9 @@ const OffScreen = () => {
             });
           }
           onComplete()
-          const base64Data = await saveRecordingToIndexedDB(blob)
-          recordedStreamBase64 = base64Data
-          setBase64Data(base64Data)
+          // const base64Data = await saveRecordingToIndexedDB(blob)
+          // recordedStreamBase64 = base64Data
+          setBase64Data(true)
         }
         chrome.runtime.sendMessage({ type: "RECORDING_IN_PROGRESS_END" })
       };

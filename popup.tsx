@@ -37,6 +37,9 @@ function IndexPopup() {
   const [projectListLoading] = useState(false)
   const [mediaListLoading, setMediaListLoading] = useState(false)
   const setCurrentSelection = (selections, micOptions, cameraOptions, newDevices) => {
+    console.log("selections in setCurrentSelection 40", selections)
+    console.log("micOptions in setCurrentSelection 41", micOptions)
+    console.log("newDevices in setCurrentSelection 42", newDevices)
     let micRecording;
     let cameraRecording;
     let screenRecording;
@@ -70,7 +73,11 @@ function IndexPopup() {
     } else {
       screenRecording = defaultRecordingOptions.screenOptions
     }
-    // console.log("SELECTIONS ARE SET HERE")
+    console.log("SELECTIONS ARE SET HERE",{
+      screenRecording,
+      micRecording,
+      cameraRecording
+    })
     setSelections({
       screenRecording,
       micRecording,
@@ -92,12 +99,14 @@ function IndexPopup() {
         chrome.tabs.sendMessage(tabs[0].id, { type: "FETCH_DEVICES" })
       })
       const devices = await navigator.mediaDevices.enumerateDevices() as any;
+      console.log("devicesdevices",devices)
       let micOptions = devices?.filter(device => !!device.label && device.kind === 'audioinput')
       let cameraOptions = devices?.filter(device => !!device.label && device.kind === 'videoinput')
       micOptions = micOptions.map(d => ({ kind: d.kind, label: d.label, value: d.deviceId, type: 'micRecording' }))
       cameraOptions = cameraOptions.map(d => ({ kind: d.kind, label: d.label, value: d.deviceId, type: 'cameraRecording' }))
       const isMicOffAndAudioOnlyRecording = result?.selectedScreenRecordings?.value === 'audioOnly'
       const isCamOffAndCamOnlyRecording = result?.selectedScreenRecordings?.value === 'camOnly'
+      console.log("")
       setRecordingOptions({
         ...recordingOptions,
         micOptions: [defaultRecordingOptions.micOptions, ...micOptions].map(mic => {
@@ -117,6 +126,25 @@ function IndexPopup() {
           },
           ...cameraOptions]
       });
+      console.log("After Setting All", {
+        ...recordingOptions,
+        micOptions: [defaultRecordingOptions.micOptions, ...micOptions].map(mic => {
+          if (isMicOffAndAudioOnlyRecording && mic.value === 'mic_off') {
+            return {
+              ...mic,
+              isDisabled: true
+            }
+          } else {
+            return { ...mic }
+          }
+        }),
+        cameraOptions: [
+          {
+            ...defaultRecordingOptions.cameraOptions,
+            ...((result?.selectedScreenRecordings?.value === "camera_only" || isCamOffAndCamOnlyRecording) ? { isDisabled: true } : { isDisabled: false })
+          },
+          ...cameraOptions]
+      })
       setCurrentSelection(result, micOptions, cameraOptions, devices)
     })
   }
@@ -225,6 +253,7 @@ function IndexPopup() {
                   projectList={projectList}
                   // mediaFiles={mediaFiles}
                   projectListLoading={projectListLoading}
+                  setSelectedProject={setSelectedProject}
                   selectedProjected={selectedProjected}
                   userDetails={userDetails}
                   setInRecordingMode={setInRecordingMode} />

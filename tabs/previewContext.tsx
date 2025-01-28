@@ -103,44 +103,69 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     const playPartialRecording = async (receivedChunks) => {
         try {
             // Convert available chunks to a Blob
-            const base64Data = receivedChunks.filter(Boolean).join('');
-            if (!base64Data) {
-                console.warn('No data available to play');
-                return;
+            // const base64Data = receivedChunks.filter(Boolean).join('');
+            const validChunks = receivedChunks.filter(Boolean);
+            // if (!base64Data) {
+            //     console.warn('No data available to play');
+            //     return;
+            // }
+            if (validChunks.length === 0) {
+                console.warn('No chunks available to play');
+                return null; // Explicitly return null if no chunks are available
             }
 
+            // Combine all chunks into a single Blob
+        const newBlob = new Blob(validChunks, { type: "video/webm; codecs=vp8, opus" });
+
+        // Create a Blob URL
+        const newBlobUrl = URL.createObjectURL(newBlob);
+
+        // Update states or references for playback
+        setBlobUrl(newBlobUrl);
+        blobRef.current = newBlob;
+        setBlob(newBlob);
+        setLoadingVideo(false);
+
+        // Revoke the previous URL to prevent memory leaks
+        if (url.current) {
+            URL.revokeObjectURL(url.current);
+        }
+        url.current = newBlobUrl;
+
+        console.log("Partial recording ready for playback");
+        return { newBlob, newBlobUrl };
             // Check if the data is a data URL
-            if (base64Data.startsWith('data:')) {
-                try {
-                    const response = await fetch(base64Data);
-                    // console.log("response1212", response)
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    const recievedBlob = await response.blob();
-                    const newBlob = new Blob([recievedBlob], {
-                        type: "video/webm; codecs=vp8, opus",
-                    });
-                    // console.log("newBlob1121", newBlob)
-                    const newBlobUrl = URL.createObjectURL(newBlob);
-                    // console.log("newBlobUrl11221", newBlobUrl)
-                    setBlobUrl(newBlobUrl)
-                    blobRef.current = newBlob
-                    setBlob(newBlob)
-                    setLoadingVideo(false)
-                    // Revoke old URL to prevent memory leaks
-                    if (url.current) {
-                        URL.revokeObjectURL(url.current);
-                    }
-                    url.current = newBlobUrl;
-                    return { newBlob, newBlobUrl }
-                } catch (fetchError) {
-                    console.error('Error fetching or processing blob:', fetchError);
-                    // Handle the error appropriately, maybe set an error state
-                }
-            } else {
-                console.warn('Invalid data format - expected data URL');
-            }
+            // if (base64Data.startsWith('data:')) {
+            //     try {
+            //         const response = await fetch(base64Data);
+            //         // console.log("response1212", response)
+            //         if (!response.ok) {
+            //             throw new Error(`HTTP error! status: ${response.status}`);
+            //         }
+            //         const recievedBlob = await response.blob();
+            //         const newBlob = new Blob([recievedBlob], {
+            //             type: "video/webm; codecs=vp8, opus",
+            //         });
+            //         // console.log("newBlob1121", newBlob)
+            //         const newBlobUrl = URL.createObjectURL(newBlob);
+            //         // console.log("newBlobUrl11221", newBlobUrl)
+            //         setBlobUrl(newBlobUrl)
+            //         blobRef.current = newBlob
+            //         setBlob(newBlob)
+            //         setLoadingVideo(false)
+            //         // Revoke old URL to prevent memory leaks
+            //         if (url.current) {
+            //             URL.revokeObjectURL(url.current);
+            //         }
+            //         url.current = newBlobUrl;
+            //         return { newBlob, newBlobUrl }
+            //     } catch (fetchError) {
+            //         console.error('Error fetching or processing blob:', fetchError);
+            //         // Handle the error appropriately, maybe set an error state
+            //     }
+            // } else {
+            //     console.warn('Invalid data format - expected data URL');
+            // }
         } catch (error) {
             console.error('Error in playPartialRecording:', error);
             // Handle the error appropriately, maybe set an error state
@@ -182,8 +207,12 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                         break;
                     case "RECORDING_CHUNK_PREVIEW": {
                         receivedChunks[message.index] = message.data;
+                        const uint8Array = new Uint8Array(message.data);
+                        const blobChunk = new Blob([uint8Array], { type: "video/webm" });
+                        receivedChunks[message.index] = blobChunk;
+                    
                         // Try to start playing the video when enough data is received
-                        if (!isPlaying && receivedChunks.length >= 5) { // Assuming 5 chunks are sufficient to start
+                        if (!isPlaying && receivedChunks.length >= 2) { // Assuming 5 chunks are sufficient to start
                             isPlaying = true;
                             playPartialRecording(receivedChunks);
                         }

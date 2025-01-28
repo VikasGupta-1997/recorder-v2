@@ -596,7 +596,61 @@ const handleLogout = async (userDetails) => {
 }
 
 const chunksStorage = {}; 
+let chunks = [];
+let receivedChunks = []
+// Function to send the full blob to the preview tab in chunks
+
+async function sendBlobToPreviewTab(blob) {
+  const chunkSize = 5 * 1024 * 1024; // 10MB per chunk
+  let offset = 0;
+  let chunkIndex = 0;
+
+  while (offset < blob.size) {
+    const chunk = blob.slice(offset, offset + chunkSize);
+    offset += chunkSize;
+
+    // Convert chunk to ArrayBuffer and send to the preview tab
+    const arrayBuffer = await chunk.arrayBuffer();
+    chrome.tabs.sendMessage(previewTabId, {
+      type: "RECORDING_CHUNK_PREVIEW",
+      data: Array.from(new Uint8Array(arrayBuffer)), // Convert to array for serialization
+      index: chunkIndex,
+      isLastChunk: offset >= blob.size,
+    });
+
+    chunkIndex++;
+
+    // Optional: Introduce a small delay to avoid overwhelming the preview tab
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+}
+
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+  if (message.type === "chunk") {
+    // Convert the array back to Uint8Array
+    console.log("Chunk", message)
+    const uint8Array = new Uint8Array(message.data);
+    receivedChunks.push(uint8Array);
+  }
+  if (message.type === "complete") {
+    // Combine all chunks into a single Blob when done
+    const completeBlob = new Blob(receivedChunks, { type: "video/webm" });
+    receivedChunks = []; // Clear chunks to free memory
+
+    // Do something with the complete Blob (e.g., send to preview tab)
+    console.log("Complete Blob received", completeBlob);
+    sendBlobToPreviewTab(completeBlob)
+  }
+  if (message.type === 'RECORDING_CHUNK') {
+    setTimeout(() => {
+      chrome.tabs.sendMessage(previewTabId, {
+        type: "RECORDING_CHUNK_PREVIEW",
+        data: message.data,
+        index: message.index,
+        isLastChunk: message.isLastChunk,
+      }, function () { })
+    }, 2000)
+  }
   if (message.type === 'START_LOGIN') {
     handleLogin(message.state)
   }
@@ -679,18 +733,6 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     } catch (error) {
       console.error("Caught exception: ", error);
     }
-  }
-
-  if (message.type === 'RECORDING_CHUNK') {
-    console.log(previewTabId, "RECORDING_CHUNKRECORDING_CHUNK", message)
-    setTimeout(() => {
-      chrome.tabs.sendMessage(previewTabId, {
-        type: "RECORDING_CHUNK_PREVIEW",
-        data: message.data,
-        index: message.index,
-        isLastChunk: message.isLastChunk,
-      }, function () { })
-    }, 2000)
   }
 
   if(message.type === 'PREVIEW_TAB_INFO'){

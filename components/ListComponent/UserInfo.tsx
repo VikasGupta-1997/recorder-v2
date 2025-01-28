@@ -13,10 +13,12 @@ const UserInfo = ({
     setInRecordingMode,
     projectList,
     loading,
-    selectedProjected
+    selectedProjected,
+    setSelectedProject
 }) => {
     const [base64Image, setBase64Image] = useState(null);
     const handleMenuClick = item => {
+        setSelectedProject({ label: item?.label, id: item?.id, project_id: item?.project_id })
         handleProjectChange(item)
     }
 
