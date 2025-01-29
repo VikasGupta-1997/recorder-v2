@@ -48,16 +48,10 @@
       "storage",
       "downloads",
       "activeTab",
-      "scripting",
-      "tabCapture",
       "tabs",
-      "desktopCapture",
-      "tabCapture",
       "offscreen",
-      "app.window",
       "system.display",
       "unlimitedStorage",
-      "webRequest",
       "commands"
     ],
     "commands": {
@@ -80,10 +74,7 @@
         "resources": [
           "tabs/*",
           "vendor/*",
-          "ffmpeg/*",
-          "sandboxes/*",
-          "sandboxes/demo.tsx",
-          "sandboxes/audioDemo.tsx"
+          "sandboxes/*"
         ],
         "matches": [
           "<all_urls>"
