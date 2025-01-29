@@ -120,69 +120,41 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
     const playPartialRecording = async (receivedChunks) => {
         try {
             // Convert available chunks to a Blob
-            // const base64Data = receivedChunks.filter(Boolean).join('');
-            const validChunks = receivedChunks.filter(Boolean);
-            // if (!base64Data) {
-            //     console.warn('No data available to play');
-            //     return;
-            // }
-            if (validChunks.length === 0) {
-                console.warn('No chunks available to play!');
-                return null; // Explicitly return null if no chunks are available
+            const base64Data = receivedChunks.filter(Boolean).join('');
+            if (!base64Data) {
+                console.warn('No data available to play');
+                return;
             }
 
-            const newBlob = new Blob(validChunks);
-
-            // Create a Blob URL
-            const newBlobUrl = URL.createObjectURL(newBlob);
-            const audio = document.createElement("audio");
-            audio.controls = true;
-            audio.src = newBlobUrl;
-            document.body.appendChild(audio);
-        
-            // Try playing the audio automatically
-            audio.play().catch((error) => {
-                console.error("Playback failed:", error);
-            });
-            setBlobUrl(newBlobUrl)
-            setSource(newBlobUrl)
-            setBlob(newBlob)
-            setLoadingVideo(false)
-            // Revoke old URL to prevent memory leaks
-            if (url.current) {
-                URL.revokeObjectURL(url.current);
-            }
-            url.current = newBlobUrl;
-            return { newBlob, newBlobUrl }
             // Check if the data is a data URL
-            // if (base64Data.startsWith('data:')) {
-            //     try {
-            //         const response = await fetch(base64Data);
-            //         console.log("response1212", response)
-            //         if (!response.ok) {
-            //             throw new Error(`HTTP error! status: ${response.status}`);
-            //         }
-            //         const newBlob = await response.blob();
-            //         console.log("newBlob1121", newBlob)
-            //         const newBlobUrl = URL.createObjectURL(newBlob);
-            //         console.log("newBlobUrl11221", newBlobUrl)
-            //         setBlobUrl(newBlobUrl)
-            //         setSource(newBlobUrl)
-            //         setBlob(newBlob)
-            //         setLoadingVideo(false)
-            //         // Revoke old URL to prevent memory leaks
-            //         if (url.current) {
-            //             URL.revokeObjectURL(url.current);
-            //         }
-            //         url.current = newBlobUrl;
-            //         return { newBlob, newBlobUrl }
-            //     } catch (fetchError) {
-            //         console.error('Error fetching or processing blob:', fetchError);
-            //         // Handle the error appropriately, maybe set an error state
-            //     }
-            // } else {
-            //     console.warn('Invalid data format - expected data URL');
-            // }
+            if (base64Data.startsWith('data:')) {
+                try {
+                    const response = await fetch(base64Data);
+                    console.log("response1212", response)
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const newBlob = await response.blob();
+                    console.log("newBlob1121", newBlob)
+                    const newBlobUrl = URL.createObjectURL(newBlob);
+                    console.log("newBlobUrl11221", newBlobUrl)
+                    setBlobUrl(newBlobUrl)
+                    setSource(newBlobUrl)
+                    setBlob(newBlob)
+                    setLoadingVideo(false)
+                    // Revoke old URL to prevent memory leaks
+                    if (url.current) {
+                        URL.revokeObjectURL(url.current);
+                    }
+                    url.current = newBlobUrl;
+                    return { newBlob, newBlobUrl }
+                } catch (fetchError) {
+                    console.error('Error fetching or processing blob:', fetchError);
+                    // Handle the error appropriately, maybe set an error state
+                }
+            } else {
+                console.warn('Invalid data format - expected data URL');
+            }
         } catch (error) {
             console.error('Error in playPartialRecording:', error);
             // Handle the error appropriately, maybe set an error state
@@ -448,7 +420,7 @@ export function AudioOnlyPreviewProvider({ children }: { children: React.ReactNo
                 setIsFfmpegLoaded(true)
                 console.log("ffmpeg-loaded Call from Demo!!")
                 // chrome.runtime.sendMessage({ type: "START_UPLOAD_CHUNKS_BG" })
-                chrome.runtime.sendMessage({ type: "START_RECIEVING_BLOB_OFFSCREEN" })
+                chrome.runtime.sendMessage({ type: "START_RECIEVING_BLOB_OFFSCREEN", isAudio: true })
                 chrome.runtime.sendMessage({ type: "PREVIEW_TAB_INFO" })
             }
             if (message.type === "ffmpeg-load-error") {

@@ -74,8 +74,9 @@ const OffScreen = () => {
     }
   }, [audioVideoStreams, startToRecord, isWindowOnlyRecording, recordSelections])
 
-  const uploadChunks = () => {
-    console.log("uploadChunks started!!")
+  //Using for audio recording only option as if I do not send base64 to audio preview screen it does not work
+  const uploadChunks = (base64Data) => {
+    console.log("uploadChunks started!!",base64Data)
     const chunkSize = 1024 * 1024; // 1 MB per chunk
     let chunkIndex = 0;
 
@@ -127,9 +128,9 @@ const OffScreen = () => {
     if (isPreviewOpened) {
       if (base64Data) {
         console.log("NO HAS BEGUN TO SEND!!!")
-        sendBlobToBackground(recordedBlob.current)
-        setIsPreviewOpened(false)
-        setIsPreviewOpened(false)
+        // sendBlobToBackground(recordedBlob.current)
+        // setIsPreviewOpened(false)
+        // setIsPreviewOpened(false)
       //   console.log("base64Data1121", base64Data)
       //   if (uploadChunksCall) {
       //     uploadChunks()
@@ -849,12 +850,18 @@ const OffScreen = () => {
     // setCamOnlyStream(mediaStream)
   }
 
-  const onMountListners = () => {
+  const onMountListners = async () => {
     chrome.runtime.onMessage.addListener(
       function async(message, sender, sendResponse) {
         switch (message.type) {
           case "START_SENDING_CHUNKS": {
-            sendBlobToBackground(recordedBlob.current)
+            if(message?.isAudio){
+              saveRecordingToIndexedDB(recordedBlob.current).then(base64Str => {
+                uploadChunks(base64Str)
+              })
+            } else {
+              sendBlobToBackground(recordedBlob.current)
+            }
             setIsPreviewOpened(false)
             setIsPreviewOpened(false)
           }

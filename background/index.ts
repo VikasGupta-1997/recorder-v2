@@ -634,7 +634,7 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   }
   if(message.type === 'START_RECIEVING_BLOB_OFFSCREEN'){
     await setupOffscreenDocument()
-    chrome.runtime.sendMessage({type: "START_SENDING_CHUNKS"})
+    chrome.runtime.sendMessage({type: "START_SENDING_CHUNKS", isAudio: message?.isAudio})
   }
   if (message.type === "complete") {
     // Combine all chunks into a single Blob when done
