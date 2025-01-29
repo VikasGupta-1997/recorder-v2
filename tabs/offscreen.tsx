@@ -375,6 +375,7 @@ const OffScreen = () => {
       setRecorderState('ideal');
       if (!isRecordingDiscarded) {
         const blob = new Blob(chunks, { type: 'video/mp4' });
+        recordedBlob.current = blob
         // const videoUrl = URL.createObjectURL(blob);
         // const downloadLink = document.createElement('a');
         // downloadLink.href = videoUrl;
@@ -681,6 +682,7 @@ const OffScreen = () => {
     const blob = new Blob(micOnlyChunks, {
       type: 'audio/webm; codecs=opus'
     });
+    recordedBlob.current = blob
     function onComplete() {
       const url = (URL as any).createObjectURL(blob);
       console.log("url1122", url)
@@ -719,9 +721,9 @@ const OffScreen = () => {
     }
     onComplete()
     if (!isMicOnlyRecordingDiscarded) {
-      const base64Data = await saveRecordingToIndexedDB(blob)
-      recordedStreamBase64 = base64Data
-      setBase64Data(base64Data)
+      // const base64Data = await saveRecordingToIndexedDB(blob)
+      // recordedStreamBase64 = base64Data
+      // setBase64Data(base64Data)
 
     }
   };
@@ -804,6 +806,7 @@ const OffScreen = () => {
     camOnlyRecorder.onstop = async () => {
 
       const blob = new Blob(camOnlyChunks, { type: 'video/webm' });
+      recordedBlob.current = blob
       // Convert Blob to Base64
       console.log(isCamOnlyRecordingDiscarded, "onstop", blob)
       function onComplete() {
@@ -826,9 +829,9 @@ const OffScreen = () => {
       onComplete()
       if (!isCamOnlyRecordingDiscarded) {
         console.log("CAM RECORDIGN ENDEDDD!!!!")
-        const base64Data = await saveRecordingToIndexedDB(blob)
-        recordedStreamBase64 = base64Data
-        setBase64Data(base64Data)
+        // const base64Data = await saveRecordingToIndexedDB(blob)
+        // recordedStreamBase64 = base64Data
+        // setBase64Data(base64Data)
       }
     };
 
@@ -851,7 +854,9 @@ const OffScreen = () => {
       function async(message, sender, sendResponse) {
         switch (message.type) {
           case "START_SENDING_CHUNKS": {
-            setBase64Data(true)
+            sendBlobToBackground(recordedBlob.current)
+            setIsPreviewOpened(false)
+            setIsPreviewOpened(false)
           }
           case "END_CAM_ONLY_RECORDING": {
             console.log("END_CAM_ONLY_RECORDING", camOnlyRecorder)
