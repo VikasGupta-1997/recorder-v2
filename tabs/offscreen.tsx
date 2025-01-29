@@ -126,6 +126,7 @@ const OffScreen = () => {
   useEffect(() => {
     if (isPreviewOpened) {
       if (base64Data) {
+        console.log("NO HAS BEGUN TO SEND!!!")
         sendBlobToBackground(recordedBlob.current)
         setIsPreviewOpened(false)
         setIsPreviewOpened(false)
@@ -637,7 +638,7 @@ const OffScreen = () => {
           onComplete()
           // const base64Data = await saveRecordingToIndexedDB(blob)
           // recordedStreamBase64 = base64Data
-          setBase64Data(true)
+          // setBase64Data(true)
         }
         chrome.runtime.sendMessage({ type: "RECORDING_IN_PROGRESS_END" })
       };
@@ -849,6 +850,9 @@ const OffScreen = () => {
     chrome.runtime.onMessage.addListener(
       function async(message, sender, sendResponse) {
         switch (message.type) {
+          case "START_SENDING_CHUNKS": {
+            setBase64Data(true)
+          }
           case "END_CAM_ONLY_RECORDING": {
             console.log("END_CAM_ONLY_RECORDING", camOnlyRecorder)
             camOnlyRecorder?.stop()

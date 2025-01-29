@@ -632,6 +632,10 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     const uint8Array = new Uint8Array(message.data);
     receivedChunks.push(uint8Array);
   }
+  if(message.type === 'START_RECIEVING_BLOB_OFFSCREEN'){
+    await setupOffscreenDocument()
+    chrome.runtime.sendMessage({type: "START_SENDING_CHUNKS"})
+  }
   if (message.type === "complete") {
     // Combine all chunks into a single Blob when done
     const completeBlob = new Blob(receivedChunks, { type: "video/webm" });
