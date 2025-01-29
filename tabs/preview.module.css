@@ -334,7 +334,7 @@ video {
 .editing-container .redo-undo {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 16px;
 }
 
 .redo-undo button {
@@ -349,6 +349,10 @@ video {
   opacity: 1;
 }
 
+.redo-undo {
+  gap: 12px;
+}
+
 .editing-actions button:disabled {
   opacity: 0.5;
 }
@@ -361,6 +365,7 @@ video {
   gap: 12px;
   flex-wrap: wrap;
   align-items: start;
+  font-size: 12px;
 }
 
 .edit-mode-btn {
@@ -390,6 +395,7 @@ video {
   cursor: pointer;
   height: 30px;
   white-space: nowrap;
+  font-size: 12px;
 }
 
 .publish-btn {
@@ -403,6 +409,11 @@ video {
 
 .editing-container .editing-actions button span {
   line-height: 0;
+}
+
+.editing-container {
+  justify-content: center;
+  gap: 6px;
 }
 
 .wrapper-absolute,

@@ -928,14 +928,14 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     await setupOffscreenDocument();
     setTimeout(() => {
       chrome.runtime.sendMessage({ type: "START_RECORDING_OFFSCREEN", data: message.data, isCamOnly: message?.isCamOnly, isAudioOnly: message?.isAudioOnly });
-    }, 250)
+    }, 1000)
   }
 
   if (message.type === 'OPEN_MIC_ONLY') {
     await setupOffscreenDocument();
     setTimeout(() => {
       chrome.runtime.sendMessage({ type: "START_RECORDING_OFFSCREEN", data: message.data, isCamOnly: message?.isCamOnly, isAudioOnly: message?.isAudioOnly });
-    }, 250)
+    }, 1000)
   }
 
   if (message.type === 'SCREEN_SHARE_WINDOW_SELECTED') {
@@ -969,11 +969,10 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
       }, function () {
           console.log("isCamOnlyisCamOnly", message)
           chrome.storage.local.get(["firstTimeLaunch"], async result => {
-            await setupOffscreenDocument();
             const firstTimeLaunch = result?.firstTimeLaunch
             setTimeout(() => {
               chrome.runtime.sendMessage({ type: "START_RECORDING_OFFSCREEN", data: message.data, isCamOnly: message?.isCamOnly, isAudioOnly: message?.isAudioOnly, firstTimeLaunch });
-            }, 250)
+            }, 1000)
             return;
           })
       });

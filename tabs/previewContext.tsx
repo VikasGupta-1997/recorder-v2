@@ -220,6 +220,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                         if (message.isLastChunk) {
                             console.log("All chunks received. Reassembling...");
                             const { newBlob, newBlobUrl } = await playPartialRecording(receivedChunks); // Play the complete recording
+                            setIsVideoEncoding(false)
                             sendPostMessage({ type: "fixMetadata", blob: newBlob })
                         }
                     }
@@ -510,7 +511,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                 }
 
                 if (message.fixMetadata) {
-                    setIsVideoEncoding(false)
+                    // setIsVideoEncoding(false)
                     setOriginalVideo({
                         blob: message.blob,
                         url: URL.createObjectURL(message.blob)
@@ -755,8 +756,9 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         console.log("Resume the upload")
         isPausedref.current = false; // Set the flag to false
         console.log("Resuming upload...");
-        // partUrls, uploadId, key, userDetails, blob, selectedProject
-        handleUpload(partsUrlsRef.current, uploadIdRef.current, keyRef.current, userDetailRef.current, newBlobRef.current, selectedProjectRef.current);
+        // Filter out already uploaded parts
+        const remainingParts = partsUrlsRef.current.slice(currentPartIndexRef.current);
+        handleUpload(remainingParts, uploadIdRef.current, keyRef.current, userDetailRef.current, newBlobRef.current, selectedProjectRef.current);
     }
 
     const resetUploadRefs = () => {
@@ -824,20 +826,20 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                 return; // Exit the loop if paused
             }
 
-            if(stoppedUpload.current){
-                currentPartIndexRef.current = i; // Save the current index for resuming
-                console.log("Deleted upload api1@4", partNumber);
-                stoppedUpload.current = false
-                handleDeleteUpload()
+            // if(stoppedUpload.current){
+            //     currentPartIndexRef.current = i; // Save the current index for resuming
+            //     console.log("Deleted upload api1@4", partNumber);
+            //     stoppedUpload.current = false
+            //     handleDeleteUpload()
 
-                setIspublishing(false)
-                // setPublishedData(saveData)
-                // chrome.runtime.sendMessage({ type: "REFETCH_MEDIA_LIST", project: selectedProject, userDetails })
-                resetUploadRefs()
-                toast.error("Uploading Deleted !")
+            //     setIspublishing(false)
+            //     // setPublishedData(saveData)
+            //     // chrome.runtime.sendMessage({ type: "REFETCH_MEDIA_LIST", project: selectedProject, userDetails })
+            //     resetUploadRefs()
+            //     toast.error("Uploading Deleted !")
 
-                return; // Exit the loop if paused
-            }
+            //     return; // Exit the loop if paused
+            // }
             console.log("Current XHR", xhrRef.current)
             try {
                 await new Promise(async (resolve, reject) => {
@@ -994,6 +996,10 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
 
         console.log(ETagRef.current, "Check uploadedPartsuploadedParts")
         let completeData;
+        const uniqueArray = ETagRef.current.filter((obj, index, self) =>
+            index === self.findIndex((o) => o.PartNumber === obj.PartNumber)
+          );
+          console.log("uniqueArray", uniqueArray)
         try {
             const completeResponse = await fetch(
                 `${process.env.PLASMO_PUBLIC_ADILO_API}/s3/multipart/${uploadId}/complete?key=${key}`,
@@ -1003,7 +1009,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                         "Authorization": `Bearer ${userDetails.access_token}`
                     },
                     body: JSON.stringify({
-                        parts: ETagRef.current,
+                        parts: uniqueArray,
                     }),
                 }
             );
@@ -1122,6 +1128,10 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                             // chunk
                             chunk: blob.slice((partNumber - 1) * chunk_size, partNumber * chunk_size, "video/mp4")
                         });
+
+                        if (partUrls.length === 1) {
+                            handleUpload(partUrls, uploadId, key, userDetails, blob, selectedProject);
+                        }
                     }
                     console.log("Received pre-signed URLs for all parts", partUrls);
                     // Step 3: Upload  each chunk to S3
@@ -1138,8 +1148,6 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
                     userDetailRef.current = userDetails
                     uploadIdRef.current = uploadId
                     newBlobRef.current = blob
-                    await handleUpload(partUrls, uploadId, key, userDetails, blob, selectedProject)
-                    stoppedUpload.current = false
                 }
             } catch (error) {
                 await chrome.storage.local.set({ "showUploadStatus": false })
@@ -1249,7 +1257,8 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
         tabsInfo,
         publishingUpload,
         latestAuphonicDataRef,
-        isModalOpened
+        isModalOpened,
+        isVideoEndcoding
     };
 
     return (

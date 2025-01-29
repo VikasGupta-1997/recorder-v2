@@ -98,7 +98,8 @@ function PreviewPage() {
         publishingUpload,
         duration,
         latestAuphonicDataRef,
-        isModalOpened
+        isModalOpened,
+        isVideoEndcoding
     } = usePreview();
     const [showGhost, setShowGhost] = useState(false);
 
@@ -147,7 +148,7 @@ function PreviewPage() {
                         <div className={`${style["ref-wrapper-video"]} ${auphonicVideoUrlPreview ? style['auphonic-video'] : ''}`}>
                             <VideoPreview blobUrl={blobUrl} />
                         </div>
-                        {(!isEditMode && !auphonicVideoUrlPreview && !publishedData) && <div className={`${style['edit-mode-btn']}`} > <button className={`${style["rounded-btn"]} ${style['publish-btn']}`} disabled={!isFfmpegLoaded || ffmpegRunning || isPublishing} onClick={changeMode} >Edit Video</button></div>}
+                        {(!isEditMode && !auphonicVideoUrlPreview && !publishedData) && <div className={`${style['edit-mode-btn']}`} > <button className={`${style["rounded-btn"]} ${style['publish-btn']}`} disabled={!isFfmpegLoaded || ffmpegRunning || isPublishing || isVideoEndcoding} onClick={changeMode} >Edit Video</button></div>}
                         {(isPublishing && !auphonicVideoUrlPreview) && <p className={style["publishing-load-text"]} >{
                             publishingUpload ? "Publishing content , please wait and do not close the window till upload is not complete."
                                 : "Enhancing your audio for crystal sound, please do not close this window till the process is complete."
@@ -164,6 +165,9 @@ function PreviewPage() {
                                 isModalOpened={isModalOpened}
                             />
                         </div>}
+                        {/* <input type="file" onChange={e => {
+                            handlePublish(e.target.files[0])
+                        }} /> */}
                         {
                             publishedData && <div className={style["copy-link-div"]} >
                                 <input type="text" disabled value={`https://adilo.bigcommand.com/watch/${getVideoKeyFromUrl(publishedData.video.location)}`} />
