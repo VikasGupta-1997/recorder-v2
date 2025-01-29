@@ -150,6 +150,7 @@ function PreviewPage() {
                         }} type="button" >
                             <FiLink2 /> Copy link
                         </button>
+                        <button className={style['publish-btn']} onClick={downloadBlob}>Download</button>
                     </div>
                 }
             </span>
